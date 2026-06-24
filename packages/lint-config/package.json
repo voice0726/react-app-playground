@@ -1,0 +1,7 @@
+{
+  "name": "@playground/lint-config",
+  "private": true,
+  "exports": {
+    "./oxlint": "./oxlint.json"
+  }
+}

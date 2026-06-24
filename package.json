@@ -1,0 +1,25 @@
+{
+  "name": "react-app-playground",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "check-deps": "turbo run check-deps",
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "knip": "latest",
+    "lefthook": "latest",
+    "turbo": "latest"
+  }
+}
