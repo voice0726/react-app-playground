@@ -31,7 +31,7 @@ test('redirects unauthenticated customers access to login', async ({ page }) => 
 
 test('signs out and returns to login', async ({ page }) => {
   await loginAsDemo(page)
-  await page.getByRole('button', { name: 'Sign out' }).dispatchEvent('click')
+  await page.getByRole('button', { name: 'Sign out' }).click()
 
   await expect(page).toHaveURL(/\/login$/)
 })

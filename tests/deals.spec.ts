@@ -1,17 +1,6 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import { loginAsDemo, signOut } from './helpers/auth'
-
-async function setInputValue(locator: Locator, value: string) {
-  await locator.evaluate((element, nextValue) => {
-    const input = element as HTMLInputElement
-    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
-
-    valueSetter?.call(input, nextValue)
-    input.dispatchEvent(new InputEvent('input', { bubbles: true, data: nextValue }))
-    input.dispatchEvent(new Event('change', { bubbles: true }))
-  }, value)
-}
 
 test.beforeEach(async ({ page }) => {
   await signOut(page)
@@ -27,12 +16,12 @@ test('shows the deals list after sign in', async ({ page }) => {
 
 test('opens the new deal form with customer options', async ({ page }) => {
   await page.getByRole('link', { name: 'Deals' }).click()
-  await page.getByRole('button', { name: 'New Deal' }).dispatchEvent('click')
+  await page.getByRole('button', { name: 'New Deal' }).click()
   await expect(page.getByRole('dialog', { name: 'New Deal' })).toBeVisible()
   const customerSelect = page.getByRole('combobox', { name: 'Customer' })
 
   await expect(customerSelect).toBeEnabled()
-  await customerSelect.dispatchEvent('click')
+  await customerSelect.click()
   await expect(page.getByRole('option', { name: 'Acme Corporation' })).toBeVisible()
 })
 
@@ -40,19 +29,20 @@ test('creates a deal and shows the related customer section on detail', async ({
   const dealTitle = `Phase 5 Deal ${Date.now()}`
 
   await page.getByRole('link', { name: 'Deals' }).click()
-  await page.getByRole('button', { name: 'New Deal' }).dispatchEvent('click')
+  await page.getByRole('button', { name: 'New Deal' }).click()
   await expect(page.getByRole('dialog', { name: 'New Deal' })).toBeVisible()
   await page.getByLabel('Title').fill(dealTitle)
   const customerSelect = page.getByRole('combobox', { name: 'Customer' })
 
   await expect(customerSelect).toBeEnabled()
-  await customerSelect.dispatchEvent('click')
-  await page.getByRole('option', { name: 'Acme Corporation' }).dispatchEvent('click')
-  await setInputValue(page.getByLabel('Amount'), '250000')
+  await customerSelect.click()
+  await page.getByRole('option', { name: 'Acme Corporation' }).click()
+  await page.getByLabel('Amount').click()
+  await page.getByLabel('Amount').pressSequentially('250000')
   await page
     .getByRole('dialog', { name: 'New Deal' })
     .getByRole('button', { name: 'Save' })
-    .dispatchEvent('click')
+    .click()
 
   await expect(page.getByText(dealTitle)).toBeVisible()
   await page.getByRole('button', { name: `View ${dealTitle}` }).click()

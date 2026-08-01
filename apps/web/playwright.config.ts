@@ -7,13 +7,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5174',
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'VITE_DISABLE_DEVTOOLS=true pnpm --filter @playground/web dev',
-    url: 'http://localhost:5173',
+    command: 'VITE_DISABLE_DEVTOOLS=true pnpm --filter @playground/web dev --port 5174 --strictPort',
+    url: 'http://localhost:5174',
     reuseExistingServer: !process.env.CI,
   },
 })
