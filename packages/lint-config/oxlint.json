@@ -11,5 +11,8 @@
     "correctness": "error",
     "suspicious": "error",
     "perf": "warn"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off"
   }
 }

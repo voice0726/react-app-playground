@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { dealSchema, type DealFormValues } from '@/features/deals/schemas/deal.schema'

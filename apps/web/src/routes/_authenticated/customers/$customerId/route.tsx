@@ -2,7 +2,6 @@ import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title }
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import React from 'react'
 
 import { useUpdateCustomer } from '@/features/customers/api/mutations'
 import { useCustomer } from '@/features/customers/api/queries'

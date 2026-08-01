@@ -2,7 +2,6 @@ import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title }
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import React from 'react'
 
 import { useUpdateInvoice } from '@/features/invoices/api/mutations'
 import { useInvoice } from '@/features/invoices/api/queries'

@@ -1,6 +1,5 @@
 import { Button, NavLink, Stack } from '@mantine/core'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import React from 'react'
 
 import { authClient } from '@/lib/auth'
 import { useSessionStore } from '@/lib/stores/session.store'

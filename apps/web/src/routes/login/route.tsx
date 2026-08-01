@@ -12,7 +12,6 @@ import {
   Title,
 } from '@mantine/core'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import React from 'react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'

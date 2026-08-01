@@ -2,7 +2,7 @@ import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 
 import { createRouter, RouterProvider } from '@tanstack/react-router'
-import React, { StrictMode } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { useSessionStore, type SessionUser } from '@/lib/stores/session.store'

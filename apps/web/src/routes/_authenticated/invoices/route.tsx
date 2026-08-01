@@ -1,7 +1,6 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import React from 'react'
 import { z } from 'zod'
 
 import { useCreateInvoice } from '@/features/invoices/api/mutations'

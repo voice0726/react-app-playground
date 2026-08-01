@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
 import { format } from 'date-fns'
-import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { invoiceSchema, type InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'

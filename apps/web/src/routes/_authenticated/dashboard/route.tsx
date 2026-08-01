@@ -1,7 +1,6 @@
 import { Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import React from 'react'
 
 import type { Deal, Invoice, Task } from '@/mocks/data/seed'
 import type { Customer } from '@/types/customer.types'
