@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { DealStatusBadge } from '@/features/deals/components/DealStatusBadge'
 import type { Deal } from '@/features/deals/types'
@@ -78,7 +78,10 @@ const columns = [
 export function DealTable({ deals }: DealTableProps) {
   const search = useSearch({ from: '/_authenticated/deals' })
   const navigate = useNavigate({ from: '/deals' })
-  const sorting = toSortingState(search.sort, search.order)
+  const sorting = useMemo(
+    () => toSortingState(search.sort, search.order),
+    [search.sort, search.order],
+  )
   const globalFilter = search.q ?? ''
 
   const table = useReactTable({

@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { useDeleteCustomer } from '@/features/customers/api/mutations'
 import { CustomerStatusBadge } from '@/features/customers/components/CustomerStatusBadge'
@@ -94,7 +94,10 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 export function CustomerTable({ customers }: CustomerTableProps) {
   const search = useSearch({ from: '/_authenticated/customers' })
   const navigate = useNavigate({ from: '/customers' })
-  const sorting = toSortingState(search.sort, search.order)
+  const sorting = useMemo(
+    () => toSortingState(search.sort, search.order),
+    [search.sort, search.order],
+  )
   const globalFilter = search.q ?? ''
 
   const table = useReactTable({
