@@ -18,8 +18,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "knip": "latest",
-    "lefthook": "latest",
-    "turbo": "latest"
+    "knip": "6.29.0",
+    "lefthook": "2.1.10",
+    "turbo": "2.10.7"
   }
 }
