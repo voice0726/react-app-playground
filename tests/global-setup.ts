@@ -2,6 +2,12 @@ import { chromium, type FullConfig } from '@playwright/test'
 
 const WARMUP_TIMEOUT = 60_000
 
+/**
+ * コールド起動の dev server では初回ページロードがモジュールのオンデマンド変換と
+ * Service Worker 登録で数秒かかり、先頭テストが expect の 5000ms タイムアウトに
+ * 収まらず落ちる。auth.spec.ts は serial なので1本落ちると残りも did not run になる。
+ * テスト開始前に1回ページを開いてこのコストを吸収する。
+ */
 export default async function globalSetup(config: FullConfig) {
   const baseURL = config.projects[0]?.use.baseURL
 
