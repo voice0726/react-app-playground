@@ -1,7 +1,6 @@
 import { Button, Group, Paper, Stack, Text, Title } from '@mantine/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
-import React from 'react'
 
 import { TaskCard } from '@/features/tasks/components/TaskCard'
 import type { Task, TaskStatus } from '@/features/tasks/types'

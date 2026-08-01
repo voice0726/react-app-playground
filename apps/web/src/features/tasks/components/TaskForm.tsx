@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
-import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { taskSchema, type TaskFormValues } from '@/features/tasks/schemas/task.schema'

@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 
 import { DealStatusBadge } from '@/features/deals/components/DealStatusBadge'
 import type { Deal } from '@/features/deals/types'

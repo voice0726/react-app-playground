@@ -10,7 +10,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useCreateTask, useUpdateTaskStatus } from '@/features/tasks/api/mutations'
 import { KanbanColumn } from '@/features/tasks/components/KanbanColumn'

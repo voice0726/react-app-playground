@@ -1,6 +1,6 @@
 import { Alert, Loader, Stack, Title } from '@mantine/core'
 import { createFileRoute } from '@tanstack/react-router'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 
 import { useTasks } from '@/features/tasks/api/queries'
 import { KanbanBoard } from '@/features/tasks/components/KanbanBoard'

@@ -1,7 +1,6 @@
 import { AppShell, Burger, Group, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import React from 'react'
 
 import { AppNav } from '@/components/AppNav'
 import { useSessionStore } from '@/lib/stores/session.store'

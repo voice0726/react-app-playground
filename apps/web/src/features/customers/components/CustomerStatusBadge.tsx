@@ -1,5 +1,4 @@
 import { Badge } from '@mantine/core'
-import React from 'react'
 
 import type { CustomerStatus } from '@/types/customer.types'
 

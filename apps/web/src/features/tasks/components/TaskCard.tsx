@@ -2,7 +2,7 @@ import { ActionIcon, Card, Group, Stack, Text } from '@mantine/core'
 import { IconGripVertical } from '@tabler/icons-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import React, { type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 
 import type { Task } from '@/features/tasks/types'
 

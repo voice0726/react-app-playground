@@ -1,5 +1,4 @@
 import { Badge } from '@mantine/core'
-import React from 'react'
 import { match } from 'ts-pattern'
 
 import type { InvoiceStatus } from '@/features/invoices/types'
