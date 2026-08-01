@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
 import type { Invoice } from '@/features/invoices/types'
@@ -82,7 +82,10 @@ const columns = [
 export function InvoiceTable({ invoices }: InvoiceTableProps) {
   const search = useSearch({ from: '/_authenticated/invoices' })
   const navigate = useNavigate({ from: '/invoices' })
-  const sorting = toSortingState(search.sort, search.order)
+  const sorting = useMemo(
+    () => toSortingState(search.sort, search.order),
+    [search.sort, search.order],
+  )
   const globalFilter = search.q ?? ''
 
   const table = useReactTable({
