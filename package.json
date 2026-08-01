@@ -17,7 +17,7 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0",
+    "@playwright/test": "^1.62.1",
     "knip": "latest",
     "lefthook": "latest",
     "turbo": "latest"
