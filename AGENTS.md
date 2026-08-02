@@ -17,9 +17,9 @@ BtBアプリケーション Playground。TurborepoモノレポでReact + TypeScr
 
 ### TypeScript
 
-- 型チェックは `tsgo --noEmit` を優先。使えない場合のみ `tsc --noEmit` にフォールバック
+- TypeScript 7（ネイティブ実装）を使用する。型チェックは `tsc --noEmit`
 - `strict: true`, `noUncheckedIndexedAccess: true` を有効にすること
-- `verbatimModuleSyntax: true`（tsgo互換に必要）
+- `verbatimModuleSyntax: true`
 - `moduleResolution: "bundler"`
 
 ### フォーム
