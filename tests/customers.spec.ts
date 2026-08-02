@@ -19,7 +19,7 @@ test('creates a customer and opens its detail page', async ({ page }) => {
   const customerName = `Phase 5 Customer ${suffix}`
 
   await page.getByRole('link', { name: 'Customers' }).click()
-  await page.getByRole('button', { name: 'New Customer' }).dispatchEvent('click')
+  await page.getByRole('button', { name: 'New Customer' }).click()
   await expect(page.getByRole('dialog', { name: 'New Customer' })).toBeVisible()
   await page.getByLabel('Name').fill(customerName)
   await page.getByLabel('Email').fill(`phase5-${suffix}@example.com`)
@@ -27,7 +27,7 @@ test('creates a customer and opens its detail page', async ({ page }) => {
   await page
     .getByRole('dialog', { name: 'New Customer' })
     .getByRole('button', { name: 'Save' })
-    .dispatchEvent('click')
+    .click()
 
   await expect(page.getByText(customerName)).toBeVisible()
   await page.getByRole('button', { name: `View ${customerName}` }).click()
