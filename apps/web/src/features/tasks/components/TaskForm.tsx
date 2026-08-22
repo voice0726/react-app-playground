@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
+import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { taskSchema, type TaskFormValues } from '@/features/tasks/schemas/task.schema'
@@ -28,10 +29,15 @@ export function TaskForm({ initialValues, isSubmitting = false, onSubmit }: Task
     formState: { errors },
     handleSubmit,
     register,
+    reset,
   } = useForm<TaskFormValues>({
     defaultValues: initialValues ?? defaultValues,
     resolver: zodResolver(taskSchema),
   })
+
+  useEffect(() => {
+    reset(initialValues ?? defaultValues)
+  }, [initialValues, reset])
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

@@ -49,6 +49,7 @@ export function KanbanBoard() {
   const activeTaskId = useKanbanStore((state) => state.activeTaskId)
   const setActiveTaskId = useKanbanStore((state) => state.setActiveTaskId)
   const moveTask = useKanbanStore((state) => state.moveTask)
+  const setTasks = useKanbanStore((state) => state.setTasks)
   const createTask = useCreateTask()
   const updateTaskStatus = useUpdateTaskStatus()
   const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus | null>(null)
@@ -77,8 +78,14 @@ export function KanbanBoard() {
       return
     }
 
+    const previousTasks = tasks
     moveTask(taskId, nextStatus)
-    updateTaskStatus.mutate({ id: taskId, status: nextStatus })
+    updateTaskStatus.mutate(
+      { id: taskId, status: nextStatus },
+      {
+        onError: () => setTasks(previousTasks),
+      },
+    )
   }
 
   const handleCreate = async (values: TaskFormValues) => {
