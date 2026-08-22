@@ -23,6 +23,14 @@ function invoiceStatus(value: unknown, fallback: InvoiceStatus): InvoiceStatus {
   return fallback
 }
 
+function canTransitionInvoiceStatus(current: InvoiceStatus, next: InvoiceStatus): boolean {
+  if (current === next || next === 'cancelled') {
+    return true
+  }
+
+  return (current === 'draft' && next === 'sent') || (current === 'sent' && next === 'paid')
+}
+
 export const invoiceHandlers = [
   http.get('*/api/invoices', () => HttpResponse.json(invoices)),
   http.get('*/api/invoices/:id', ({ params }) => {
@@ -60,6 +68,12 @@ export const invoiceHandlers = [
     }
 
     const body = await readJsonObject(request)
+    const nextStatus = invoiceStatus(body.status, invoice.status)
+
+    if (!canTransitionInvoiceStatus(invoice.status, nextStatus)) {
+      return HttpResponse.json({ message: 'Invalid invoice status transition' }, { status: 409 })
+    }
+
     const updated: Invoice = {
       ...invoice,
       number: stringValue(body.number) ?? invoice.number,
@@ -67,7 +81,7 @@ export const invoiceHandlers = [
       amount: numberValue(body.amount) ?? invoice.amount,
       issueDate: stringValue(body.issueDate) ?? invoice.issueDate,
       dueDate: stringValue(body.dueDate) ?? invoice.dueDate,
-      status: invoiceStatus(body.status, invoice.status),
+      status: nextStatus,
     }
 
     invoices = invoices.map((item) => (item.id === id ? updated : item))
