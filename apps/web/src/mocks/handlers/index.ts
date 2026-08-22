@@ -1,8 +1,8 @@
-import { authHandlers } from './auth'
-import { customerHandlers } from './customers'
-import { dealHandlers } from './deals'
-import { invoiceHandlers } from './invoices'
-import { taskHandlers } from './tasks'
+import { authHandlers, resetAuthState } from './auth'
+import { customerHandlers, resetCustomerState } from './customers'
+import { dealHandlers, resetDealState } from './deals'
+import { invoiceHandlers, resetInvoiceState } from './invoices'
+import { resetTaskState, taskHandlers } from './tasks'
 
 export const handlers = [
   ...authHandlers,
@@ -11,3 +11,11 @@ export const handlers = [
   ...invoiceHandlers,
   ...taskHandlers,
 ]
+
+export function resetMockState(): void {
+  resetAuthState()
+  resetCustomerState()
+  resetDealState()
+  resetInvoiceState()
+  resetTaskState()
+}

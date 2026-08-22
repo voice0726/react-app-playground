@@ -5,6 +5,10 @@ import { createId, notFound, readJsonObject, stringValue } from './utils'
 
 let tasks: Task[] = [...seedTasks]
 
+export function resetTaskState(): void {
+  tasks = [...seedTasks]
+}
+
 function findTask(id: string): Task | undefined {
   return tasks.find((task) => task.id === id)
 }

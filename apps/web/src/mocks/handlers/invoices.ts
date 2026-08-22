@@ -5,6 +5,10 @@ import { createId, notFound, numberValue, readJsonObject, stringValue } from './
 
 let invoices: Invoice[] = [...seedInvoices]
 
+export function resetInvoiceState(): void {
+  invoices = [...seedInvoices]
+}
+
 function findInvoice(id: string): Invoice | undefined {
   return invoices.find((invoice) => invoice.id === id)
 }

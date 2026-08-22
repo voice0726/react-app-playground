@@ -45,16 +45,20 @@ async function startMockWorker(): Promise<void> {
 }
 
 async function restoreSession(): Promise<void> {
-  const response = await fetch('/api/auth/get-session')
+  try {
+    const response = await fetch('/api/auth/get-session')
 
-  if (!response.ok) {
-    return
-  }
+    if (!response.ok) {
+      return
+    }
 
-  const session = (await response.json()) as unknown
+    const session = (await response.json()) as unknown
 
-  if (isSessionResponse(session) && session.user !== undefined) {
-    useSessionStore.getState().setSession(session.user)
+    if (isSessionResponse(session) && session.user !== undefined) {
+      useSessionStore.getState().setSession(session.user)
+    }
+  } catch {
+    useSessionStore.getState().clearSession()
   }
 }
 

@@ -2,6 +2,7 @@ import { Button, NavLink, Stack } from '@mantine/core'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 
 import { authClient } from '@/lib/auth'
+import { queryClient } from '@/lib/queryClient'
 import { useSessionStore } from '@/lib/stores/session.store'
 
 const navItems = [
@@ -20,6 +21,7 @@ export function AppNav() {
   const handleSignOut = async () => {
     await authClient.signOut()
     clearSession()
+    queryClient.clear()
     await navigate({ to: '/login' })
   }
 

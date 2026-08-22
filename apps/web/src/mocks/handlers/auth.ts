@@ -28,6 +28,10 @@ const demoUser: MockSessionUser = {
 
 let currentSession: MockSession | null = null
 
+export function resetAuthState(): void {
+  currentSession = null
+}
+
 function createSession(): MockSession {
   const now = new Date().toISOString()
 

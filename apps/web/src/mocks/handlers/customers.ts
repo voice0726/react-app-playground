@@ -7,6 +7,10 @@ import { createId, notFound, readJsonObject, stringValue } from './utils'
 
 let customers: Customer[] = [...seedCustomers]
 
+export function resetCustomerState(): void {
+  customers = [...seedCustomers]
+}
+
 function findCustomer(id: string): Customer | undefined {
   return customers.find((customer) => customer.id === id)
 }
