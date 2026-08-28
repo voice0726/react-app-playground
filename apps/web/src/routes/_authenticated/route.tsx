@@ -3,13 +3,14 @@ import { useDisclosure } from '@mantine/hooks'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { AppNav } from '@/components/AppNav'
+import { shouldRedirectToLogin } from '@/lib/auth'
 import { useSessionStore } from '@/lib/stores/session.store'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: () => {
-    const isAuthenticated = useSessionStore.getState().isAuthenticated
+    const isAuthenticated = useSessionStore.getState().status === 'authenticated'
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated && shouldRedirectToLogin(useSessionStore.getState().status)) {
       throw redirect({ to: '/login' })
     }
   },

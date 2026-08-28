@@ -4,6 +4,7 @@ import type { TaskFormValues } from '@/features/tasks/schemas/task.schema'
 import type { Task, TaskStatus } from '@/features/tasks/types'
 
 import { taskKeys } from './queries'
+import { requestJson } from '@/lib/apiClient'
 
 type UpdateTaskInput = {
   id: string
@@ -13,22 +14,6 @@ type UpdateTaskInput = {
 type UpdateTaskStatusInput = {
   id: string
   status: TaskStatus
-}
-
-async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${url}`)
-  }
-
-  return (await response.json()) as T
 }
 
 export function useCreateTask() {

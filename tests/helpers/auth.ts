@@ -1,13 +1,13 @@
-import type { Page } from '@playwright/test'
+import type { Browser, BrowserContext, Page } from '@playwright/test'
 
-export async function loginAsDemo(page: Page) {
-  await page.goto('/login')
-  await page.getByLabel('Email').fill('demo@example.com')
-  await page.getByRole('textbox', { name: 'Password' }).fill('password')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await page.waitForURL('**/dashboard')
+export function storageStateFor(user: 'a' | 'b'): string {
+  const value = user === 'a' ? process.env.E2E_USER_A_STORAGE_STATE : process.env.E2E_USER_B_STORAGE_STATE
+  if (value === undefined || value === '') throw new Error(`E2E_USER_${user.toUpperCase()}_STORAGE_STATE must be set`)
+  return value
 }
 
-export async function signOut(page: Page) {
-  await page.request.post('/api/auth/sign-out')
+export async function createUserContext(browser: Browser, user: 'a' | 'b'): Promise<BrowserContext> {
+  return browser.newContext({ storageState: storageStateFor(user), baseURL: 'http://localhost:5173' })
 }
+
+export async function signOut(page: Page) { await page.request.post('/auth/logout?redirect=%2Flogin', { headers: { Origin: 'http://localhost:5173' } }) }

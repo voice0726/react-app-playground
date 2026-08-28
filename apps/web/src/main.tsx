@@ -1,82 +1,40 @@
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
-
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-
-import { useSessionStore, type SessionUser } from '@/lib/stores/session.store'
+import { fetchSession } from '@/lib/auth'
+import { useSessionStore } from '@/lib/stores/session.store'
 import { routeTree } from '@/routeTree.gen'
 
-type SessionResponse = {
-  user?: SessionUser
-}
-
-const router = createRouter({
-  routeTree,
-})
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
-}
-
-function isSessionResponse(value: unknown): value is SessionResponse {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    'user' in value &&
-    typeof (value as SessionResponse).user?.id === 'string' &&
-    typeof (value as SessionResponse).user?.name === 'string' &&
-    typeof (value as SessionResponse).user?.email === 'string'
-  )
-}
+const router = createRouter({ routeTree })
+declare module '@tanstack/react-router' { interface Register { router: typeof router } }
 
 async function startMockWorker(): Promise<void> {
-  if (!import.meta.env.DEV) {
-    return
-  }
-
+  if (!import.meta.env.DEV || import.meta.env.VITE_USE_MSW !== 'true') return
   const { worker } = await import('@/mocks/browser')
-  await worker.start({
-    onUnhandledRequest: 'bypass',
-  })
+  await worker.start({ onUnhandledRequest: 'bypass' })
 }
 
 async function restoreSession(): Promise<void> {
-  try {
-    const response = await fetch('/api/auth/get-session')
+  const result = await fetchSession()
+  if (result.status === 'authenticated') useSessionStore.getState().setSession(result.user)
+  else useSessionStore.getState().setStatus(result.status)
+}
 
-    if (!response.ok) {
-      return
-    }
-
-    const session = (await response.json()) as unknown
-
-    if (isSessionResponse(session) && session.user !== undefined) {
-      useSessionStore.getState().setSession(session.user)
-    }
-  } catch {
-    useSessionStore.getState().clearSession()
-  }
+function BootstrapGate() {
+  const status = useSessionStore((state) => state.status)
+  if (status === 'loading') return <div>Loading…</div>
+  if (status === 'unavailable') return <div>Authentication service unavailable. <button onClick={() => window.location.reload()}>Retry</button></div>
+  return <RouterProvider router={router} />
 }
 
 async function bootstrap(): Promise<void> {
   await startMockWorker()
+  const root = document.getElementById('root')
+  if (root === null) throw new Error('Root element #root was not found')
+  createRoot(root).render(<StrictMode><BootstrapGate /></StrictMode>)
   await restoreSession()
-
-  const rootElement = document.getElementById('root')
-
-  if (rootElement === null) {
-    throw new Error('Root element #root was not found')
-  }
-
-  createRoot(rootElement).render(
-    <StrictMode>
-      <RouterProvider router={router} />
-    </StrictMode>,
-  )
 }
 
 void bootstrap()

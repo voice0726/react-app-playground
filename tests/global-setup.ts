@@ -15,6 +15,18 @@ export default async function globalSetup(config: FullConfig) {
     throw new Error('baseURL is not configured')
   }
 
+  if (baseURL === 'http://localhost:5173') {
+    const statePaths = [process.env.E2E_USER_A_STORAGE_STATE, process.env.E2E_USER_B_STORAGE_STATE]
+    if (statePaths.some((path) => path === undefined || path === '')) throw new Error('E2E_USER_A_STORAGE_STATE and E2E_USER_B_STORAGE_STATE must be set for backend integration tests')
+    const fs = await import('node:fs/promises')
+    for (const path of statePaths) { try { await fs.access(path as string) } catch { throw new Error(`E2E storage state does not exist: ${path}`) } }
+    const response = await fetch(`${baseURL}/api/healthz`)
+    if (!response.ok) throw new Error(`backend health check failed: ${response.status}`)
+    const authResponse = await fetch(`${baseURL}/auth/me`)
+    if (![200, 401].includes(authResponse.status)) throw new Error(`auth-gateway health check failed: ${authResponse.status}`)
+    return
+  }
+
   const browser = await chromium.launch()
 
   try {

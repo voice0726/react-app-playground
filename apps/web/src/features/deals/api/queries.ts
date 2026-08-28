@@ -3,21 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import type { Deal } from '@/features/deals/types'
 import type { Customer } from '@/types/customer.types'
 import { customerKeys } from '@/types/queryKeys'
+import { fetchJson } from '@/lib/apiClient'
 
 export const dealKeys = {
   all: ['deals'] as const,
   list: () => [...dealKeys.all, 'list'] as const,
   detail: (id: string) => [...dealKeys.all, 'detail', id] as const,
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}`)
-  }
-
-  return (await response.json()) as T
 }
 
 export function useDeals() {
