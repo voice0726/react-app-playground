@@ -6,8 +6,8 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendURL = env.VITE_BACKEND_URL ?? 'http://localhost:8080'
-  const authGatewayURL = env.VITE_AUTH_GATEWAY_URL ?? 'http://localhost:4000'
+  const backendURL = env.VITE_BACKEND_URL ?? 'http://localhost:18080'
+  const authGatewayURL = env.VITE_AUTH_GATEWAY_URL ?? 'http://localhost:8800'
   return {
   plugins: [
     tanstackRouter({
@@ -30,6 +30,6 @@ export default defineConfig(({ mode }) => {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-    server: { proxy: { '/api/healthz': { target: backendURL, changeOrigin: true, rewrite: () => '/healthz' }, '/api': { target: backendURL, changeOrigin: true }, '/auth': { target: authGatewayURL, changeOrigin: true, secure: false } } },
+    server: { host: '127.0.0.1', port: 5174, strictPort: true, allowedHosts: ['react.localtest.me'], proxy: { '/api/healthz': { target: backendURL, changeOrigin: true, rewrite: () => '/healthz' }, '/api': { target: backendURL, changeOrigin: true }, '/auth': { target: authGatewayURL, changeOrigin: true, secure: false, rewrite: (path) => path.replace(/^\/auth(?=\/|$)/, '/auth/react-app-playground') } } },
   }
 })
