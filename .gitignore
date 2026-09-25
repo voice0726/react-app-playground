@@ -6,3 +6,4 @@ playwright-report
 test-results
 *.tsbuildinfo
 **/src/routeTree.gen.ts
+.codex/hooks.json
