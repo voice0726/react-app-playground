@@ -1,4 +1,6 @@
-import type { Browser, BrowserContext, Page } from '@playwright/test'
+import type { Browser, BrowserContext } from '@playwright/test'
+
+export const appOrigin = 'http://react.localtest.me:5174'
 
 export function storageStateFor(user: 'a' | 'b'): string {
   const value = user === 'a' ? process.env.E2E_USER_A_STORAGE_STATE : process.env.E2E_USER_B_STORAGE_STATE
@@ -7,7 +9,5 @@ export function storageStateFor(user: 'a' | 'b'): string {
 }
 
 export async function createUserContext(browser: Browser, user: 'a' | 'b'): Promise<BrowserContext> {
-  return browser.newContext({ storageState: storageStateFor(user), baseURL: 'http://localhost:5173' })
+  return browser.newContext({ storageState: storageStateFor(user), baseURL: appOrigin })
 }
-
-export async function signOut(page: Page) { await page.request.post('/auth/logout?redirect=%2Flogin', { headers: { Origin: 'http://localhost:5173' } }) }

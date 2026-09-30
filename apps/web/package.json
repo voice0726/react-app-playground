@@ -9,7 +9,7 @@
     "lint": "oxlint src",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --config=../../tests/backend-integration.config.ts",
     "check-deps": "depcruise src --config .dependency-cruiser.cjs"
   },
   "dependencies": {
