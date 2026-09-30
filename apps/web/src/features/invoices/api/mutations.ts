@@ -4,6 +4,7 @@ import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.sche
 import type { Invoice, InvoiceStatus } from '@/features/invoices/types'
 
 import { invoiceKeys } from './queries'
+import { requestJson } from '@/lib/apiClient'
 
 type UpdateInvoiceInput = {
   id: string
@@ -13,22 +14,6 @@ type UpdateInvoiceInput = {
 type AdvanceInvoiceStatusInput = {
   id: string
   nextStatus: InvoiceStatus
-}
-
-async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${url}`)
-  }
-
-  return (await response.json()) as T
 }
 
 export function useCreateInvoice() {

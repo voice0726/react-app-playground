@@ -9,7 +9,7 @@
     "lint": "oxlint src",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --config=../../tests/backend-integration.config.ts",
     "check-deps": "depcruise src --config .dependency-cruiser.cjs"
   },
   "dependencies": {
@@ -28,7 +28,6 @@
     "@tanstack/react-router": "1.170.18",
     "@tanstack/react-router-devtools": "^1.167.0",
     "@tanstack/react-table": "8.21.3",
-    "better-auth": "1.6.25",
     "date-fns": "4.4.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",

@@ -4,26 +4,11 @@ import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
 import type { Deal } from '@/features/deals/types'
 
 import { dealKeys } from './queries'
+import { requestJson } from '@/lib/apiClient'
 
 type UpdateDealInput = {
   id: string
   values: DealFormValues
-}
-
-async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${url}`)
-  }
-
-  return (await response.json()) as T
 }
 
 export function useCreateDeal() {

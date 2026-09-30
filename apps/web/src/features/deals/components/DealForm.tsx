@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 
 import { dealSchema, type DealFormValues } from '@/features/deals/schemas/deal.schema'
+import { fetchJson } from '@/lib/apiClient'
 import type { Customer } from '@/types/customer.types'
 
 type DealFormProps = {
@@ -27,16 +28,6 @@ const statusOptions = [
 
 const dealCustomerKeys = {
   list: () => ['deals', 'customer-options'] as const,
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}`)
-  }
-
-  return (await response.json()) as T
 }
 
 function useCustomerOptions() {

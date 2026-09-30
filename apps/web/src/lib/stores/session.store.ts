@@ -1,21 +1,6 @@
 import { create } from 'zustand'
-
-export type SessionUser = {
-  id: string
-  name: string
-  email: string
-}
-
-type SessionState = {
-  user: SessionUser | null
-  isAuthenticated: boolean
-  setSession: (user: SessionUser) => void
-  clearSession: () => void
-}
-
-export const useSessionStore = create<SessionState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  setSession: (user) => set({ user, isAuthenticated: true }),
-  clearSession: () => set({ user: null, isAuthenticated: false }),
-}))
+import type { SessionUser } from '@/lib/auth'
+export type { SessionUser }
+export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unavailable'
+type SessionState = { user: SessionUser | null; status: SessionStatus; isAuthenticated: boolean; setSession: (user: SessionUser) => void; setStatus: (status: SessionStatus) => void; clearSession: () => void }
+export const useSessionStore = create<SessionState>((set) => ({ user: null, status: 'loading', isAuthenticated: false, setSession: (user) => set({ user, status: 'authenticated', isAuthenticated: true }), setStatus: (status) => set({ status, isAuthenticated: status === 'authenticated' }), clearSession: () => set({ user: null, status: 'unauthenticated', isAuthenticated: false }) }))

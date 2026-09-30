@@ -4,26 +4,11 @@ import type { CustomerFormValues } from '@/features/customers/schemas/customer.s
 import type { Customer } from '@/types/customer.types'
 
 import { customerKeys } from './queries'
+import { requestJson } from '@/lib/apiClient'
 
 type UpdateCustomerInput = {
   id: string
   values: CustomerFormValues
-}
-
-async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${url}`)
-  }
-
-  return (await response.json()) as T
 }
 
 export function useCreateCustomer() {

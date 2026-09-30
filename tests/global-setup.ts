@@ -1,28 +1,32 @@
-import { chromium, type FullConfig } from '@playwright/test'
+import { request } from '@playwright/test'
+import { access } from 'node:fs/promises'
+import { appOrigin, storageStateFor } from './helpers/auth'
 
-const WARMUP_TIMEOUT = 60_000
-
-/**
- * コールド起動の dev server では初回ページロードがモジュールのオンデマンド変換と
- * Service Worker 登録で数秒かかり、先頭テストが expect の 5000ms タイムアウトに
- * 収まらず落ちる。auth.spec.ts は serial なので1本落ちると残りも did not run になる。
- * テスト開始前に1回ページを開いてこのコストを吸収する。
- */
-export default async function globalSetup(config: FullConfig) {
-  const baseURL = config.projects[0]?.use.baseURL
-
-  if (baseURL === undefined) {
-    throw new Error('baseURL is not configured')
-  }
-
-  const browser = await chromium.launch()
-
+export default async function globalSetup() {
+  const anonymous = await request.newContext({ baseURL: appOrigin })
   try {
-    const page = await browser.newPage()
-
-    await page.goto(new URL('/login', baseURL).toString())
-    await page.getByRole('heading', { name: 'Sign in' }).waitFor({ timeout: WARMUP_TIMEOUT })
+    const health = await anonymous.get('/api/healthz')
+    if (!health.ok()) throw new Error(`Backend health check failed: ${health.status()}`)
+    const session = await anonymous.get('/auth/me')
+    if (session.status() !== 401) throw new Error(`Anonymous auth check failed: ${session.status()}`)
   } finally {
-    await browser.close()
+    await anonymous.dispose()
   }
+
+  const ids: string[] = []
+  for (const user of ['a', 'b'] as const) {
+    const state = storageStateFor(user)
+    await access(state)
+    const context = await request.newContext({ baseURL: appOrigin, storageState: state })
+    try {
+      const response = await context.get('/auth/me')
+      if (!response.ok()) throw new Error(`User ${user} storage state is not authenticated at ${appOrigin}: ${response.status()}`)
+      const body = await response.json() as { user_id?: unknown }
+      if (typeof body.user_id !== 'string' || body.user_id === '') throw new Error(`User ${user} session has no user_id`)
+      ids.push(body.user_id)
+    } finally {
+      await context.dispose()
+    }
+  }
+  if (ids[0] === ids[1]) throw new Error('E2E storage states must belong to different users')
 }
