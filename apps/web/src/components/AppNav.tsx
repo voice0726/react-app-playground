@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { queryClient } from '@/lib/queryClient'
 import { useSessionStore } from '@/lib/stores/session.store'
 
-const navItems = [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Customers', to: '/customers' }, { label: 'Deals', to: '/deals' }, { label: 'Invoices', to: '/invoices' }, { label: 'Tasks', to: '/tasks' }] as const
+const navItems = [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Customers', to: '/customers' }, { label: 'Deals', to: '/deals' }, { label: 'Invoices', to: '/invoices' }, { label: 'Tasks', to: '/tasks' }, { label: 'Tickets', to: '/tickets' }] as const
 
 export function AppNav() {
   const location = useRouterState({ select: (state) => state.location.pathname })
