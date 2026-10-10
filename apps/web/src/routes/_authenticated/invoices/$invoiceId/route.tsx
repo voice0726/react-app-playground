@@ -1,13 +1,14 @@
 import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { format } from 'date-fns'
+import { useState } from 'react'
 
 import { useUpdateInvoice } from '@/features/invoices/api/mutations'
 import { useInvoice } from '@/features/invoices/api/queries'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
 import { InvoiceStatusTransition } from '@/features/invoices/components/InvoiceStatusTransition'
+import { formatInvoiceDate } from '@/features/invoices/date'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
 
 const currencyFormatter = new Intl.NumberFormat('ja-JP', {
@@ -23,13 +24,19 @@ export const Route = createFileRoute('/_authenticated/invoices/$invoiceId')({
 function InvoiceDetailRoute() {
   const { invoiceId } = Route.useParams()
   const [opened, { close, open }] = useDisclosure()
+  const [updateError, setUpdateError] = useState(false)
   const invoiceQuery = useInvoice(invoiceId)
   const updateInvoice = useUpdateInvoice()
   const invoice = invoiceQuery.data
 
   const handleUpdate = async (values: InvoiceFormValues) => {
-    await updateInvoice.mutateAsync({ id: invoiceId, values })
-    close()
+    setUpdateError(false)
+    try {
+      await updateInvoice.mutateAsync({ id: invoiceId, values })
+      close()
+    } catch {
+      setUpdateError(true)
+    }
   }
 
   if (invoiceQuery.isLoading) {
@@ -55,7 +62,14 @@ function InvoiceDetailRoute() {
         </Stack>
         <Group>
           <InvoiceStatusTransition invoiceId={invoice.id} status={invoice.status} />
-          <Button onClick={open}>Edit</Button>
+          <Button
+            onClick={() => {
+              setUpdateError(false)
+              open()
+            }}
+          >
+            Edit
+          </Button>
         </Group>
       </Group>
 
@@ -71,11 +85,11 @@ function InvoiceDetailRoute() {
           </Group>
           <Group justify="space-between">
             <Text fw={600}>Issue date</Text>
-            <Text>{format(new Date(invoice.issueDate), 'MMM d, yyyy')}</Text>
+            <Text>{formatInvoiceDate(invoice.issueDate, 'MMM d, yyyy')}</Text>
           </Group>
           <Group justify="space-between">
             <Text fw={600}>Due date</Text>
-            <Text>{format(new Date(invoice.dueDate), 'MMM d, yyyy')}</Text>
+            <Text>{formatInvoiceDate(invoice.dueDate, 'MMM d, yyyy')}</Text>
           </Group>
           <Group justify="space-between">
             <Text fw={600}>Status</Text>
@@ -85,6 +99,11 @@ function InvoiceDetailRoute() {
       </Card>
 
       <Modal opened={opened} onClose={close} title="Edit Invoice">
+        {updateError ? (
+          <Alert color="red" variant="light" mb="md">
+            Failed to update invoice. Please try again.
+          </Alert>
+        ) : null}
         <InvoiceForm
           initialValues={{
             number: invoice.number,
