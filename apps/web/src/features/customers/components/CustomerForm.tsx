@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Group, Select, Stack, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Select, Stack, TextInput } from '@mantine/core'
 import { Controller, useForm } from 'react-hook-form'
 
 import {
@@ -10,6 +10,7 @@ import {
 type CustomerFormProps = {
   initialValues?: CustomerFormValues
   isSubmitting?: boolean
+  submitError?: string | null
   onSubmit: (values: CustomerFormValues) => void | Promise<void>
 }
 
@@ -20,7 +21,7 @@ const defaultValues: CustomerFormValues = {
   status: 'active',
 }
 
-export function CustomerForm({ initialValues, isSubmitting = false, onSubmit }: CustomerFormProps) {
+export function CustomerForm({ initialValues, isSubmitting = false, onSubmit, submitError }: CustomerFormProps) {
   const {
     control,
     formState: { errors },
@@ -34,6 +35,7 @@ export function CustomerForm({ initialValues, isSubmitting = false, onSubmit }: 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
+        {submitError ? <Alert color="red" role="alert">{submitError}</Alert> : null}
         <TextInput label="Name" error={errors.name?.message} {...register('name')} />
         <TextInput label="Email" type="email" error={errors.email?.message} {...register('email')} />
         <TextInput label="Phone" error={errors.phone?.message} {...register('phone')} />
