@@ -22,7 +22,7 @@
     "@hookform/resolvers": "5.5.7",
     "@mantine/core": "9.5.0",
     "@mantine/dates": "9.5.0",
-    "@mantine/hooks": "9.5.0",
+    "@mantine/hooks": "9.7.1",
     "@mantine/modals": "^9.7.1",
     "@mantine/notifications": "9.5.0",
     "@tabler/icons-react": "^3.44.0",
