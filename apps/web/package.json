@@ -6,8 +6,11 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint src",
-    "test": "vitest run",
+    "lint": "oxlint src worker vite.config.ts vitest.worker.config.ts vitest.workerd.config.ts vitest.runtime.config.ts",
+    "test": "vitest run && pnpm test:worker",
+    "test:worker": "pnpm build && vitest run --config vitest.worker.config.ts && vitest run --config vitest.workerd.config.ts && vitest run --config vitest.runtime.config.ts",
+    "dev:worker": "pnpm build && wrangler dev --local",
+    "deploy": "pnpm build && wrangler deploy",
     "test:watch": "vitest",
     "test:e2e": "playwright test --config=../../tests/backend-integration.config.ts",
     "check-deps": "depcruise src --config .dependency-cruiser.cjs"
@@ -37,6 +40,7 @@
     "zustand": "5.0.14"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.0",
     "@playwright/test": "1.62.1",
     "@tanstack/router-plugin": "1.168.23",
     "@testing-library/react": "16.3.2",
@@ -50,7 +54,8 @@
     "oxlint": "1.76.0",
     "typescript": "7.0.2",
     "vite": "8.2.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "4.149.0"
   },
   "msw": {
     "workerDirectory": [

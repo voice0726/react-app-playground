@@ -6,5 +6,7 @@ onlyBuiltDependencies:
   - lefthook
   - msw
 allowBuilds:
+  esbuild: true
   lefthook: true
   msw: true
+  workerd: true

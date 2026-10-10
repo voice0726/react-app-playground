@@ -30,6 +30,21 @@ export default defineConfig(({ mode }) => {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-    server: { host: '127.0.0.1', port: 5174, strictPort: true, allowedHosts: ['react.localtest.me'], proxy: { '/api/healthz': { target: backendURL, changeOrigin: true, rewrite: () => '/healthz' }, '/api': { target: backendURL, changeOrigin: true }, '/auth': { target: authGatewayURL, changeOrigin: true, secure: false, rewrite: (path) => path.replace(/^\/auth(?=\/|$)/, '/auth/react-app-playground') } } },
+    server: {
+      host: '127.0.0.1',
+      port: 5174,
+      strictPort: true,
+      allowedHosts: ['react.localtest.me'],
+      proxy: {
+        '/api/healthz': { target: backendURL, changeOrigin: true, rewrite: () => '/healthz' },
+        '/api': { target: backendURL, changeOrigin: true },
+        '/auth': {
+          target: authGatewayURL,
+          changeOrigin: true,
+          secure: false,
+          headers: { 'X-App-Id': 'react-app-playground' },
+        },
+      },
+    },
   }
 })

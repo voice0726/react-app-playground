@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "react-app-playground",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-10",
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "react-app-playground.aknr.dev", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*", "/auth", "/auth/*"]
+  },
+  "observability": { "enabled": true }
+}
