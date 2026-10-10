@@ -8,12 +8,16 @@ import { routeTree } from '@/routeTree.gen'
 const entries = [
   { entry: '/customers?q=123&sort=name&order=desc', search: { q: '123', sort: 'name', order: 'desc' } },
   { entry: '/deals?q=true&sort=title&order=asc', search: { q: 'true', sort: 'title', order: 'asc' } },
+  { entry: '/customers?sort=email&order=desc', search: { sort: 'email', order: 'desc' } },
+  { entry: '/deals?sort=amount&order=asc', search: { sort: 'amount', order: 'asc' } },
   { entry: '/customers?q=acme', search: { q: 'acme' } },
   { entry: '/customers?q=null', search: {} },
   { entry: '/deals?q=%5B%22abc%22%5D', search: {} },
   { entry: '/customers?q=%7B%22x%22%3A1%7D', search: {} },
   { entry: '/customers?q=acme&sort=%5B%22name%22%5D&order=sideways', search: { q: 'acme' } },
   { entry: '/deals?q=%5B%5D&sort=%7B%22id%22%3A1%7D&order=false', search: {} },
+  { entry: '/customers?q=acme&sort=amount&order=desc', search: { q: 'acme', order: 'desc' } },
+  { entry: '/deals?q=renewal&sort=email&order=asc', search: { q: 'renewal', order: 'asc' } },
 ] as const
 
 describe('顧客・案件一覧の検索URL', () => {

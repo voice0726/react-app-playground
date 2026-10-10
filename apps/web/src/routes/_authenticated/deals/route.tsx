@@ -8,10 +8,18 @@ import { useDeals } from '@/features/deals/api/queries'
 import { DealForm } from '@/features/deals/components/DealForm'
 import { DealTable } from '@/features/deals/components/DealTable'
 import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
-import { listSearchSchema } from '@/lib/listSearchSchema'
+import { createListSearchSchema } from '@/lib/listSearchSchema'
+
+const dealSearchSchema = createListSearchSchema([
+  'title',
+  'customerId',
+  'amount',
+  'status',
+  'createdAt',
+])
 
 export const Route = createFileRoute('/_authenticated/deals')({
-  validateSearch: listSearchSchema,
+  validateSearch: dealSearchSchema,
   component: DealsRoute,
 })
 

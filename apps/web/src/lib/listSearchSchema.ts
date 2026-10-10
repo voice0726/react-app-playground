@@ -1,10 +1,5 @@
 import { z } from 'zod'
 
-const optionalSearchText = z.preprocess(
-  (value: unknown) => (typeof value === 'string' ? value : undefined),
-  z.string().optional(),
-)
-
 const optionalQuery = z.preprocess(
   (value: unknown) => {
     if (typeof value === 'string') return value
@@ -14,11 +9,19 @@ const optionalQuery = z.preprocess(
   z.string().optional(),
 )
 
-export const listSearchSchema = z.object({
-  sort: optionalSearchText,
-  order: z.preprocess(
-    (value: unknown) => (value === 'asc' || value === 'desc' ? value : undefined),
-    z.enum(['asc', 'desc']).optional(),
-  ),
-  q: optionalQuery,
-})
+export function createListSearchSchema<const SortableFields extends readonly [string, ...string[]]>(
+  sortableFields: SortableFields,
+) {
+  return z.object({
+    sort: z.preprocess(
+      (value: unknown) =>
+        typeof value === 'string' && sortableFields.includes(value) ? value : undefined,
+      z.enum(sortableFields).optional(),
+    ),
+    order: z.preprocess(
+      (value: unknown) => (value === 'asc' || value === 'desc' ? value : undefined),
+      z.enum(['asc', 'desc']).optional(),
+    ),
+    q: optionalQuery,
+  })
+}

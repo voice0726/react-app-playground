@@ -8,10 +8,18 @@ import { useCustomers } from '@/features/customers/api/queries'
 import { CustomerForm } from '@/features/customers/components/CustomerForm'
 import { CustomerTable } from '@/features/customers/components/CustomerTable'
 import type { CustomerFormValues } from '@/features/customers/schemas/customer.schema'
-import { listSearchSchema } from '@/lib/listSearchSchema'
+import { createListSearchSchema } from '@/lib/listSearchSchema'
+
+const customerSearchSchema = createListSearchSchema([
+  'name',
+  'email',
+  'phone',
+  'status',
+  'createdAt',
+])
 
 export const Route = createFileRoute('/_authenticated/customers')({
-  validateSearch: listSearchSchema,
+  validateSearch: customerSearchSchema,
   component: CustomersRoute,
 })
 
