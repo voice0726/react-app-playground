@@ -126,4 +126,73 @@ describe('KanbanBoard', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(requestCount).toBe(2)
   })
+
+  it('clears a create error when closing and reopening the form', async () => {
+    let requestCount = 0
+    server.use(
+      http.post('*/api/tasks', async ({ request }) => {
+        requestCount += 1
+        const body = await request.json() as { title: string; description: string; status: Task['status'] }
+        if (requestCount === 1) return new HttpResponse(null, { status: 500 })
+        return HttpResponse.json({ ...body, id: 'task-retried', createdAt: '2026-01-03' }, { status: 201 })
+      }),
+    )
+    renderBoard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
+    await screen.findByText('New Todo Task')
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'First attempt' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await screen.findByRole('alert')
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
+    await screen.findByText('New Todo Task')
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('')
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Retry attempt' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(requestCount).toBe(2)
+  })
+
+  it('keeps a reopened form open when an earlier save completes', async () => {
+    let requestCount = 0
+    let firstSaveStarted = false
+    let firstSaveCompleted = false
+    server.use(
+      http.post('*/api/tasks', async ({ request }) => {
+        requestCount += 1
+        const body = await request.json() as { title: string; description: string; status: Task['status'] }
+        if (requestCount === 1) {
+          firstSaveStarted = true
+          await delay(250)
+          firstSaveCompleted = true
+        }
+        return HttpResponse.json({ ...body, id: `task-${requestCount}`, createdAt: '2026-01-03' }, { status: 201 })
+      }),
+    )
+    renderBoard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
+    await screen.findByText('New Todo Task')
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Earlier save' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(firstSaveStarted).toBe(true))
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
+    await screen.findByText('New Todo Task')
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New form' } })
+    await waitFor(() => expect(firstSaveCompleted).toBe(true))
+
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('New form')
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(requestCount).toBe(2)
+  })
 })

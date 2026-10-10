@@ -53,6 +53,7 @@ export function KanbanBoard() {
   const updateTaskStatus = useUpdateTaskStatus()
   const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus | null>(null)
   const statusChangeLock = useRef(false)
+  const createSession = useRef(0)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -69,6 +70,18 @@ export function KanbanBoard() {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveTaskId(String(event.active.id))
+  }
+
+  const handleOpenCreate = (status: TaskStatus) => {
+    createSession.current += 1
+    createTask.reset()
+    setNewTaskStatus(status)
+  }
+
+  const handleCloseCreate = () => {
+    createSession.current += 1
+    createTask.reset()
+    setNewTaskStatus(null)
   }
 
   const handleStatusChange = async (taskId: string, nextStatus: TaskStatus) => {
@@ -101,9 +114,12 @@ export function KanbanBoard() {
   }
 
   const handleCreate = async (values: TaskFormValues) => {
+    const session = createSession.current
     try {
       await createTask.mutateAsync(values)
-      setNewTaskStatus(null)
+      if (session === createSession.current) {
+        handleCloseCreate()
+      }
     } catch {
       return
     }
@@ -131,7 +147,7 @@ export function KanbanBoard() {
               tasks={tasksByStatus[status]}
               isStatusChangePending={updateTaskStatus.isPending}
               onStatusChange={(taskId, nextStatus) => void handleStatusChange(taskId, nextStatus)}
-              onAddTask={setNewTaskStatus}
+              onAddTask={handleOpenCreate}
             />
           ))}
         </SimpleGrid>
@@ -140,7 +156,7 @@ export function KanbanBoard() {
 
       <Modal
         opened={newTaskStatus !== null}
-        onClose={() => setNewTaskStatus(null)}
+        onClose={handleCloseCreate}
         title={`New ${newTaskStatus === null ? 'Task' : columnLabels[newTaskStatus]} Task`}
       >
         <TaskForm
