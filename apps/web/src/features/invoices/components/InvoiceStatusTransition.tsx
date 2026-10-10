@@ -1,5 +1,5 @@
 import { Alert, Button, Stack } from '@mantine/core'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useAdvanceInvoiceStatus } from '@/features/invoices/api/mutations'
 import { getNextStatus, type InvoiceStatus } from '@/features/invoices/types'
@@ -13,6 +13,10 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
   const advanceInvoiceStatus = useAdvanceInvoiceStatus()
   const [error, setError] = useState(false)
   const nextStatus = getNextStatus(status)
+
+  useEffect(() => {
+    setError(false)
+  }, [invoiceId, status])
 
   if (nextStatus === null) {
     return null

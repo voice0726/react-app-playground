@@ -1,7 +1,7 @@
 import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { useUpdateInvoice } from '@/features/invoices/api/mutations'
 import { useInvoice } from '@/features/invoices/api/queries'
@@ -25,18 +25,29 @@ function InvoiceDetailRoute() {
   const { invoiceId } = Route.useParams()
   const [opened, { close, open }] = useDisclosure()
   const [updateError, setUpdateError] = useState(false)
+  const editFormGeneration = useRef(0)
   const invoiceQuery = useInvoice(invoiceId)
   const updateInvoice = useUpdateInvoice()
   const invoice = invoiceQuery.data
 
   const handleUpdate = async (values: InvoiceFormValues) => {
+    const generation = editFormGeneration.current
     setUpdateError(false)
     try {
       await updateInvoice.mutateAsync({ id: invoiceId, values })
-      close()
+      if (editFormGeneration.current === generation) {
+        close()
+      }
     } catch {
-      setUpdateError(true)
+      if (editFormGeneration.current === generation) {
+        setUpdateError(true)
+      }
     }
+  }
+
+  const handleClose = () => {
+    editFormGeneration.current += 1
+    close()
   }
 
   if (invoiceQuery.isLoading) {
@@ -64,6 +75,7 @@ function InvoiceDetailRoute() {
           <InvoiceStatusTransition invoiceId={invoice.id} status={invoice.status} />
           <Button
             onClick={() => {
+              editFormGeneration.current += 1
               setUpdateError(false)
               open()
             }}
@@ -98,7 +110,7 @@ function InvoiceDetailRoute() {
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={close} title="Edit Invoice">
+      <Modal opened={opened} onClose={handleClose} title="Edit Invoice">
         {updateError ? (
           <Alert color="red" variant="light" mb="md">
             Failed to update invoice. Please try again.

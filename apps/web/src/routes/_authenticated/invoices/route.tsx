@@ -1,7 +1,7 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCreateInvoice } from '@/features/invoices/api/mutations'
 import { useInvoices } from '@/features/invoices/api/queries'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
@@ -18,17 +18,28 @@ function InvoicesRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [opened, { close, open }] = useDisclosure()
   const [createError, setCreateError] = useState(false)
+  const createFormGeneration = useRef(0)
   const invoicesQuery = useInvoices()
   const createInvoice = useCreateInvoice()
 
   const handleCreate = async (values: InvoiceFormValues) => {
+    const generation = createFormGeneration.current
     setCreateError(false)
     try {
       await createInvoice.mutateAsync(values)
-      close()
+      if (createFormGeneration.current === generation) {
+        close()
+      }
     } catch {
-      setCreateError(true)
+      if (createFormGeneration.current === generation) {
+        setCreateError(true)
+      }
     }
+  }
+
+  const handleClose = () => {
+    createFormGeneration.current += 1
+    close()
   }
 
   if (pathname !== '/invoices') {
@@ -41,6 +52,7 @@ function InvoicesRoute() {
         <Title order={2}>Invoices</Title>
         <Button
           onClick={() => {
+            createFormGeneration.current += 1
             setCreateError(false)
             open()
           }}
@@ -57,7 +69,7 @@ function InvoicesRoute() {
       ) : null}
       {invoicesQuery.data !== undefined ? <InvoiceTable invoices={invoicesQuery.data} /> : null}
 
-      <Modal opened={opened} onClose={close} title="New Invoice">
+      <Modal opened={opened} onClose={handleClose} title="New Invoice">
         {createError ? (
           <Alert color="red" variant="light" mb="md">
             Failed to create invoice. Please try again.

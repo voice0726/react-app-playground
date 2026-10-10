@@ -74,6 +74,8 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
               label="Issue date"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY-MM-DD"
+              clearable
+              allowDeselect
               error={errors.issueDate?.message}
               onBlur={field.onBlur}
               onChange={(value) => field.onChange(toInvoiceDateString(value))}
@@ -88,6 +90,8 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
               label="Due date"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY-MM-DD"
+              clearable
+              allowDeselect
               error={errors.dueDate?.message}
               onBlur={field.onBlur}
               onChange={(value) => field.onChange(toInvoiceDateString(value))}

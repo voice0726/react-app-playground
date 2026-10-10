@@ -5,28 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
 
-vi.mock('@mantine/dates', async () => {
-  const React = await import('react')
-
-  return {
-    DateInput: ({
-      label,
-      value,
-      onChange,
-    }: {
-      label: string
-      value: string | null
-      onChange?: (value: string | null) => void
-    }) =>
-      React.createElement('input', {
-        'aria-label': label,
-        value: value ?? '',
-        onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
-          onChange?.(event.currentTarget.value || null),
-      }),
-  }
-})
-
 const runtimeEnv = (globalThis as typeof globalThis & {
   process: { env: Record<string, string | undefined> }
 }).process.env
@@ -68,4 +46,34 @@ describe('InvoiceForm', () => {
       })
     },
   )
+
+  it.each([
+    ['Issue date', 'Issue date is required'],
+    ['Due date', 'Due date is required'],
+  ] as const)('treats an emptied %s input as missing', async (label, errorMessage) => {
+    const onSubmit = vi.fn<(values: InvoiceFormValues) => void>()
+
+    render(
+      <MantineProvider>
+        <InvoiceForm
+          initialValues={{
+            number: 'INV-1',
+            customerId: 'customer-1',
+            amount: 100,
+            issueDate: '2026-10-10',
+            dueDate: '2026-10-20',
+            status: 'draft',
+          }}
+          onSubmit={onSubmit}
+        />
+      </MantineProvider>,
+    )
+
+    fireEvent.change(screen.getByLabelText(label), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText(errorMessage)).toBeTruthy()
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe('')
+  })
 })
