@@ -1,5 +1,5 @@
 import { Alert, Button, Stack } from '@mantine/core'
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import { useAdvanceInvoiceStatus } from '@/features/invoices/api/mutations'
 import { getNextStatus, type InvoiceStatus } from '@/features/invoices/types'
@@ -12,10 +12,14 @@ type InvoiceStatusTransitionProps = {
 export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTransitionProps) {
   const advanceInvoiceStatus = useAdvanceInvoiceStatus()
   const [error, setError] = useState(false)
+  const [pendingGeneration, setPendingGeneration] = useState<number | null>(null)
+  const requestGeneration = useRef(0)
   const nextStatus = getNextStatus(status)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    requestGeneration.current += 1
     setError(false)
+    setPendingGeneration(null)
   }, [invoiceId, status])
 
   if (nextStatus === null) {
@@ -23,11 +27,19 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
   }
 
   const handleAdvance = async () => {
+    const generation = ++requestGeneration.current
     setError(false)
+    setPendingGeneration(generation)
     try {
       await advanceInvoiceStatus.mutateAsync({ id: invoiceId, nextStatus })
     } catch {
-      setError(true)
+      if (requestGeneration.current === generation) {
+        setError(true)
+      }
+    } finally {
+      if (requestGeneration.current === generation) {
+        setPendingGeneration(null)
+      }
     }
   }
 
@@ -38,7 +50,11 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
           Failed to update invoice status. Please try again.
         </Alert>
       ) : null}
-      <Button variant="light" loading={advanceInvoiceStatus.isPending} onClick={handleAdvance}>
+      <Button
+        variant="light"
+        loading={pendingGeneration === requestGeneration.current}
+        onClick={handleAdvance}
+      >
         → {nextStatus}
       </Button>
     </Stack>
