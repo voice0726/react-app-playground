@@ -46,15 +46,15 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
-        <TextInput label="Name" error={errors.name?.message} {...register('name')} />
-        <Textarea label="Description" error={errors.description?.message} {...register('description')} />
-        <TextInput label="Owner" error={errors.owner?.message} {...register('owner')} />
+        <TextInput label="名前" error={errors.name?.message} {...register('name')} />
+        <Textarea label="説明" error={errors.description?.message} {...register('description')} />
+        <TextInput label="担当者" error={errors.owner?.message} {...register('owner')} />
         <Controller
           control={control}
           name="startDate"
           render={({ field }) => (
             <DateInput
-              label="Start date"
+              label="開始日"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY-MM-DD"
               error={errors.startDate?.message}
@@ -68,7 +68,7 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
           name="dueDate"
           render={({ field }) => (
             <DateInput
-              label="Due date"
+              label="支払期日"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY-MM-DD"
               clearable
@@ -78,10 +78,10 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
             />
           )}
         />
-        <TextInput label="Status" error={errors.status?.message} {...register('status')} />
+        <TextInput label="ステータス" error={errors.status?.message} {...register('status')} />
         <Group justify="flex-end">
           <Button type="submit" loading={isSubmitting}>
-            Create project
+            プロジェクトを作成
           </Button>
         </Group>
       </Stack>

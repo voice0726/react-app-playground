@@ -36,18 +36,18 @@ export function CustomerForm({ initialValues, isSubmitting = false, onSubmit, su
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
         {submitError ? <Alert color="red" role="alert">{submitError}</Alert> : null}
-        <TextInput label="Name" error={errors.name?.message} {...register('name')} />
-        <TextInput label="Email" type="email" error={errors.email?.message} {...register('email')} />
-        <TextInput label="Phone" error={errors.phone?.message} {...register('phone')} />
+        <TextInput label="名前" error={errors.name?.message} {...register('name')} />
+        <TextInput label="メールアドレス" type="email" error={errors.email?.message} {...register('email')} />
+        <TextInput label="電話番号" error={errors.phone?.message} {...register('phone')} />
         <Controller
           control={control}
           name="status"
           render={({ field }) => (
             <Select
-              label="Status"
+              label="ステータス"
               data={[
-                { value: 'active', label: 'Active' },
-                { value: 'inactive', label: 'Inactive' },
+                { value: 'active', label: '有効' },
+                { value: 'inactive', label: '無効' },
               ]}
               error={errors.status?.message}
               value={field.value}
@@ -61,7 +61,7 @@ export function CustomerForm({ initialValues, isSubmitting = false, onSubmit, su
         />
         <Group justify="flex-end">
           <Button type="submit" loading={isSubmitting}>
-            Save
+            保存
           </Button>
         </Group>
       </Stack>

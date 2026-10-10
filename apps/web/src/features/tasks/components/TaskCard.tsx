@@ -14,9 +14,9 @@ type TaskCardProps = {
 }
 
 const statusOptions = [
-  { value: 'TODO', label: 'Todo' },
-  { value: 'IN_PROGRESS', label: 'In progress' },
-  { value: 'DONE', label: 'Done' },
+  { value: 'TODO', label: '未着手' },
+  { value: 'IN_PROGRESS', label: '進行中' },
+  { value: 'DONE', label: '完了' },
 ] satisfies { value: TaskStatus; label: string }[]
 
 export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = false, onStatusChange }: TaskCardProps) {
@@ -41,7 +41,7 @@ export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = 
     >
       <Group align="flex-start" gap="sm" wrap="nowrap">
         <ActionIcon
-          aria-label={`Drag ${task.title}`}
+          aria-label={`${task.title} をドラッグ`}
           variant="subtle"
           color="gray"
           {...attributes}
@@ -57,7 +57,7 @@ export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = 
           </Text>
           {!isDragOverlay && onStatusChange !== undefined ? (
             <NativeSelect
-              aria-label={`Move ${task.title}`}
+              aria-label={`${task.title} を移動`}
               size="xs"
               data={statusOptions}
               value={task.status}

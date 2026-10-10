@@ -32,10 +32,10 @@ export function KanbanColumn({ title, status, tasks, isStatusChangePending, onSt
           <Button
             size="xs"
             variant="light"
-            aria-label={`Add ${title} task`}
+            aria-label={`${title}にタスクを追加`}
             onClick={() => onAddTask(status)}
           >
-            Add Task
+            タスクを追加
           </Button>
         </Group>
         <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>

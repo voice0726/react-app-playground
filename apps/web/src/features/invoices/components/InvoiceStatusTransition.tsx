@@ -2,7 +2,7 @@ import { Alert, Button, Stack } from '@mantine/core'
 import { useLayoutEffect, useRef, useState } from 'react'
 
 import { useAdvanceInvoiceStatus } from '@/features/invoices/api/mutations'
-import { getNextStatus, type InvoiceStatus } from '@/features/invoices/types'
+import { getNextStatus, invoiceStatusLabels, type InvoiceStatus } from '@/features/invoices/types'
 
 type InvoiceStatusTransitionProps = {
   invoiceId: string
@@ -47,7 +47,7 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
     <Stack gap="xs">
       {error ? (
         <Alert color="red" variant="light">
-          Failed to update invoice status. Please try again.
+          請求書のステータスを更新できませんでした。もう一度お試しください。
         </Alert>
       ) : null}
       <Button
@@ -55,7 +55,7 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
         loading={pendingGeneration === requestGeneration.current}
         onClick={handleAdvance}
       >
-        → {nextStatus}
+        → {invoiceStatusLabels[nextStatus]}
       </Button>
     </Stack>
   )

@@ -30,7 +30,7 @@ function renderBoard() {
 Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: () => undefined })
 
 async function chooseStatus(taskTitle: string, status: TaskStatus) {
-  const select = screen.getByRole('combobox', { name: `Move ${taskTitle}` })
+  const select = screen.getByRole('combobox', { name: `${taskTitle} を移動` })
   fireEvent.change(select, { target: { value: status } })
 }
 
@@ -56,11 +56,11 @@ describe('KanbanBoard', () => {
 
     await chooseStatus('Task A', 'IN_PROGRESS')
     await waitFor(() => expect(patchStarted).toBe(true))
-    expect(screen.getByRole('combobox', { name: 'Move Task B' }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByRole('combobox', { name: 'Task B を移動' }).hasAttribute('disabled')).toBe(true)
     expect(useKanbanStore.getState().tasks.find((task) => task.id === 'task-a')?.status).toBe('IN_PROGRESS')
 
     await waitFor(() => expect(patchCompleted).toBe(true))
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Move Task B' }).hasAttribute('disabled')).toBe(false))
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Task B を移動' }).hasAttribute('disabled')).toBe(false))
   })
 
   it('restores only the failed move and accepts a later successful move', async () => {
@@ -93,7 +93,7 @@ describe('KanbanBoard', () => {
     )
     renderBoard()
 
-    const select = screen.getByRole('combobox', { name: 'Move Task A' })
+    const select = screen.getByRole('combobox', { name: 'Task A を移動' })
     select.focus()
     fireEvent.keyDown(select, { key: 'ArrowDown' })
     fireEvent.change(select, { target: { value: 'DONE' } })
@@ -112,17 +112,17 @@ describe('KanbanBoard', () => {
       }),
     )
     renderBoard()
-    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
-    await screen.findByText('New Todo Task')
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Keep this title' } })
-    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Retry this task' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: '未着手にタスクを追加' }))
+    await screen.findByText('新規タスク(未着手)')
+    fireEvent.change(screen.getByLabelText('タイトル'), { target: { value: 'Keep this title' } })
+    fireEvent.change(screen.getByLabelText('説明'), { target: { value: 'Retry this task' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
 
     expect((await screen.findByRole('alert')).textContent).toContain('タスクを保存できませんでした')
-    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Keep this title')
-    expect((screen.getByLabelText('Description') as HTMLTextAreaElement).value).toBe('Retry this task')
+    expect((screen.getByLabelText('タイトル') as HTMLInputElement).value).toBe('Keep this title')
+    expect((screen.getByLabelText('説明') as HTMLTextAreaElement).value).toBe('Retry this task')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(requestCount).toBe(2)
   })
@@ -139,21 +139,21 @@ describe('KanbanBoard', () => {
     )
     renderBoard()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
-    await screen.findByText('New Todo Task')
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'First attempt' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: '未着手にタスクを追加' }))
+    await screen.findByText('新規タスク(未着手)')
+    fireEvent.change(screen.getByLabelText('タイトル'), { target: { value: 'First attempt' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
     await screen.findByRole('alert')
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
-    await screen.findByText('New Todo Task')
+    fireEvent.click(screen.getByRole('button', { name: '未着手にタスクを追加' }))
+    await screen.findByText('新規タスク(未着手)')
     expect(screen.queryByRole('alert')).toBeNull()
-    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('')
+    expect((screen.getByLabelText('タイトル') as HTMLInputElement).value).toBe('')
 
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Retry attempt' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.change(screen.getByLabelText('タイトル'), { target: { value: 'Retry attempt' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(requestCount).toBe(2)
   })
@@ -176,22 +176,22 @@ describe('KanbanBoard', () => {
     )
     renderBoard()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
-    await screen.findByText('New Todo Task')
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Earlier save' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: '未着手にタスクを追加' }))
+    await screen.findByText('新規タスク(未着手)')
+    fireEvent.change(screen.getByLabelText('タイトル'), { target: { value: 'Earlier save' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(firstSaveStarted).toBe(true))
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    fireEvent.click(screen.getByRole('button', { name: 'Add Todo task' }))
-    await screen.findByText('New Todo Task')
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New form' } })
+    fireEvent.click(screen.getByRole('button', { name: '未着手にタスクを追加' }))
+    await screen.findByText('新規タスク(未着手)')
+    fireEvent.change(screen.getByLabelText('タイトル'), { target: { value: 'New form' } })
     await waitFor(() => expect(firstSaveCompleted).toBe(true))
 
     expect(screen.getByRole('dialog')).toBeTruthy()
-    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('New form')
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect((screen.getByLabelText('タイトル') as HTMLInputElement).value).toBe('New form')
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(requestCount).toBe(2)
   })

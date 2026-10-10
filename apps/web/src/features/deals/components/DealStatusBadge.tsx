@@ -7,6 +7,8 @@ type DealStatusBadgeProps = {
   status: DealStatus
 }
 
+const statusLabels: Record<DealStatus, string> = { open: '商談中', won: '受注', lost: '失注' }
+
 function statusColor(status: DealStatus): string {
   return match(status)
     .with('open', () => 'blue')
@@ -16,5 +18,5 @@ function statusColor(status: DealStatus): string {
 }
 
 export function DealStatusBadge({ status }: DealStatusBadgeProps) {
-  return <Badge color={statusColor(status)}>{status}</Badge>
+  return <Badge color={statusColor(status)}>{statusLabels[status]}</Badge>
 }

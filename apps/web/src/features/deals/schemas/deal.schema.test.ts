@@ -23,6 +23,6 @@ describe('dealSchema', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.issues[0]?.message).toBe('Amount must be a number')
+    expect(result.error?.issues[0]?.message).toBe('金額は数値で入力してください')
   })
 })

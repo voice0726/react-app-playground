@@ -59,13 +59,13 @@ describe('顧客一覧の削除確認', () => {
     renderCustomers()
     await screen.findByText('Acme Corporation')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Acme Corporation を削除' }))
     const dialog = await screen.findByRole('dialog')
     expect(dialog.textContent).toContain('Acme Corporation')
     fireEvent.click(screen.getByRole('button', { name: 'キャンセル' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Acme Corporation を削除' }))
     const escapeDialog = await screen.findByRole('dialog')
     fireEvent.keyDown(escapeDialog, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -80,7 +80,7 @@ describe('顧客一覧の削除確認', () => {
     renderCustomers()
     await screen.findByText('Acme Corporation')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Acme Corporation を削除' }))
     const dialog = await screen.findByRole('dialog')
     const confirmButton = screen.getByRole('button', { name: '削除する' })
     fireEvent.click(confirmButton)
@@ -101,7 +101,7 @@ describe('顧客一覧の削除確認', () => {
     renderCustomers()
     await screen.findByText('Acme Corporation')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Acme Corporation を削除' }))
     await screen.findByRole('dialog')
     fireEvent.click(screen.getByRole('button', { name: '削除する' }))
 
@@ -125,7 +125,7 @@ describe('顧客一覧の削除確認', () => {
     renderCustomers()
     await screen.findByText('Acme Corporation')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Acme Corporation を削除' }))
     await screen.findByRole('dialog')
     fireEvent.click(screen.getByRole('button', { name: '削除する' }))
     expect((await screen.findByRole('alert')).textContent).toContain('顧客を削除できませんでした')
@@ -133,14 +133,14 @@ describe('顧客一覧の削除確認', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'キャンセル' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Northstar Systems' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Northstar Systems を削除' }))
     const nextDialog = await screen.findByRole('dialog')
     expect(nextDialog.textContent).toContain('Northstar Systems')
     expect(screen.queryByRole('alert')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'キャンセル' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Acme Corporation を削除' }))
     await screen.findByRole('dialog')
     fireEvent.click(screen.getByRole('button', { name: '削除する' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())

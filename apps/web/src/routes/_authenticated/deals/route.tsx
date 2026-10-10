@@ -37,7 +37,7 @@ function DealsRoute() {
       await createDeal.mutateAsync(values)
       if (session === modalSession.current) close()
     } catch {
-      if (session === modalSession.current) setSubmitError('Failed to save deal. Please try again.')
+      if (session === modalSession.current) setSubmitError('案件を保存できませんでした。もう一度お試しください。')
     }
   }
 
@@ -59,19 +59,19 @@ function DealsRoute() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={2}>Deals</Title>
-        <Button onClick={open}>New Deal</Button>
+        <Title order={2}>案件</Title>
+        <Button onClick={open}>新規案件</Button>
       </Group>
 
       {dealsQuery.isLoading ? <Loader /> : null}
       {dealsQuery.isError ? (
         <Alert color="red" variant="light">
-          Failed to load deals.
+          案件を読み込めませんでした。
         </Alert>
       ) : null}
       {dealsQuery.data !== undefined ? <DealTable deals={dealsQuery.data} /> : null}
 
-      <Modal opened={opened} onClose={close} title="New Deal">
+      <Modal opened={opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />
       </Modal>
     </Stack>

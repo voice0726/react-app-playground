@@ -36,7 +36,7 @@ function DealDetailRoute() {
       await updateDeal.mutateAsync({ id: dealId, values })
       if (session === modalSession.current) close()
     } catch {
-      if (session === modalSession.current) setSubmitError('Failed to save deal. Please try again.')
+      if (session === modalSession.current) setSubmitError('案件を保存できませんでした。もう一度お試しください。')
     }
   }
 
@@ -58,7 +58,7 @@ function DealDetailRoute() {
   if (dealQuery.isError || deal === undefined) {
     return (
       <Alert color="red" variant="light">
-        Failed to load deal.
+        案件を読み込めませんでした。
       </Alert>
     )
   }
@@ -68,26 +68,26 @@ function DealDetailRoute() {
       <Group justify="space-between">
         <Stack gap={4}>
           <Anchor component={Link} to="/deals">
-            Back to Deals
+            案件一覧に戻る
           </Anchor>
           <Title order={2}>{deal.title}</Title>
         </Stack>
-        <Button onClick={open}>Edit</Button>
+        <Button onClick={open}>編集</Button>
       </Group>
 
       <Card withBorder radius="sm" padding="lg">
         <Stack>
           <Group justify="space-between">
-            <Text fw={600}>Amount</Text>
+            <Text fw={600}>金額</Text>
             <Text>{currencyFormatter.format(deal.amount)}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Status</Text>
+            <Text fw={600}>ステータス</Text>
             <DealStatusBadge status={deal.status} />
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Created</Text>
-            <Text>{format(new Date(deal.createdAt), 'MMM d, yyyy')}</Text>
+            <Text fw={600}>作成日</Text>
+            <Text>{format(new Date(deal.createdAt), 'yyyy/MM/dd')}</Text>
           </Group>
         </Stack>
       </Card>
@@ -95,26 +95,26 @@ function DealDetailRoute() {
       <Card withBorder radius="sm" padding="lg">
         <Stack>
           <Title order={3} size="h4">
-            Customer
+            顧客
           </Title>
           {customerQuery.isLoading ? <Loader size="sm" /> : null}
           {customerQuery.isError ? (
             <Alert color="red" variant="light">
-              Failed to load customer.
+              顧客を読み込めませんでした。
             </Alert>
           ) : null}
           {customer !== undefined ? (
             <>
               <Group justify="space-between">
-                <Text fw={600}>Name</Text>
+                <Text fw={600}>名前</Text>
                 <Text>{customer.name}</Text>
               </Group>
               <Group justify="space-between">
-                <Text fw={600}>Email</Text>
+                <Text fw={600}>メールアドレス</Text>
                 <Text>{customer.email}</Text>
               </Group>
               <Group justify="space-between">
-                <Text fw={600}>Phone</Text>
+                <Text fw={600}>電話番号</Text>
                 <Text>{customer.phone}</Text>
               </Group>
             </>
@@ -122,7 +122,7 @@ function DealDetailRoute() {
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={close} title="Edit Deal">
+      <Modal opened={opened} onClose={close} title="案件を編集">
         <DealForm
           initialValues={{
             title: deal.title,

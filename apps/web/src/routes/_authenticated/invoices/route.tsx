@@ -65,7 +65,7 @@ function InvoicesRoute() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={2}>Invoices</Title>
+        <Title order={2}>請求書</Title>
         <Button
           onClick={() => {
             createFormGeneration.current += 1
@@ -74,22 +74,22 @@ function InvoicesRoute() {
             open()
           }}
         >
-          New Invoice
+          新規請求書
         </Button>
       </Group>
 
       {invoicesQuery.isLoading ? <Loader /> : null}
       {invoicesQuery.isError ? (
         <Alert color="red" variant="light">
-          Failed to load invoices.
+          請求書を読み込めませんでした。
         </Alert>
       ) : null}
       {invoicesQuery.data !== undefined ? <InvoiceTable invoices={invoicesQuery.data} /> : null}
 
-      <Modal opened={opened} onClose={handleClose} title="New Invoice">
+      <Modal opened={opened} onClose={handleClose} title="新規請求書">
         {createError ? (
           <Alert color="red" variant="light" mb="md">
-            Failed to create invoice. Please try again.
+            請求書を作成できませんでした。もう一度お試しください。
           </Alert>
         ) : null}
         <InvoiceForm

@@ -43,18 +43,18 @@ function CustomerActions({ customer }: CustomerActionsProps) {
 
   return (
     <Group gap="xs" justify="flex-end">
-      <Tooltip label="View details">
+      <Tooltip label="詳細を見る">
         <Link to="/customers/$customerId" params={{ customerId: customer.id }}>
-          <ActionIcon variant="subtle" aria-label={`View ${customer.name}`}>
+          <ActionIcon variant="subtle" aria-label={`${customer.name} の詳細を見る`}>
             <IconEye size={16} />
           </ActionIcon>
         </Link>
       </Tooltip>
-      <Tooltip label="Delete customer">
+      <Tooltip label="顧客を削除">
         <ActionIcon
           color="red"
           variant="subtle"
-          aria-label={`Delete ${customer.name}`}
+          aria-label={`${customer.name} を削除`}
           disabled={actionContext.isDeleting}
           onClick={() => actionContext.onDelete(customer)}
         >
@@ -67,28 +67,28 @@ function CustomerActions({ customer }: CustomerActionsProps) {
 
 const columns = [
   columnHelper.accessor('name', {
-    header: 'Name',
+    header: '名前',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('email', {
-    header: 'Email',
+    header: 'メールアドレス',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('phone', {
-    header: 'Phone',
+    header: '電話番号',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
+    header: 'ステータス',
     cell: (info) => <CustomerStatusBadge status={info.getValue()} />,
   }),
   columnHelper.accessor('createdAt', {
-    header: 'Created',
-    cell: (info) => format(new Date(info.getValue()), 'MMM d, yyyy'),
+    header: '作成日',
+    cell: (info) => format(new Date(info.getValue()), 'yyyy/MM/dd'),
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
+    header: '操作',
     enableSorting: false,
     cell: ({ row }) => <CustomerActions customer={row.original} />,
   }),
@@ -192,8 +192,8 @@ export function CustomerTable({ customers }: CustomerTableProps) {
   return (
     <>
       <TextInput
-        label="Search"
-        placeholder="Search customers"
+        label="検索"
+        placeholder="顧客を検索"
         value={globalFilter}
         onChange={(event) => table.setGlobalFilter(event.currentTarget.value)}
       />
@@ -242,7 +242,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 <Table.Tr>
                   <Table.Td colSpan={columns.length}>
                     <Text c="dimmed" ta="center">
-                      No customers found.
+                      顧客が見つかりません。
                     </Text>
                   </Table.Td>
                 </Table.Tr>

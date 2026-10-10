@@ -23,7 +23,7 @@ function TasksRoute() {
   return (
     <Stack gap="lg">
       <Stack gap={2}>
-        <Title order={2}>Tasks</Title>
+        <Title order={2}>タスク</Title>
       </Stack>
 
       {tasksQuery.isLoading ? <Loader /> : null}

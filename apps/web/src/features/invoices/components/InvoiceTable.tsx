@@ -38,38 +38,38 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 
 const columns = [
   columnHelper.accessor('number', {
-    header: 'Invoice',
+    header: '請求書',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('customerId', {
-    header: 'Customer ID',
+    header: '顧客 ID',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('amount', {
-    header: 'Amount',
+    header: '金額',
     cell: (info) => currencyFormatter.format(info.getValue()),
   }),
   columnHelper.accessor('issueDate', {
-    header: 'Issue date',
-    cell: (info) => formatInvoiceDate(info.getValue(), 'MMM d, yyyy'),
+    header: '発行日',
+    cell: (info) => formatInvoiceDate(info.getValue(), 'yyyy/MM/dd'),
   }),
   columnHelper.accessor('dueDate', {
-    header: 'Due date',
-    cell: (info) => formatInvoiceDate(info.getValue(), 'MMM d, yyyy'),
+    header: '支払期日',
+    cell: (info) => formatInvoiceDate(info.getValue(), 'yyyy/MM/dd'),
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
+    header: 'ステータス',
     cell: (info) => <InvoiceStatusBadge status={info.getValue()} />,
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
+    header: '操作',
     enableSorting: false,
     cell: ({ row }) => (
       <Group gap="xs" justify="flex-end">
-        <Tooltip label="View details">
+        <Tooltip label="詳細を見る">
           <Link to="/invoices/$invoiceId" params={{ invoiceId: row.original.id }}>
-            <ActionIcon variant="subtle" aria-label={`View ${row.original.number}`}>
+            <ActionIcon variant="subtle" aria-label={`${row.original.number} の詳細を見る`}>
               <IconEye size={16} />
             </ActionIcon>
           </Link>
@@ -123,8 +123,8 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
   return (
     <>
       <TextInput
-        label="Search"
-        placeholder="Search invoices"
+        label="検索"
+        placeholder="請求書を検索"
         value={globalFilter}
         onChange={(event) => table.setGlobalFilter(event.currentTarget.value)}
       />
@@ -172,7 +172,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
                   <Text c="dimmed" ta="center">
-                    No invoices found.
+                    請求書が見つかりません。
                   </Text>
                 </Table.Td>
               </Table.Tr>

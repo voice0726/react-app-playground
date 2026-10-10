@@ -50,10 +50,10 @@ function deferRequest(method: 'post' | 'patch', path: string, status: number) {
 }
 
 const saveFlows = [
-  { name: '顧客作成', route: '/customers', open: 'New Customer', method: 'post', endpoint: 'customers', field: 'Name', value: 'New Customer' },
-  { name: '顧客編集', route: '/customers/customer-001', open: 'Edit', method: 'patch', endpoint: 'customers/customer-001', field: 'Name', value: 'Updated Customer' },
-  { name: '案件作成', route: '/deals', open: 'New Deal', method: 'post', endpoint: 'deals', field: 'Title', value: 'New Deal' },
-  { name: '案件編集', route: '/deals/deal-001', open: 'Edit', method: 'patch', endpoint: 'deals/deal-001', field: 'Title', value: 'Updated Deal' },
+  { name: '顧客作成', route: '/customers', open: '新規顧客', method: 'post', endpoint: 'customers', field: '名前', value: '新規顧客' },
+  { name: '顧客編集', route: '/customers/customer-001', open: '編集', method: 'patch', endpoint: 'customers/customer-001', field: '名前', value: 'Updated Customer' },
+  { name: '案件作成', route: '/deals', open: '新規案件', method: 'post', endpoint: 'deals', field: 'タイトル', value: '新規案件' },
+  { name: '案件編集', route: '/deals/deal-001', open: '編集', method: 'patch', endpoint: 'deals/deal-001', field: 'タイトル', value: 'Updated Deal' },
 ] as const
 
 async function openAndFill(flow: (typeof saveFlows)[number]) {
@@ -61,15 +61,15 @@ async function openAndFill(flow: (typeof saveFlows)[number]) {
   const dialog = await screen.findByRole('dialog')
   fireEvent.change(within(dialog).getByLabelText(flow.field), { target: { value: flow.value } })
   if (flow.name === '顧客作成') {
-    fireEvent.change(within(dialog).getByLabelText('Email'), { target: { value: 'new@example.com' } })
-    fireEvent.change(within(dialog).getByLabelText('Phone'), { target: { value: '03-1234-0000' } })
+    fireEvent.change(within(dialog).getByLabelText('メールアドレス'), { target: { value: 'new@example.com' } })
+    fireEvent.change(within(dialog).getByLabelText('電話番号'), { target: { value: '03-1234-0000' } })
   }
   if (flow.name === '案件作成') {
-    fireEvent.click(within(dialog).getByLabelText('Customer'))
+    fireEvent.click(within(dialog).getByLabelText('顧客'))
     fireEvent.click(await screen.findByText('Acme Corporation'))
-    fireEvent.change(within(dialog).getByLabelText('Amount'), { target: { value: '2500' } })
+    fireEvent.change(within(dialog).getByLabelText('金額'), { target: { value: '2500' } })
   }
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+  fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
   return dialog
 }
 
@@ -89,7 +89,7 @@ async function verifyStaleResultIsIgnored(flow: (typeof saveFlows)[number], stat
   deferred.releaseResponse()
   await deferred.finished
   await waitFor(() => {
-    const saveButton = within(currentDialog).getByRole('button', { name: 'Save' }) as HTMLButtonElement
+    const saveButton = within(currentDialog).getByRole('button', { name: '保存' }) as HTMLButtonElement
     expect(saveButton.disabled).toBe(false)
   })
   expect(within(currentDialog).queryByRole('alert')).toBeNull()
@@ -107,15 +107,15 @@ describe('顧客・案件の保存エラー表示', () => {
       id: 'customer-new', name: 'Acme', email: 'acme@example.com', phone: '03-1234-5678', status: 'active', createdAt: '2026-01-01',
     })
     renderRoute('/customers')
-    fireEvent.click(await screen.findByRole('button', { name: 'New Customer' }))
+    fireEvent.click(await screen.findByRole('button', { name: '新規顧客' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'Acme' } })
-    fireEvent.change(within(dialog).getByLabelText('Email'), { target: { value: 'acme@example.com' } })
-    fireEvent.change(within(dialog).getByLabelText('Phone'), { target: { value: '03-1234-5678' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-    expect((await within(dialog).findByRole('alert')).textContent).toContain('Failed to save customer')
-    expect((within(dialog).getByLabelText('Name') as HTMLInputElement).value).toBe('Acme')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    fireEvent.change(within(dialog).getByLabelText('名前'), { target: { value: 'Acme' } })
+    fireEvent.change(within(dialog).getByLabelText('メールアドレス'), { target: { value: 'acme@example.com' } })
+    fireEvent.change(within(dialog).getByLabelText('電話番号'), { target: { value: '03-1234-5678' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
+    expect((await within(dialog).findByRole('alert')).textContent).toContain('顧客を保存できませんでした')
+    expect((within(dialog).getByLabelText('名前') as HTMLInputElement).value).toBe('Acme')
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
@@ -124,13 +124,13 @@ describe('顧客・案件の保存エラー表示', () => {
       id: 'customer-001', name: 'Updated Acme', email: 'contact@acme.example', phone: '03-5555-0101', status: 'active', createdAt: '2026-01-01',
     })
     renderRoute('/customers/customer-001')
-    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.click(await screen.findByRole('button', { name: '編集' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'Updated Acme' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-    expect((await within(dialog).findByRole('alert')).textContent).toContain('Failed to save customer')
-    expect((within(dialog).getByLabelText('Name') as HTMLInputElement).value).toBe('Updated Acme')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    fireEvent.change(within(dialog).getByLabelText('名前'), { target: { value: 'Updated Acme' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
+    expect((await within(dialog).findByRole('alert')).textContent).toContain('顧客を保存できませんでした')
+    expect((within(dialog).getByLabelText('名前') as HTMLInputElement).value).toBe('Updated Acme')
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
@@ -139,16 +139,16 @@ describe('顧客・案件の保存エラー表示', () => {
       id: 'deal-new', title: 'Renewal', customerId: 'customer-001', amount: 2500, status: 'open', createdAt: '2026-01-01',
     })
     renderRoute('/deals')
-    fireEvent.click(await screen.findByRole('button', { name: 'New Deal' }))
+    fireEvent.click(await screen.findByRole('button', { name: '新規案件' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.change(within(dialog).getByLabelText('Title'), { target: { value: 'Renewal' } })
-    fireEvent.click(within(dialog).getByLabelText('Customer'))
+    fireEvent.change(within(dialog).getByLabelText('タイトル'), { target: { value: 'Renewal' } })
+    fireEvent.click(within(dialog).getByLabelText('顧客'))
     fireEvent.click(await screen.findByText('Acme Corporation'))
-    fireEvent.change(within(dialog).getByLabelText('Amount'), { target: { value: '2500' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-    expect((await within(dialog).findByRole('alert')).textContent).toContain('Failed to save deal')
-    expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe('Renewal')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    fireEvent.change(within(dialog).getByLabelText('金額'), { target: { value: '2500' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
+    expect((await within(dialog).findByRole('alert')).textContent).toContain('案件を保存できませんでした')
+    expect((within(dialog).getByLabelText('タイトル') as HTMLInputElement).value).toBe('Renewal')
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
@@ -157,13 +157,13 @@ describe('顧客・案件の保存エラー表示', () => {
       id: 'deal-001', title: 'Updated Renewal', customerId: 'customer-001', amount: 2500, status: 'open', createdAt: '2026-01-01',
     })
     renderRoute('/deals/deal-001')
-    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.click(await screen.findByRole('button', { name: '編集' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.change(within(dialog).getByLabelText('Title'), { target: { value: 'Updated Renewal' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-    expect((await within(dialog).findByRole('alert')).textContent).toContain('Failed to save deal')
-    expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe('Updated Renewal')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    fireEvent.change(within(dialog).getByLabelText('タイトル'), { target: { value: 'Updated Renewal' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
+    expect((await within(dialog).findByRole('alert')).textContent).toContain('案件を保存できませんでした')
+    expect((within(dialog).getByLabelText('タイトル') as HTMLInputElement).value).toBe('Updated Renewal')
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 

@@ -13,12 +13,12 @@ function NewProjectRoute() {
   const [apiMessage, setApiMessage] = useState<string | null>(null)
 
   const handleSubmit = async (_values: ProjectFormValues) => {
-    setApiMessage('Project creation is unavailable until the projects API is implemented.')
+    setApiMessage('プロジェクト API の実装が完了するまで、プロジェクトは作成できません。')
   }
 
   return (
     <Stack gap="lg" maw={640}>
-      <Title order={2}>New project</Title>
+      <Title order={2}>新規プロジェクト</Title>
       {apiMessage !== null ? (
         <Alert color="yellow" variant="light">
           {apiMessage}

@@ -41,7 +41,7 @@ describe('顧客・案件一覧の検索URL', () => {
     render(<RouterProvider router={router} />)
 
     await waitFor(() => expect(router.state.location.search).toEqual(search))
-    const searchInput = (await screen.findByRole('textbox', { name: 'Search' })) as HTMLInputElement
+    const searchInput = (await screen.findByRole('textbox', { name: '検索' })) as HTMLInputElement
     expect(searchInput.value).toBe(('q' in search ? search.q : undefined) ?? '')
   })
 })
