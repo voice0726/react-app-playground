@@ -96,6 +96,24 @@ describe('顧客一覧の削除確認', () => {
     expect(api.deleteRequests).toEqual(['customer-001'])
   })
 
+  it('削除成功後も閉じるアニメーション中は確認対象名を表示する', async () => {
+    setupCustomerApi(seedCustomers.slice(0, 2), () => HttpResponse.json({ success: true }))
+    renderCustomers()
+    await screen.findByText('Acme Corporation')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Acme Corporation' }))
+    await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: '削除する' }))
+
+    const confirmationText = 'Acme Corporation を削除します。この操作は取り消せません。'
+    await waitFor(() => {
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"]')
+      expect(dialog?.style.opacity).toBe('0')
+    })
+    expect(screen.queryByText(confirmationText)).not.toBeNull()
+    await waitFor(() => expect(screen.queryByText(confirmationText)).toBeNull())
+  })
+
   it('失敗を表示して再試行でき、別の顧客を選ぶと古いエラーを消す', async () => {
     let attempt = 0
     const api = setupCustomerApi(seedCustomers.slice(0, 3), () => {

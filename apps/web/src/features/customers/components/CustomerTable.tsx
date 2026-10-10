@@ -104,6 +104,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 
 export function CustomerTable({ customers }: CustomerTableProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [displayedCustomerName, setDisplayedCustomerName] = useState<string | null>(null)
   const deleteCustomer = useDeleteCustomer()
   const deleteInFlight = useRef(false)
   const search = useSearch({ from: '/_authenticated/customers' })
@@ -124,6 +125,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         }
 
         resetDelete()
+        setDisplayedCustomerName(customer.name)
         setSelectedCustomer(customer)
       },
     }),
@@ -252,13 +254,18 @@ export function CustomerTable({ customers }: CustomerTableProps) {
       <Modal
         opened={selectedCustomer !== null}
         onClose={handleCloseDelete}
+        onExitTransitionEnd={() => {
+          if (selectedCustomer === null) {
+            setDisplayedCustomerName(null)
+          }
+        }}
         title="顧客を削除しますか？"
         closeOnClickOutside={!deleteCustomer.isPending}
         closeOnEscape={!deleteCustomer.isPending}
         withCloseButton={!deleteCustomer.isPending}
       >
         <Stack>
-          <Text>{selectedCustomer?.name} を削除します。この操作は取り消せません。</Text>
+          <Text>{displayedCustomerName} を削除します。この操作は取り消せません。</Text>
           {deleteCustomer.isError ? (
             <Alert color="red" role="alert">
               顧客を削除できませんでした。もう一度お試しください。
