@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Alert, Button, Group, Modal, Stack, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconEye, IconTrash } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
-import { useMemo } from 'react'
+import { createContext, useContext, useMemo, useRef, useState } from 'react'
 
 import { useDeleteCustomer } from '@/features/customers/api/mutations'
 import { CustomerStatusBadge } from '@/features/customers/components/CustomerStatusBadge'
@@ -27,8 +27,19 @@ type CustomerActionsProps = {
   customer: Customer
 }
 
+type CustomerActionsContextValue = {
+  isDeleting: boolean
+  onDelete: (customer: Customer) => void
+}
+
+const CustomerActionsContext = createContext<CustomerActionsContextValue | null>(null)
+
 function CustomerActions({ customer }: CustomerActionsProps) {
-  const deleteCustomer = useDeleteCustomer()
+  const actionContext = useContext(CustomerActionsContext)
+
+  if (actionContext === null) {
+    return null
+  }
 
   return (
     <Group gap="xs" justify="flex-end">
@@ -44,8 +55,8 @@ function CustomerActions({ customer }: CustomerActionsProps) {
           color="red"
           variant="subtle"
           aria-label={`Delete ${customer.name}`}
-          loading={deleteCustomer.isPending}
-          onClick={() => deleteCustomer.mutate(customer.id)}
+          disabled={actionContext.isDeleting}
+          onClick={() => actionContext.onDelete(customer)}
         >
           <IconTrash size={16} />
         </ActionIcon>
@@ -92,6 +103,10 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 }
 
 export function CustomerTable({ customers }: CustomerTableProps) {
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [displayedCustomerName, setDisplayedCustomerName] = useState<string | null>(null)
+  const deleteCustomer = useDeleteCustomer()
+  const deleteInFlight = useRef(false)
   const search = useSearch({ from: '/_authenticated/customers' })
   const navigate = useNavigate({ from: '/customers' })
   const sorting = useMemo(
@@ -99,6 +114,48 @@ export function CustomerTable({ customers }: CustomerTableProps) {
     [search.sort, search.order],
   )
   const globalFilter = search.q ?? ''
+  const isDeletePending = deleteCustomer.isPending
+  const resetDelete = deleteCustomer.reset
+  const customerActionsContext = useMemo(
+    () => ({
+      isDeleting: isDeletePending,
+      onDelete: (customer: Customer) => {
+        if (isDeletePending || deleteInFlight.current) {
+          return
+        }
+
+        resetDelete()
+        setDisplayedCustomerName(customer.name)
+        setSelectedCustomer(customer)
+      },
+    }),
+    [isDeletePending, resetDelete],
+  )
+
+  const handleCloseDelete = () => {
+    if (deleteCustomer.isPending || deleteInFlight.current) {
+      return
+    }
+
+    setSelectedCustomer(null)
+    deleteCustomer.reset()
+  }
+
+  const handleConfirmDelete = async () => {
+    if (selectedCustomer === null || deleteCustomer.isPending || deleteInFlight.current) {
+      return
+    }
+
+    deleteInFlight.current = true
+    try {
+      await deleteCustomer.mutateAsync(selectedCustomer.id)
+      setSelectedCustomer(null)
+    } catch {
+      return
+    } finally {
+      deleteInFlight.current = false
+    }
+  }
 
   const table = useReactTable({
     data: customers,
@@ -140,58 +197,95 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         value={globalFilter}
         onChange={(event) => table.setGlobalFilter(event.currentTarget.value)}
       />
-      <Table.ScrollContainer minWidth={900}>
-        <Table striped highlightOnHover withTableBorder mt="md">
-          <Table.Thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <Table.Tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <Table.Th key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <Text
-                        component="button"
-                        type="button"
-                        fw={600}
-                        onClick={header.column.getToggleSortingHandler()}
-                        style={{
-                          cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                          background: 'transparent',
-                          border: 0,
-                          padding: 0,
-                        }}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? null}
-                      </Text>
-                    )}
-                  </Table.Th>
-                ))}
-              </Table.Tr>
-            ))}
-          </Table.Thead>
-          <Table.Tbody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <Table.Tr key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <Table.Td key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </Table.Td>
+      <CustomerActionsContext.Provider value={customerActionsContext}>
+        <Table.ScrollContainer minWidth={900}>
+          <Table striped highlightOnHover withTableBorder mt="md">
+            <Table.Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Table.Tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <Table.Th key={header.id}>
+                      {header.isPlaceholder ? null : (
+                        <Text
+                          component="button"
+                          type="button"
+                          fw={600}
+                          onClick={header.column.getToggleSortingHandler()}
+                          style={{
+                            cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                            background: 'transparent',
+                            border: 0,
+                            padding: 0,
+                          }}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? null}
+                        </Text>
+                      )}
+                    </Table.Th>
                   ))}
                 </Table.Tr>
-              ))
-            ) : (
-              <Table.Tr>
-                <Table.Td colSpan={columns.length}>
-                  <Text c="dimmed" ta="center">
-                    No customers found.
-                  </Text>
-                </Table.Td>
-              </Table.Tr>
-            )}
-          </Table.Tbody>
-        </Table>
-      </Table.ScrollContainer>
+              ))}
+            </Table.Thead>
+            <Table.Tbody>
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <Table.Tr key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <Table.Td key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </Table.Td>
+                    ))}
+                  </Table.Tr>
+                ))
+              ) : (
+                <Table.Tr>
+                  <Table.Td colSpan={columns.length}>
+                    <Text c="dimmed" ta="center">
+                      No customers found.
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              )}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      </CustomerActionsContext.Provider>
+      <Modal
+        opened={selectedCustomer !== null}
+        onClose={handleCloseDelete}
+        onExitTransitionEnd={() => {
+          if (selectedCustomer === null) {
+            setDisplayedCustomerName(null)
+          }
+        }}
+        title="顧客を削除しますか？"
+        closeOnClickOutside={!deleteCustomer.isPending}
+        closeOnEscape={!deleteCustomer.isPending}
+        withCloseButton={!deleteCustomer.isPending}
+      >
+        <Stack>
+          <Text>{displayedCustomerName} を削除します。この操作は取り消せません。</Text>
+          {deleteCustomer.isError ? (
+            <Alert color="red" role="alert">
+              顧客を削除できませんでした。もう一度お試しください。
+            </Alert>
+          ) : null}
+          <Group justify="flex-end">
+            <Button variant="default" disabled={deleteCustomer.isPending} onClick={handleCloseDelete}>
+              キャンセル
+            </Button>
+            <Button
+              color="red"
+              disabled={deleteCustomer.isPending}
+              loading={deleteCustomer.isPending}
+              onClick={() => void handleConfirmDelete()}
+            >
+              削除する
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </>
   )
 }
