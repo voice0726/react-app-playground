@@ -1,3 +1,5 @@
+import 'dayjs/locale/ja'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
@@ -5,6 +7,7 @@ import { Controller, useForm } from 'react-hook-form'
 
 import { toInvoiceDateString } from '@/features/invoices/date'
 import { invoiceSchema, type InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
+import { invoiceStatusLabels } from '@/features/invoices/types'
 
 type InvoiceFormProps = {
   initialValues?: InvoiceFormValues
@@ -21,12 +24,7 @@ const defaultValues: InvoiceFormValues = {
   status: 'draft',
 }
 
-const statusOptions = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'sent', label: 'Sent' },
-  { value: 'paid', label: 'Paid' },
-  { value: 'cancelled', label: 'Cancelled' },
-] as const
+const statusOptions = Object.entries(invoiceStatusLabels).map(([value, label]) => ({ value, label }))
 
 function toDateInputValue(value: string): string | null {
   return value.length > 0 ? value : null
@@ -46,14 +44,14 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
-        <TextInput label="Invoice number" error={errors.number?.message} {...register('number')} />
-        <TextInput label="Customer ID" error={errors.customerId?.message} {...register('customerId')} />
+        <TextInput label="請求書番号" error={errors.number?.message} {...register('number')} />
+        <TextInput label="顧客 ID" error={errors.customerId?.message} {...register('customerId')} />
         <Controller
           control={control}
           name="amount"
           render={({ field }) => (
             <NumberInput
-              label="Amount"
+              label="金額"
               min={0}
               thousandSeparator=","
               prefix="¥"
@@ -71,9 +69,10 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
           name="issueDate"
           render={({ field }) => (
             <DateInput
-              label="Issue date"
+              label="発行日"
+              locale="ja"
               value={toDateInputValue(field.value)}
-              valueFormat="YYYY-MM-DD"
+              valueFormat="YYYY/MM/DD"
               clearable
               allowDeselect
               error={errors.issueDate?.message}
@@ -87,9 +86,10 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
           name="dueDate"
           render={({ field }) => (
             <DateInput
-              label="Due date"
+              label="支払期日"
+              locale="ja"
               value={toDateInputValue(field.value)}
-              valueFormat="YYYY-MM-DD"
+              valueFormat="YYYY/MM/DD"
               clearable
               allowDeselect
               error={errors.dueDate?.message}
@@ -103,7 +103,7 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
           name="status"
           render={({ field }) => (
             <Select
-              label="Status"
+              label="ステータス"
               data={statusOptions}
               error={errors.status?.message}
               value={field.value}
@@ -122,7 +122,7 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
         />
         <Group justify="flex-end">
           <Button type="submit" loading={isSubmitting}>
-            Save
+            保存
           </Button>
         </Group>
       </Stack>

@@ -21,9 +21,9 @@ import { useKanbanStore } from '@/features/tasks/stores/kanban.store'
 import { isTaskStatus, taskStatuses, type Task, type TaskStatus } from '@/features/tasks/types'
 
 const columnLabels: Record<TaskStatus, string> = {
-  TODO: 'Todo',
-  IN_PROGRESS: 'In progress',
-  DONE: 'Done',
+  TODO: '未着手',
+  IN_PROGRESS: '進行中',
+  DONE: '完了',
 }
 
 function groupTasks(tasks: Task[]): Record<TaskStatus, Task[]> {
@@ -157,7 +157,7 @@ export function KanbanBoard() {
       <Modal
         opened={newTaskStatus !== null}
         onClose={handleCloseCreate}
-        title={`New ${newTaskStatus === null ? 'Task' : columnLabels[newTaskStatus]} Task`}
+        title={newTaskStatus === null ? '新規タスク' : `新規タスク(${columnLabels[newTaskStatus]})`}
       >
         <TaskForm
           initialValues={taskInitialValues}

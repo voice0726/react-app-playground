@@ -38,34 +38,34 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 
 const columns = [
   columnHelper.accessor('title', {
-    header: 'Title',
+    header: 'タイトル',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('customerId', {
-    header: 'Customer',
+    header: '顧客',
     cell: (info) => info.getValue(),
   }),
   columnHelper.accessor('amount', {
-    header: 'Amount',
+    header: '金額',
     cell: (info) => currencyFormatter.format(info.getValue()),
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
+    header: 'ステータス',
     cell: (info) => <DealStatusBadge status={info.getValue()} />,
   }),
   columnHelper.accessor('createdAt', {
-    header: 'Created',
-    cell: (info) => format(new Date(info.getValue()), 'MMM d, yyyy'),
+    header: '作成日',
+    cell: (info) => format(new Date(info.getValue()), 'yyyy/MM/dd'),
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
+    header: '操作',
     enableSorting: false,
     cell: ({ row }) => (
       <Group gap="xs" justify="flex-end">
-        <Tooltip label="View details">
+        <Tooltip label="詳細を見る">
           <Link to="/deals/$dealId" params={{ dealId: row.original.id }}>
-            <ActionIcon variant="subtle" aria-label={`View ${row.original.title}`}>
+            <ActionIcon variant="subtle" aria-label={`${row.original.title} の詳細を見る`}>
               <IconEye size={16} />
             </ActionIcon>
           </Link>
@@ -119,8 +119,8 @@ export function DealTable({ deals }: DealTableProps) {
   return (
     <>
       <TextInput
-        label="Search"
-        placeholder="Search deals"
+        label="検索"
+        placeholder="案件を検索"
         value={globalFilter}
         onChange={(event) => table.setGlobalFilter(event.currentTarget.value)}
       />
@@ -168,7 +168,7 @@ export function DealTable({ deals }: DealTableProps) {
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
                   <Text c="dimmed" ta="center">
-                    No deals found.
+                    案件が見つかりません。
                   </Text>
                 </Table.Td>
               </Table.Tr>

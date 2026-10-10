@@ -25,8 +25,8 @@ async function restoreSession(): Promise<void> {
 
 function BootstrapGate() {
   const status = useSessionStore((state) => state.status)
-  if (status === 'loading') return <div>Loading…</div>
-  if (status === 'unavailable') return <div>Authentication service unavailable. <button onClick={() => window.location.reload()}>Retry</button></div>
+  if (status === 'loading') return <div>読み込み中…</div>
+  if (status === 'unavailable') return <div>認証サービスに接続できません。<button onClick={() => window.location.reload()}>再試行</button></div>
   return <RouterProvider router={router} />
 }
 

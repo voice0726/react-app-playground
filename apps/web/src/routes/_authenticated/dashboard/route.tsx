@@ -21,18 +21,18 @@ function DashboardRoute() {
   const tasksQuery = useTasks()
 
   const summaryItems: SummaryItem[] = [
-    { label: 'Customers', value: customersQuery.data?.length ?? 0 },
-    { label: 'Deals', value: dealsQuery.data?.length ?? 0 },
-    { label: 'Invoices', value: invoicesQuery.data?.length ?? 0 },
-    { label: 'Tasks', value: tasksQuery.data?.length ?? 0 },
+    { label: '顧客', value: customersQuery.data?.length ?? 0 },
+    { label: '案件', value: dealsQuery.data?.length ?? 0 },
+    { label: '請求書', value: invoicesQuery.data?.length ?? 0 },
+    { label: 'タスク', value: tasksQuery.data?.length ?? 0 },
   ]
 
   return (
     <Stack gap="lg">
       <Group justify="space-between">
         <Stack gap={2}>
-          <Title order={2}>Dashboard</Title>
-          <Text c="dimmed">A quick snapshot of the current demo data.</Text>
+          <Title order={2}>ダッシュボード</Title>
+          <Text c="dimmed">現在のデモデータの概要です。</Text>
         </Stack>
       </Group>
 

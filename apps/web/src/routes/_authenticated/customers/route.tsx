@@ -37,7 +37,7 @@ function CustomersRoute() {
       await createCustomer.mutateAsync(values)
       if (session === modalSession.current) close()
     } catch {
-      if (session === modalSession.current) setSubmitError('Failed to save customer. Please try again.')
+      if (session === modalSession.current) setSubmitError('顧客を保存できませんでした。もう一度お試しください。')
     }
   }
 
@@ -59,19 +59,19 @@ function CustomersRoute() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={2}>Customers</Title>
-        <Button onClick={open}>New Customer</Button>
+        <Title order={2}>顧客</Title>
+        <Button onClick={open}>新規顧客</Button>
       </Group>
 
       {customersQuery.isLoading ? <Loader /> : null}
       {customersQuery.isError ? (
         <Alert color="red" variant="light">
-          Failed to load customers.
+          顧客を読み込めませんでした。
         </Alert>
       ) : null}
       {customersQuery.data !== undefined ? <CustomerTable customers={customersQuery.data} /> : null}
 
-      <Modal opened={opened} onClose={close} title="New Customer">
+      <Modal opened={opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />
       </Modal>
     </Stack>

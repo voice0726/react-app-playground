@@ -19,9 +19,9 @@ const defaultValues: TaskFormValues = {
 }
 
 const statusOptions = [
-  { value: 'TODO', label: 'Todo' },
-  { value: 'IN_PROGRESS', label: 'In progress' },
-  { value: 'DONE', label: 'Done' },
+  { value: 'TODO', label: '未着手' },
+  { value: 'IN_PROGRESS', label: '進行中' },
+  { value: 'DONE', label: '完了' },
 ] as const
 
 export function TaskForm({ initialValues, isSubmitting = false, error, onSubmit }: TaskFormProps) {
@@ -44,14 +44,14 @@ export function TaskForm({ initialValues, isSubmitting = false, error, onSubmit 
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
         {error === undefined ? null : <Alert color="red" role="alert">{error}</Alert>}
-        <TextInput label="Title" error={errors.title?.message} {...register('title')} />
-        <Textarea label="Description" minRows={3} error={errors.description?.message} {...register('description')} />
+        <TextInput label="タイトル" error={errors.title?.message} {...register('title')} />
+        <Textarea label="説明" minRows={3} error={errors.description?.message} {...register('description')} />
         <Controller
           control={control}
           name="status"
           render={({ field }) => (
             <Select
-              label="Status"
+              label="ステータス"
               data={statusOptions}
               error={errors.status?.message}
               value={field.value}
@@ -65,7 +65,7 @@ export function TaskForm({ initialValues, isSubmitting = false, error, onSubmit 
         />
         <Group justify="flex-end">
           <Button type="submit" loading={isSubmitting}>
-            Save
+            保存
           </Button>
         </Group>
       </Stack>

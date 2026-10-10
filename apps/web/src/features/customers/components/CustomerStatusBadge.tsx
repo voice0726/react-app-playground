@@ -9,7 +9,7 @@ type CustomerStatusBadgeProps = {
 export function CustomerStatusBadge({ status }: CustomerStatusBadgeProps) {
   return (
     <Badge color={status === 'active' ? 'green' : 'gray'} variant="light">
-      {status}
+      {status === 'active' ? '有効' : '無効'}
     </Badge>
   )
 }

@@ -23,13 +23,13 @@ function TasksRoute() {
   return (
     <Stack gap="lg">
       <Stack gap={2}>
-        <Title order={2}>Tasks</Title>
+        <Title order={2}>タスク</Title>
       </Stack>
 
       {tasksQuery.isLoading ? <Loader /> : null}
       {tasksQuery.isError ? (
         <Alert color="red" variant="light">
-          Failed to load tasks.
+          タスクを読み込めませんでした。
         </Alert>
       ) : null}
       {tasksQuery.data !== undefined ? <KanbanBoard /> : null}

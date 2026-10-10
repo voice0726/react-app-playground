@@ -22,9 +22,9 @@ const defaultValues: DealFormValues = {
 }
 
 const statusOptions = [
-  { value: 'open', label: 'Open' },
-  { value: 'won', label: 'Won' },
-  { value: 'lost', label: 'Lost' },
+  { value: 'open', label: '商談中' },
+  { value: 'won', label: '受注' },
+  { value: 'lost', label: '失注' },
 ] as const
 
 const dealCustomerKeys = {
@@ -61,16 +61,16 @@ export function DealForm({ initialValues, isSubmitting = false, onSubmit, submit
         {submitError ? <Alert color="red" role="alert">{submitError}</Alert> : null}
         {customersQuery.isError ? (
           <Alert color="red" variant="light">
-            Failed to load customers.
+            顧客を読み込めませんでした。
           </Alert>
         ) : null}
-        <TextInput label="Title" error={errors.title?.message} {...register('title')} />
+        <TextInput label="タイトル" error={errors.title?.message} {...register('title')} />
         <Controller
           control={control}
           name="customerId"
           render={({ field }) => (
             <Select
-              label="Customer"
+              label="顧客"
               data={customerOptions}
               disabled={customersQuery.isLoading}
               error={errors.customerId?.message}
@@ -84,7 +84,7 @@ export function DealForm({ initialValues, isSubmitting = false, onSubmit, submit
           name="amount"
           render={({ field }) => (
             <NumberInput
-              label="Amount"
+              label="金額"
               min={0}
               thousandSeparator=","
               prefix="¥"
@@ -102,7 +102,7 @@ export function DealForm({ initialValues, isSubmitting = false, onSubmit, submit
           name="status"
           render={({ field }) => (
             <Select
-              label="Status"
+              label="ステータス"
               data={statusOptions}
               error={errors.status?.message}
               value={field.value}
@@ -116,7 +116,7 @@ export function DealForm({ initialValues, isSubmitting = false, onSubmit, submit
         />
         <Group justify="flex-end">
           <Button type="submit" loading={isSubmitting}>
-            Save
+            保存
           </Button>
         </Group>
       </Stack>

@@ -1,7 +1,7 @@
 import { Badge } from '@mantine/core'
 import { match } from 'ts-pattern'
 
-import type { InvoiceStatus } from '@/features/invoices/types'
+import { invoiceStatusLabels, type InvoiceStatus } from '@/features/invoices/types'
 
 type InvoiceStatusBadgeProps = {
   status: InvoiceStatus
@@ -17,5 +17,5 @@ function statusColor(status: InvoiceStatus): string {
 }
 
 export function InvoiceStatusBadge({ status }: InvoiceStatusBadgeProps) {
-  return <Badge color={statusColor(status)}>{status}</Badge>
+  return <Badge color={statusColor(status)}>{invoiceStatusLabels[status]}</Badge>
 }

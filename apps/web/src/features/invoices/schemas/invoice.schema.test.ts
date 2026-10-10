@@ -25,7 +25,7 @@ describe('invoiceSchema', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.issues[0]?.message).toBe('Invoice number is required')
+    expect(result.error?.issues[0]?.message).toBe('請求書番号を入力してください')
   })
 
   it('rejects a negative amount', () => {
@@ -35,6 +35,6 @@ describe('invoiceSchema', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.issues[0]?.message).toBe('Amount must be positive')
+    expect(result.error?.issues[0]?.message).toBe('金額は 0 より大きい値を入力してください')
   })
 })

@@ -57,7 +57,7 @@ function InvoiceDetailRoute() {
   if (invoiceQuery.isError || invoice === undefined) {
     return (
       <Alert color="red" variant="light">
-        Failed to load invoice.
+        請求書を読み込めませんでした。
       </Alert>
     )
   }
@@ -67,7 +67,7 @@ function InvoiceDetailRoute() {
       <Group justify="space-between">
         <Stack gap={4}>
           <Anchor component={Link} to="/invoices">
-            Back to Invoices
+            請求書一覧に戻る
           </Anchor>
           <Title order={2}>{invoice.number}</Title>
         </Stack>
@@ -80,7 +80,7 @@ function InvoiceDetailRoute() {
               open()
             }}
           >
-            Edit
+            編集
           </Button>
         </Group>
       </Group>
@@ -88,32 +88,32 @@ function InvoiceDetailRoute() {
       <Card withBorder radius="sm" padding="lg">
         <Stack>
           <Group justify="space-between">
-            <Text fw={600}>Customer ID</Text>
+            <Text fw={600}>顧客 ID</Text>
             <Text>{invoice.customerId}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Amount</Text>
+            <Text fw={600}>金額</Text>
             <Text>{currencyFormatter.format(invoice.amount)}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Issue date</Text>
-            <Text>{formatInvoiceDate(invoice.issueDate, 'MMM d, yyyy')}</Text>
+            <Text fw={600}>発行日</Text>
+            <Text>{formatInvoiceDate(invoice.issueDate, 'yyyy/MM/dd')}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Due date</Text>
-            <Text>{formatInvoiceDate(invoice.dueDate, 'MMM d, yyyy')}</Text>
+            <Text fw={600}>支払期日</Text>
+            <Text>{formatInvoiceDate(invoice.dueDate, 'yyyy/MM/dd')}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Status</Text>
+            <Text fw={600}>ステータス</Text>
             <InvoiceStatusBadge status={invoice.status} />
           </Group>
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={handleClose} title="Edit Invoice">
+      <Modal opened={opened} onClose={handleClose} title="請求書を編集">
         {updateError ? (
           <Alert color="red" variant="light" mb="md">
-            Failed to update invoice. Please try again.
+            請求書を更新できませんでした。もう一度お試しください。
           </Alert>
         ) : null}
         <InvoiceForm

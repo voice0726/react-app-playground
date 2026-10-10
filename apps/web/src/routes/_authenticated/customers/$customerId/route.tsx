@@ -29,7 +29,7 @@ function CustomerDetailRoute() {
       await updateCustomer.mutateAsync({ id: customerId, values })
       if (session === modalSession.current) close()
     } catch {
-      if (session === modalSession.current) setSubmitError('Failed to save customer. Please try again.')
+      if (session === modalSession.current) setSubmitError('顧客を保存できませんでした。もう一度お試しください。')
     }
   }
 
@@ -51,7 +51,7 @@ function CustomerDetailRoute() {
   if (customerQuery.isError || customer === undefined) {
     return (
       <Alert color="red" variant="light">
-        Failed to load customer.
+        顧客を読み込めませんでした。
       </Alert>
     )
   }
@@ -61,35 +61,35 @@ function CustomerDetailRoute() {
       <Group justify="space-between">
         <Stack gap={4}>
           <Anchor component={Link} to="/customers">
-            Back to Customers
+            顧客一覧に戻る
           </Anchor>
           <Title order={2}>{customer.name}</Title>
         </Stack>
-        <Button onClick={open}>Edit</Button>
+        <Button onClick={open}>編集</Button>
       </Group>
 
       <Card withBorder radius="sm" padding="lg">
         <Stack>
           <Group justify="space-between">
-            <Text fw={600}>Email</Text>
+            <Text fw={600}>メールアドレス</Text>
             <Text>{customer.email}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Phone</Text>
+            <Text fw={600}>電話番号</Text>
             <Text>{customer.phone}</Text>
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Status</Text>
+            <Text fw={600}>ステータス</Text>
             <CustomerStatusBadge status={customer.status} />
           </Group>
           <Group justify="space-between">
-            <Text fw={600}>Created</Text>
-            <Text>{format(new Date(customer.createdAt), 'MMM d, yyyy')}</Text>
+            <Text fw={600}>作成日</Text>
+            <Text>{format(new Date(customer.createdAt), 'yyyy/MM/dd')}</Text>
           </Group>
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={close} title="Edit Customer">
+      <Modal opened={opened} onClose={close} title="顧客を編集">
         <CustomerForm
           initialValues={{
             name: customer.name,

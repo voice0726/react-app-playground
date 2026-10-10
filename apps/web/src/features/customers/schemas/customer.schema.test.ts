@@ -23,7 +23,7 @@ describe('customerSchema', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.issues[0]?.message).toBe('Name is required')
+    expect(result.error?.issues[0]?.message).toBe('名前を入力してください')
   })
 
   it('rejects an invalid email', () => {
@@ -33,7 +33,7 @@ describe('customerSchema', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.issues[0]?.message).toBe('Enter a valid email')
+    expect(result.error?.issues[0]?.message).toBe('有効なメールアドレスを入力してください')
   })
 
   it('rejects an invalid status', () => {

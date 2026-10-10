@@ -20,6 +20,21 @@ afterEach(() => {
 })
 
 describe('InvoiceForm', () => {
+  it.each(['発行日', '支払期日'])('%sのカレンダーを日本語で表示する', async (label) => {
+    render(
+      <MantineProvider>
+        <InvoiceForm onSubmit={vi.fn()} />
+      </MantineProvider>,
+    )
+
+    fireEvent.click(screen.getByLabelText(label))
+
+    expect(await screen.findByRole('button', { name: /^\d+月 \d{4}$/ })).toBeTruthy()
+    expect(screen.getAllByRole('columnheader', { hidden: true }).map((element) => element.textContent)).toEqual([
+      '月', '火', '水', '木', '金', '土', '日',
+    ])
+  })
+
   it.each(['America/Los_Angeles', 'Asia/Tokyo'])(
     'submits the selected calendar day unchanged in %s',
     async (timezone) => {
@@ -32,12 +47,14 @@ describe('InvoiceForm', () => {
         </MantineProvider>,
       )
 
-      fireEvent.change(screen.getByLabelText('Invoice number'), { target: { value: 'INV-1' } })
-      fireEvent.change(screen.getByLabelText('Customer ID'), { target: { value: 'customer-1' } })
-      fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '100' } })
-      fireEvent.change(screen.getByLabelText('Issue date'), { target: { value: '2026-10-10' } })
-      fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '2026-10-20' } })
-      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+      fireEvent.change(screen.getByLabelText('請求書番号'), { target: { value: 'INV-1' } })
+      fireEvent.change(screen.getByLabelText('顧客 ID'), { target: { value: 'customer-1' } })
+      fireEvent.change(screen.getByLabelText('金額'), { target: { value: '100' } })
+      fireEvent.change(screen.getByLabelText('発行日'), { target: { value: '2026/10/10' } })
+      fireEvent.change(screen.getByLabelText('支払期日'), { target: { value: '2026/10/20' } })
+      expect((screen.getByLabelText('発行日') as HTMLInputElement).value).toBe('2026/10/10')
+      expect((screen.getByLabelText('支払期日') as HTMLInputElement).value).toBe('2026/10/20')
+      fireEvent.click(screen.getByRole('button', { name: '保存' }))
 
       await waitFor(() => expect(onSubmit).toHaveBeenCalled())
       expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
@@ -48,8 +65,8 @@ describe('InvoiceForm', () => {
   )
 
   it.each([
-    ['Issue date', 'Issue date is required'],
-    ['Due date', 'Due date is required'],
+    ['発行日', '発行日を入力してください'],
+    ['支払期日', '支払期日を入力してください'],
   ] as const)('treats an emptied %s input as missing', async (label, errorMessage) => {
     const onSubmit = vi.fn<(values: InvoiceFormValues) => void>()
 
@@ -70,7 +87,7 @@ describe('InvoiceForm', () => {
     )
 
     fireEvent.change(screen.getByLabelText(label), { target: { value: '' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
 
     expect(await screen.findByText(errorMessage)).toBeTruthy()
     expect(onSubmit).not.toHaveBeenCalled()
