@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
@@ -8,6 +8,7 @@ import { taskSchema, type TaskFormValues } from '@/features/tasks/schemas/task.s
 type TaskFormProps = {
   initialValues?: TaskFormValues
   isSubmitting?: boolean
+  error?: string
   onSubmit: (values: TaskFormValues) => void | Promise<void>
 }
 
@@ -23,7 +24,7 @@ const statusOptions = [
   { value: 'DONE', label: 'Done' },
 ] as const
 
-export function TaskForm({ initialValues, isSubmitting = false, onSubmit }: TaskFormProps) {
+export function TaskForm({ initialValues, isSubmitting = false, error, onSubmit }: TaskFormProps) {
   const {
     control,
     formState: { errors },
@@ -42,6 +43,7 @@ export function TaskForm({ initialValues, isSubmitting = false, onSubmit }: Task
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
+        {error === undefined ? null : <Alert color="red" role="alert">{error}</Alert>}
         <TextInput label="Title" error={errors.title?.message} {...register('title')} />
         <Textarea label="Description" minRows={3} error={errors.description?.message} {...register('description')} />
         <Controller

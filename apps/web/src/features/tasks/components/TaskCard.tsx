@@ -1,20 +1,28 @@
-import { ActionIcon, Card, Group, Stack, Text } from '@mantine/core'
+import { ActionIcon, Card, Group, NativeSelect, Stack, Text } from '@mantine/core'
 import { IconGripVertical } from '@tabler/icons-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { type CSSProperties } from 'react'
 
-import type { Task } from '@/features/tasks/types'
+import type { Task, TaskStatus } from '@/features/tasks/types'
 
 type TaskCardProps = {
   task: Task
   isDragOverlay?: boolean
+  isStatusChangePending?: boolean
+  onStatusChange?: (taskId: string, status: TaskStatus) => void
 }
 
-export function TaskCard({ task, isDragOverlay = false }: TaskCardProps) {
+const statusOptions = [
+  { value: 'TODO', label: 'Todo' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'DONE', label: 'Done' },
+] satisfies { value: TaskStatus; label: string }[]
+
+export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = false, onStatusChange }: TaskCardProps) {
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
-    disabled: isDragOverlay,
+    disabled: isDragOverlay || isStatusChangePending,
   })
   const style: CSSProperties = {
     opacity: isDragging ? 0.45 : 1,
@@ -47,6 +55,21 @@ export function TaskCard({ task, isDragOverlay = false }: TaskCardProps) {
           <Text size="sm" c="dimmed">
             {task.description}
           </Text>
+          {!isDragOverlay && onStatusChange !== undefined ? (
+            <NativeSelect
+              aria-label={`Move ${task.title}`}
+              size="xs"
+              data={statusOptions}
+              value={task.status}
+              disabled={isStatusChangePending}
+              onChange={(value) => {
+                const status = value.currentTarget.value
+                if (status === 'TODO' || status === 'IN_PROGRESS' || status === 'DONE') {
+                  onStatusChange(task.id, status)
+                }
+              }}
+            />
+          ) : null}
         </Stack>
       </Group>
     </Card>

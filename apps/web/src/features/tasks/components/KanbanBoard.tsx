@@ -10,7 +10,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { useCreateTask, useUpdateTaskStatus } from '@/features/tasks/api/mutations'
 import { KanbanColumn } from '@/features/tasks/components/KanbanColumn'
@@ -49,10 +49,10 @@ export function KanbanBoard() {
   const activeTaskId = useKanbanStore((state) => state.activeTaskId)
   const setActiveTaskId = useKanbanStore((state) => state.setActiveTaskId)
   const moveTask = useKanbanStore((state) => state.moveTask)
-  const setTasks = useKanbanStore((state) => state.setTasks)
   const createTask = useCreateTask()
   const updateTaskStatus = useUpdateTaskStatus()
   const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus | null>(null)
+  const statusChangeLock = useRef(false)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -61,43 +61,59 @@ export function KanbanBoard() {
     }),
   )
   const tasksByStatus = useMemo(() => groupTasks(tasks), [tasks])
+  const taskInitialValues = useMemo<TaskFormValues>(
+    () => ({ title: '', description: '', status: newTaskStatus ?? 'TODO' }),
+    [newTaskStatus],
+  )
   const activeTask = activeTaskId === null ? undefined : tasks.find((task) => task.id === activeTaskId)
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveTaskId(String(event.active.id))
   }
 
+  const handleStatusChange = async (taskId: string, nextStatus: TaskStatus) => {
+    const task = useKanbanStore.getState().tasks.find((item) => item.id === taskId)
+
+    if (statusChangeLock.current || task === undefined || task.status === nextStatus) {
+      return
+    }
+
+    statusChangeLock.current = true
+    moveTask(taskId, nextStatus)
+    try {
+      await updateTaskStatus.mutateAsync({ id: taskId, status: nextStatus })
+    } catch {
+      moveTask(taskId, task.status)
+    } finally {
+      statusChangeLock.current = false
+    }
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     const taskId = String(event.active.id)
-    const task = tasks.find((item) => item.id === taskId)
     const nextStatus = event.over === null ? null : getTaskStatus(tasks, event.over.id)
 
     setActiveTaskId(null)
 
-    if (task === undefined || nextStatus === null || task.status === nextStatus) {
-      return
+    if (nextStatus !== null) {
+      void handleStatusChange(taskId, nextStatus)
     }
-
-    const previousTasks = tasks
-    moveTask(taskId, nextStatus)
-    updateTaskStatus.mutate(
-      { id: taskId, status: nextStatus },
-      {
-        onError: () => setTasks(previousTasks),
-      },
-    )
   }
 
   const handleCreate = async (values: TaskFormValues) => {
-    await createTask.mutateAsync(values)
-    setNewTaskStatus(null)
+    try {
+      await createTask.mutateAsync(values)
+      setNewTaskStatus(null)
+    } catch {
+      return
+    }
   }
 
   return (
     <Stack gap="md">
       {updateTaskStatus.isError ? (
-        <Alert color="red" variant="light">
-          Failed to update task status.
+        <Alert color="red" variant="light" role="alert">
+          タスクの状態を保存できませんでした。元の状態に戻しました。
         </Alert>
       ) : null}
       <DndContext
@@ -113,6 +129,8 @@ export function KanbanBoard() {
               title={columnLabels[status]}
               status={status}
               tasks={tasksByStatus[status]}
+              isStatusChangePending={updateTaskStatus.isPending}
+              onStatusChange={(taskId, nextStatus) => void handleStatusChange(taskId, nextStatus)}
               onAddTask={setNewTaskStatus}
             />
           ))}
@@ -126,12 +144,9 @@ export function KanbanBoard() {
         title={`New ${newTaskStatus === null ? 'Task' : columnLabels[newTaskStatus]} Task`}
       >
         <TaskForm
-          initialValues={{
-            title: '',
-            description: '',
-            status: newTaskStatus ?? 'TODO',
-          }}
+          initialValues={taskInitialValues}
           isSubmitting={createTask.isPending}
+          error={createTask.isError ? 'タスクを保存できませんでした。入力内容を確認して再試行してください。' : undefined}
           onSubmit={handleCreate}
         />
       </Modal>
