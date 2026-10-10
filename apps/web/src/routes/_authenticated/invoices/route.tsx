@@ -1,19 +1,13 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { z } from 'zod'
-
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useCreateInvoice } from '@/features/invoices/api/mutations'
 import { useInvoices } from '@/features/invoices/api/queries'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceTable } from '@/features/invoices/components/InvoiceTable'
+import { invoiceSearchSchema } from '@/features/invoices/schemas/search'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
-
-const invoiceSearchSchema = z.object({
-  sort: z.string().optional(),
-  order: z.enum(['asc', 'desc']).optional(),
-  q: z.string().optional(),
-})
 
 export const Route = createFileRoute('/_authenticated/invoices')({
   validateSearch: invoiceSearchSchema,
@@ -23,12 +17,45 @@ export const Route = createFileRoute('/_authenticated/invoices')({
 function InvoicesRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [opened, { close, open }] = useDisclosure()
+  const [createError, setCreateError] = useState(false)
+  const [pendingCreateGeneration, setPendingCreateGeneration] = useState<number | null>(null)
+  const createFormGeneration = useRef(0)
   const invoicesQuery = useInvoices()
   const createInvoice = useCreateInvoice()
 
+  useLayoutEffect(() => {
+    if (pathname !== '/invoices') {
+      createFormGeneration.current += 1
+      setCreateError(false)
+      setPendingCreateGeneration(null)
+      close()
+    }
+  }, [close, pathname])
+
   const handleCreate = async (values: InvoiceFormValues) => {
-    await createInvoice.mutateAsync(values)
+    const generation = createFormGeneration.current
+    setCreateError(false)
+    setPendingCreateGeneration(generation)
+    try {
+      await createInvoice.mutateAsync(values)
+      if (createFormGeneration.current === generation) {
+        close()
+      }
+    } catch {
+      if (createFormGeneration.current === generation) {
+        setCreateError(true)
+      }
+    } finally {
+      if (createFormGeneration.current === generation) {
+        setPendingCreateGeneration(null)
+      }
+    }
+  }
+
+  const handleClose = () => {
+    createFormGeneration.current += 1
     close()
+    setPendingCreateGeneration(null)
   }
 
   if (pathname !== '/invoices') {
@@ -39,7 +66,16 @@ function InvoicesRoute() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>Invoices</Title>
-        <Button onClick={open}>New Invoice</Button>
+        <Button
+          onClick={() => {
+            createFormGeneration.current += 1
+            setCreateError(false)
+            setPendingCreateGeneration(null)
+            open()
+          }}
+        >
+          New Invoice
+        </Button>
       </Group>
 
       {invoicesQuery.isLoading ? <Loader /> : null}
@@ -50,8 +86,16 @@ function InvoicesRoute() {
       ) : null}
       {invoicesQuery.data !== undefined ? <InvoiceTable invoices={invoicesQuery.data} /> : null}
 
-      <Modal opened={opened} onClose={close} title="New Invoice">
-        <InvoiceForm isSubmitting={createInvoice.isPending} onSubmit={handleCreate} />
+      <Modal opened={opened} onClose={handleClose} title="New Invoice">
+        {createError ? (
+          <Alert color="red" variant="light" mb="md">
+            Failed to create invoice. Please try again.
+          </Alert>
+        ) : null}
+        <InvoiceForm
+          isSubmitting={pendingCreateGeneration === createFormGeneration.current}
+          onSubmit={handleCreate}
+        />
       </Modal>
     </Stack>
   )

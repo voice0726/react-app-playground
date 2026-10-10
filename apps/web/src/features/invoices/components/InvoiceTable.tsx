@@ -10,10 +10,10 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { format } from 'date-fns'
 import { useMemo } from 'react'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
+import { formatInvoiceDate } from '@/features/invoices/date'
 import type { Invoice } from '@/features/invoices/types'
 
 type InvoiceTableProps = {
@@ -51,11 +51,11 @@ const columns = [
   }),
   columnHelper.accessor('issueDate', {
     header: 'Issue date',
-    cell: (info) => format(new Date(info.getValue()), 'MMM d, yyyy'),
+    cell: (info) => formatInvoiceDate(info.getValue(), 'MMM d, yyyy'),
   }),
   columnHelper.accessor('dueDate', {
     header: 'Due date',
-    cell: (info) => format(new Date(info.getValue()), 'MMM d, yyyy'),
+    cell: (info) => formatInvoiceDate(info.getValue(), 'MMM d, yyyy'),
   }),
   columnHelper.accessor('status', {
     header: 'Status',
@@ -100,7 +100,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
       const next = nextSorting[0]
 
       navigate({
-        search: (previous) => ({
+        search: (previous: typeof search) => ({
           ...previous,
           sort: next?.id,
           order: next === undefined ? undefined : next.desc ? 'desc' : 'asc',
@@ -109,7 +109,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
     },
     onGlobalFilterChange: (value) => {
       navigate({
-        search: (previous) => ({
+        search: (previous: typeof search) => ({
           ...previous,
           q: typeof value === 'string' && value.length > 0 ? value : undefined,
         }),

@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
-import { format } from 'date-fns'
 import { Controller, useForm } from 'react-hook-form'
 
+import { toInvoiceDateString } from '@/features/invoices/date'
 import { invoiceSchema, type InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
 
 type InvoiceFormProps = {
@@ -30,14 +30,6 @@ const statusOptions = [
 
 function toDateInputValue(value: string): string | null {
   return value.length > 0 ? value : null
-}
-
-function toDateString(value: string | Date | null): string {
-  if (value === null || value === '') {
-    return ''
-  }
-
-  return format(new Date(value), 'yyyy-MM-dd')
 }
 
 export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: InvoiceFormProps) {
@@ -82,9 +74,11 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
               label="Issue date"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY-MM-DD"
+              clearable
+              allowDeselect
               error={errors.issueDate?.message}
               onBlur={field.onBlur}
-              onChange={(value) => field.onChange(toDateString(value))}
+              onChange={(value) => field.onChange(toInvoiceDateString(value))}
             />
           )}
         />
@@ -96,9 +90,11 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
               label="Due date"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY-MM-DD"
+              clearable
+              allowDeselect
               error={errors.dueDate?.message}
               onBlur={field.onBlur}
-              onChange={(value) => field.onChange(toDateString(value))}
+              onChange={(value) => field.onChange(toInvoiceDateString(value))}
             />
           )}
         />
