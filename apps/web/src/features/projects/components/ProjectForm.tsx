@@ -1,3 +1,5 @@
+import 'dayjs/locale/ja'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, Stack, TextInput, Textarea } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
@@ -55,6 +57,7 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
           render={({ field }) => (
             <DateInput
               label="開始日"
+              locale="ja"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY/MM/DD"
               error={errors.startDate?.message}
@@ -69,6 +72,7 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
           render={({ field }) => (
             <DateInput
               label="期日"
+              locale="ja"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY/MM/DD"
               clearable

@@ -20,6 +20,21 @@ afterEach(() => {
 })
 
 describe('InvoiceForm', () => {
+  it.each(['発行日', '支払期日'])('%sのカレンダーを日本語で表示する', async (label) => {
+    render(
+      <MantineProvider>
+        <InvoiceForm onSubmit={vi.fn()} />
+      </MantineProvider>,
+    )
+
+    fireEvent.click(screen.getByLabelText(label))
+
+    expect(await screen.findByRole('button', { name: /^\d+月 \d{4}$/ })).toBeTruthy()
+    expect(screen.getAllByRole('columnheader', { hidden: true }).map((element) => element.textContent)).toEqual([
+      '月', '火', '水', '木', '金', '土', '日',
+    ])
+  })
+
   it.each(['America/Los_Angeles', 'Asia/Tokyo'])(
     'submits the selected calendar day unchanged in %s',
     async (timezone) => {

@@ -71,6 +71,9 @@ importers:
       date-fns:
         specifier: 4.4.0
         version: 4.4.0
+      dayjs:
+        specifier: 1.11.21
+        version: 1.11.21
       react:
         specifier: 19.2.8
         version: 19.2.8

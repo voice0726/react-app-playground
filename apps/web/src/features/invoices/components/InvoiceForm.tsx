@@ -1,3 +1,5 @@
+import 'dayjs/locale/ja'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
@@ -68,6 +70,7 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
           render={({ field }) => (
             <DateInput
               label="発行日"
+              locale="ja"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY/MM/DD"
               clearable
@@ -84,6 +87,7 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
           render={({ field }) => (
             <DateInput
               label="支払期日"
+              locale="ja"
               value={toDateInputValue(field.value)}
               valueFormat="YYYY/MM/DD"
               clearable
