@@ -1,7 +1,7 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { useCreateCustomer } from '@/features/customers/api/mutations'
 import { useCustomers } from '@/features/customers/api/queries'
@@ -19,20 +19,30 @@ function CustomersRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const modalSession = useRef(0)
   const customersQuery = useCustomers()
   const createCustomer = useCreateCustomer()
 
   const handleCreate = async (values: CustomerFormValues) => {
+    const session = modalSession.current
     try {
       await createCustomer.mutateAsync(values)
-      closeModal()
+      if (session === modalSession.current) close()
     } catch {
-      setSubmitError('Failed to save customer. Please try again.')
+      if (session === modalSession.current) setSubmitError('Failed to save customer. Please try again.')
     }
   }
 
-  const open = () => { setSubmitError(null); openModal() }
-  const close = () => { closeModal(); setSubmitError(null) }
+  const open = () => {
+    modalSession.current += 1
+    setSubmitError(null)
+    openModal()
+  }
+  const close = () => {
+    modalSession.current += 1
+    closeModal()
+    setSubmitError(null)
+  }
 
   if (pathname !== '/customers') {
     return <Outlet />

@@ -1,7 +1,7 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { useCreateDeal } from '@/features/deals/api/mutations'
 import { useDeals } from '@/features/deals/api/queries'
@@ -19,20 +19,30 @@ function DealsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const modalSession = useRef(0)
   const dealsQuery = useDeals()
   const createDeal = useCreateDeal()
 
   const handleCreate = async (values: DealFormValues) => {
+    const session = modalSession.current
     try {
       await createDeal.mutateAsync(values)
-      closeModal()
+      if (session === modalSession.current) close()
     } catch {
-      setSubmitError('Failed to save deal. Please try again.')
+      if (session === modalSession.current) setSubmitError('Failed to save deal. Please try again.')
     }
   }
 
-  const open = () => { setSubmitError(null); openModal() }
-  const close = () => { closeModal(); setSubmitError(null) }
+  const open = () => {
+    modalSession.current += 1
+    setSubmitError(null)
+    openModal()
+  }
+  const close = () => {
+    modalSession.current += 1
+    closeModal()
+    setSubmitError(null)
+  }
 
   if (pathname !== '/deals') {
     return <Outlet />
