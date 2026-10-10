@@ -46,14 +46,17 @@ https://react-app-playground.aknr.dev/auth/callback
 ```
 
 gatewayのReact設定のoriginとバックエンドの `PUBLIC_ORIGIN` は `https://react-app-playground.aknr.dev` に合わせます。
-Cloudflareへログイン済みの環境で、次のコマンドを実行します。
+mainへのpushで、GitHub Actions（`.github/workflows/ci.yml`）がチェックを通したあとにデプロイします。
+Actionsのシークレット `CLOUDFLARE_API_TOKEN`（Workers Scriptsの編集権限）が必要です。
 [Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) の設定はデプロイ時に適用されます。
+
+手元からデプロイするときは、Cloudflareへログイン済みの環境で次のコマンドを実行します。
 
 ```sh
 pnpm --filter @playground/web run deploy
 ```
 
-本番へのデプロイ、Cloudflareの設定適用、ZITADELの登録はこの実装では実行していません。
+ZITADELの登録はデプロイでは行われません。
 
 ## 実サービスのE2E
 
