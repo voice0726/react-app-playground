@@ -6,8 +6,9 @@ import { createRoot } from 'react-dom/client'
 import { fetchSession } from '@/lib/auth'
 import { useSessionStore } from '@/lib/stores/session.store'
 import { routeTree } from '@/routeTree.gen'
+import { parseSearchPreservingRawQuery } from '@/lib/searchParams'
 
-const router = createRouter({ routeTree })
+const router = createRouter({ routeTree, parseSearch: parseSearchPreservingRawQuery })
 declare module '@tanstack/react-router' { interface Register { router: typeof router } }
 
 async function startMockWorker(): Promise<void> {
