@@ -20,6 +20,12 @@ Worker名は `react-app-playground` です。`wrangler.jsonc` にカスタムド
 SPAの設定は [Cloudflareの公式仕様](https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/) に従います。
 APIと認証のリクエストはWorkerを先に実行します。
 
+`/auth/*` では、シークレット `AUTH_PROXY_TOKEN`（auth-gatewayの `proxy_token`）が設定されているときだけ、`X-Proxy-Token` と `X-Client-Ip`（`CF-Connecting-IP` の値）を付けます。auth-gatewayはこれで利用者のIPごとにログイン開始の頻度を制限します。クライアントが送った同名のヘッダは常に捨てます。未設定のときは何も付けず、auth-gatewayはアプリ単位で制限します。
+
+```sh
+pnpm --filter @playground/web exec wrangler secret put AUTH_PROXY_TOKEN
+```
+
 ```sh
 pnpm install --frozen-lockfile
 pnpm --filter @playground/web typecheck

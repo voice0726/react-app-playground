@@ -68,6 +68,48 @@ describe('Worker の中継', () => {
     expect(await worker.fetch(new Request(`${origin}/auth/login`), { ASSETS: assets })).toBe(response)
   })
 
+  describe('gateway へ渡す接続元 IP', () => {
+    const forwarded = async (headers: Record<string, string>, env: { AUTH_PROXY_TOKEN?: string }) => {
+      const { upstreamFetch, assets } = setup()
+      await worker.fetch(new Request(`${origin}/auth/login`, { headers }), { ASSETS: assets, ...env })
+      return upstreamFetch.mock.calls[0]?.[0] as Request
+    }
+
+    it('proxy_token と CF-Connecting-IP を gateway へ渡す', async () => {
+      const request = await forwarded({ 'CF-Connecting-IP': '203.0.113.1' }, { AUTH_PROXY_TOKEN: 'secret' })
+      expect(request.headers.get('X-Proxy-Token')).toBe('secret')
+      expect(request.headers.get('X-Client-Ip')).toBe('203.0.113.1')
+    })
+
+    it('クライアントが送った X-Proxy-Token と X-Client-Ip を捨てる', async () => {
+      const request = await forwarded(
+        { 'CF-Connecting-IP': '203.0.113.1', 'X-Proxy-Token': 'forged', 'X-Client-Ip': '198.51.100.9' },
+        { AUTH_PROXY_TOKEN: 'secret' },
+      )
+      expect(request.headers.get('X-Proxy-Token')).toBe('secret')
+      expect(request.headers.get('X-Client-Ip')).toBe('203.0.113.1')
+    })
+
+    it.each([
+      ['AUTH_PROXY_TOKEN が未設定', { 'CF-Connecting-IP': '203.0.113.1' }, {}],
+      ['CF-Connecting-IP が無い', {}, { AUTH_PROXY_TOKEN: 'secret' }],
+    ])('%sのときは、クライアントが送った値も含めて何も渡さない', async (_name, headers, env) => {
+      const request = await forwarded({ ...headers, 'X-Proxy-Token': 'forged', 'X-Client-Ip': '198.51.100.9' }, env)
+      expect(request.headers.get('X-Proxy-Token')).toBeNull()
+      expect(request.headers.get('X-Client-Ip')).toBeNull()
+    })
+
+    it('API の中継には proxy_token を付けない', async () => {
+      const { upstreamFetch, assets } = setup()
+      await worker.fetch(new Request(`${origin}/api/customers`, { headers: { 'CF-Connecting-IP': '203.0.113.1' } }), {
+        ASSETS: assets,
+        AUTH_PROXY_TOKEN: 'secret',
+      })
+      const request = upstreamFetch.mock.calls[0]?.[0] as Request
+      expect(request.headers.get('X-Proxy-Token')).toBeNull()
+    })
+  })
+
   it.each(['/dashboard', '/assets/app.js', '/author', '/apiculture', '/internal/session']) (
     '中継対象以外は静的アセットへ渡す: %s',
     async (path) => {
