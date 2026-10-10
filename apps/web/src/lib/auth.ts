@@ -1,4 +1,3 @@
-export type GatewayUser = { user_id: string; name: string; email: string; roles?: string[] }
 export type SessionUser = { id: string; name: string; email: string }
 export type SessionResult = { status: 'authenticated'; user: SessionUser } | { status: 'unauthenticated' } | { status: 'unavailable'; reason: 'network' | 'timeout' | 'server' | 'invalid' }
 export type SessionStatus = SessionResult['status'] | 'loading'
