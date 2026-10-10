@@ -56,7 +56,7 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
             <DateInput
               label="開始日"
               value={toDateInputValue(field.value)}
-              valueFormat="YYYY-MM-DD"
+              valueFormat="YYYY/MM/DD"
               error={errors.startDate?.message}
               onBlur={field.onBlur}
               onChange={(value) => field.onChange(toDateString(value))}
@@ -68,9 +68,9 @@ export function ProjectForm({ isSubmitting = false, onSubmit }: ProjectFormProps
           name="dueDate"
           render={({ field }) => (
             <DateInput
-              label="支払期日"
+              label="期日"
               value={toDateInputValue(field.value)}
-              valueFormat="YYYY-MM-DD"
+              valueFormat="YYYY/MM/DD"
               clearable
               error={errors.dueDate?.message}
               onBlur={field.onBlur}

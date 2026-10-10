@@ -35,8 +35,10 @@ describe('InvoiceForm', () => {
       fireEvent.change(screen.getByLabelText('請求書番号'), { target: { value: 'INV-1' } })
       fireEvent.change(screen.getByLabelText('顧客 ID'), { target: { value: 'customer-1' } })
       fireEvent.change(screen.getByLabelText('金額'), { target: { value: '100' } })
-      fireEvent.change(screen.getByLabelText('発行日'), { target: { value: '2026-10-10' } })
-      fireEvent.change(screen.getByLabelText('支払期日'), { target: { value: '2026-10-20' } })
+      fireEvent.change(screen.getByLabelText('発行日'), { target: { value: '2026/10/10' } })
+      fireEvent.change(screen.getByLabelText('支払期日'), { target: { value: '2026/10/20' } })
+      expect((screen.getByLabelText('発行日') as HTMLInputElement).value).toBe('2026/10/10')
+      expect((screen.getByLabelText('支払期日') as HTMLInputElement).value).toBe('2026/10/20')
       fireEvent.click(screen.getByRole('button', { name: '保存' }))
 
       await waitFor(() => expect(onSubmit).toHaveBeenCalled())

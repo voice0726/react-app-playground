@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 
 import { toInvoiceDateString } from '@/features/invoices/date'
 import { invoiceSchema, type InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
+import { invoiceStatusLabels } from '@/features/invoices/types'
 
 type InvoiceFormProps = {
   initialValues?: InvoiceFormValues
@@ -21,12 +22,7 @@ const defaultValues: InvoiceFormValues = {
   status: 'draft',
 }
 
-const statusOptions = [
-  { value: 'draft', label: '下書き' },
-  { value: 'sent', label: '送付済み' },
-  { value: 'paid', label: '支払済み' },
-  { value: 'cancelled', label: 'キャンセル' },
-] as const
+const statusOptions = Object.entries(invoiceStatusLabels).map(([value, label]) => ({ value, label }))
 
 function toDateInputValue(value: string): string | null {
   return value.length > 0 ? value : null
@@ -73,7 +69,7 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
             <DateInput
               label="発行日"
               value={toDateInputValue(field.value)}
-              valueFormat="YYYY-MM-DD"
+              valueFormat="YYYY/MM/DD"
               clearable
               allowDeselect
               error={errors.issueDate?.message}
@@ -89,7 +85,7 @@ export function InvoiceForm({ initialValues, isSubmitting = false, onSubmit }: I
             <DateInput
               label="支払期日"
               value={toDateInputValue(field.value)}
-              valueFormat="YYYY-MM-DD"
+              valueFormat="YYYY/MM/DD"
               clearable
               allowDeselect
               error={errors.dueDate?.message}
