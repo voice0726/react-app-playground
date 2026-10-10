@@ -10,6 +10,7 @@ import type { Customer } from '@/types/customer.types'
 type DealFormProps = {
   initialValues?: DealFormValues
   isSubmitting?: boolean
+  submitError?: string | null
   onSubmit: (values: DealFormValues) => void | Promise<void>
 }
 
@@ -37,7 +38,7 @@ function useCustomerOptions() {
   })
 }
 
-export function DealForm({ initialValues, isSubmitting = false, onSubmit }: DealFormProps) {
+export function DealForm({ initialValues, isSubmitting = false, onSubmit, submitError }: DealFormProps) {
   const customersQuery = useCustomerOptions()
   const {
     control,
@@ -57,6 +58,7 @@ export function DealForm({ initialValues, isSubmitting = false, onSubmit }: Deal
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack>
+        {submitError ? <Alert color="red" role="alert">{submitError}</Alert> : null}
         {customersQuery.isError ? (
           <Alert color="red" variant="light">
             Failed to load customers.

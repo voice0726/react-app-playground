@@ -1,35 +1,38 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { z } from 'zod'
+import { useState } from 'react'
 
 import { useCreateCustomer } from '@/features/customers/api/mutations'
 import { useCustomers } from '@/features/customers/api/queries'
 import { CustomerForm } from '@/features/customers/components/CustomerForm'
 import { CustomerTable } from '@/features/customers/components/CustomerTable'
 import type { CustomerFormValues } from '@/features/customers/schemas/customer.schema'
-
-const customerSearchSchema = z.object({
-  sort: z.string().optional(),
-  order: z.enum(['asc', 'desc']).optional(),
-  q: z.string().optional(),
-})
+import { listSearchSchema } from '@/lib/listSearchSchema'
 
 export const Route = createFileRoute('/_authenticated/customers')({
-  validateSearch: customerSearchSchema,
+  validateSearch: listSearchSchema,
   component: CustomersRoute,
 })
 
 function CustomersRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const [opened, { close, open }] = useDisclosure()
+  const [opened, { close: closeModal, open: openModal }] = useDisclosure()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const customersQuery = useCustomers()
   const createCustomer = useCreateCustomer()
 
   const handleCreate = async (values: CustomerFormValues) => {
-    await createCustomer.mutateAsync(values)
-    close()
+    try {
+      await createCustomer.mutateAsync(values)
+      closeModal()
+    } catch {
+      setSubmitError('Failed to save customer. Please try again.')
+    }
   }
+
+  const open = () => { setSubmitError(null); openModal() }
+  const close = () => { closeModal(); setSubmitError(null) }
 
   if (pathname !== '/customers') {
     return <Outlet />
@@ -51,7 +54,7 @@ function CustomersRoute() {
       {customersQuery.data !== undefined ? <CustomerTable customers={customersQuery.data} /> : null}
 
       <Modal opened={opened} onClose={close} title="New Customer">
-        <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} />
+        <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />
       </Modal>
     </Stack>
   )

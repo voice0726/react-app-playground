@@ -2,6 +2,7 @@ import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title }
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
+import { useState } from 'react'
 
 import { useUpdateCustomer } from '@/features/customers/api/mutations'
 import { useCustomer } from '@/features/customers/api/queries'
@@ -15,15 +16,23 @@ export const Route = createFileRoute('/_authenticated/customers/$customerId')({
 
 function CustomerDetailRoute() {
   const { customerId } = Route.useParams()
-  const [opened, { close, open }] = useDisclosure()
+  const [opened, { close: closeModal, open: openModal }] = useDisclosure()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const customerQuery = useCustomer(customerId)
   const updateCustomer = useUpdateCustomer()
   const customer = customerQuery.data
 
   const handleUpdate = async (values: CustomerFormValues) => {
-    await updateCustomer.mutateAsync({ id: customerId, values })
-    close()
+    try {
+      await updateCustomer.mutateAsync({ id: customerId, values })
+      closeModal()
+    } catch {
+      setSubmitError('Failed to save customer. Please try again.')
+    }
   }
+
+  const open = () => { setSubmitError(null); openModal() }
+  const close = () => { closeModal(); setSubmitError(null) }
 
   if (customerQuery.isLoading) {
     return <Loader />
@@ -80,6 +89,7 @@ function CustomerDetailRoute() {
           }}
           isSubmitting={updateCustomer.isPending}
           onSubmit={handleUpdate}
+          submitError={submitError}
         />
       </Modal>
     </Stack>

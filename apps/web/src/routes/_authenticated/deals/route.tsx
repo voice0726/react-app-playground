@@ -1,35 +1,38 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
-import { z } from 'zod'
+import { useState } from 'react'
 
 import { useCreateDeal } from '@/features/deals/api/mutations'
 import { useDeals } from '@/features/deals/api/queries'
 import { DealForm } from '@/features/deals/components/DealForm'
 import { DealTable } from '@/features/deals/components/DealTable'
 import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
-
-const dealSearchSchema = z.object({
-  sort: z.string().optional(),
-  order: z.enum(['asc', 'desc']).optional(),
-  q: z.string().optional(),
-})
+import { listSearchSchema } from '@/lib/listSearchSchema'
 
 export const Route = createFileRoute('/_authenticated/deals')({
-  validateSearch: dealSearchSchema,
+  validateSearch: listSearchSchema,
   component: DealsRoute,
 })
 
 function DealsRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const [opened, { close, open }] = useDisclosure()
+  const [opened, { close: closeModal, open: openModal }] = useDisclosure()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const dealsQuery = useDeals()
   const createDeal = useCreateDeal()
 
   const handleCreate = async (values: DealFormValues) => {
-    await createDeal.mutateAsync(values)
-    close()
+    try {
+      await createDeal.mutateAsync(values)
+      closeModal()
+    } catch {
+      setSubmitError('Failed to save deal. Please try again.')
+    }
   }
+
+  const open = () => { setSubmitError(null); openModal() }
+  const close = () => { closeModal(); setSubmitError(null) }
 
   if (pathname !== '/deals') {
     return <Outlet />
@@ -51,7 +54,7 @@ function DealsRoute() {
       {dealsQuery.data !== undefined ? <DealTable deals={dealsQuery.data} /> : null}
 
       <Modal opened={opened} onClose={close} title="New Deal">
-        <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} />
+        <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />
       </Modal>
     </Stack>
   )

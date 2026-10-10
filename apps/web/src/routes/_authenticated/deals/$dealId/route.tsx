@@ -2,6 +2,7 @@ import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title }
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
+import { useState } from 'react'
 
 import { useUpdateDeal } from '@/features/deals/api/mutations'
 import { useDealWithCustomer } from '@/features/deals/api/queries'
@@ -21,16 +22,24 @@ export const Route = createFileRoute('/_authenticated/deals/$dealId')({
 
 function DealDetailRoute() {
   const { dealId } = Route.useParams()
-  const [opened, { close, open }] = useDisclosure()
+  const [opened, { close: closeModal, open: openModal }] = useDisclosure()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const { customerQuery, dealQuery } = useDealWithCustomer(dealId)
   const updateDeal = useUpdateDeal()
   const deal = dealQuery.data
   const customer = customerQuery.data
 
   const handleUpdate = async (values: DealFormValues) => {
-    await updateDeal.mutateAsync({ id: dealId, values })
-    close()
+    try {
+      await updateDeal.mutateAsync({ id: dealId, values })
+      closeModal()
+    } catch {
+      setSubmitError('Failed to save deal. Please try again.')
+    }
   }
+
+  const open = () => { setSubmitError(null); openModal() }
+  const close = () => { closeModal(); setSubmitError(null) }
 
   if (dealQuery.isLoading) {
     return <Loader />
@@ -113,6 +122,7 @@ function DealDetailRoute() {
           }}
           isSubmitting={updateDeal.isPending}
           onSubmit={handleUpdate}
+          submitError={submitError}
         />
       </Modal>
     </Stack>
