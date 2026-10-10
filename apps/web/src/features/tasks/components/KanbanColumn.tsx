@@ -9,10 +9,12 @@ type KanbanColumnProps = {
   title: string
   status: TaskStatus
   tasks: Task[]
+  isStatusChangePending: boolean
+  onStatusChange: (taskId: string, status: TaskStatus) => void
   onAddTask: (status: TaskStatus) => void
 }
 
-export function KanbanColumn({ title, status, tasks, onAddTask }: KanbanColumnProps) {
+export function KanbanColumn({ title, status, tasks, isStatusChangePending, onStatusChange, onAddTask }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id: status })
 
   return (
@@ -39,7 +41,12 @@ export function KanbanColumn({ title, status, tasks, onAddTask }: KanbanColumnPr
         <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
           <Stack gap="sm">
             {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard
+                key={task.id}
+                task={task}
+                isStatusChangePending={isStatusChangePending}
+                onStatusChange={onStatusChange}
+              />
             ))}
           </Stack>
         </SortableContext>
