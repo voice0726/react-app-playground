@@ -4,6 +4,51 @@
 開くURLは `http://react.localtest.me:5174` です。
 `/api` はbackend、`/auth` はauth-gatewayへVite proxy経由で接続します。
 
+## Cloudflare Workers
+
+Worker名は `react-app-playground` です。`wrangler.jsonc` にカスタムドメイン `react-app-playground.aknr.dev` を指定しています。
+旧 `tanstack-playground` のWorkerと設定は変更しません。
+
+| リクエスト | 配信・転送先 |
+| --- | --- |
+| `/api/*` | `https://react-app-playground-backend-tqhoqdmw4a-uc.a.run.app`。パスとクエリを維持 |
+| `/auth/*` | `https://auth.aknr.dev`。パスとクエリを維持し、`X-App-Id` を `react-app-playground` に上書き |
+| その他 | `dist` の静的アセット。画面のURLはSPA fallbackで `index.html` を配信 |
+
+中継はHTTPメソッド・本文・Cookie・Originを維持します。
+上流のリダイレクトを追跡せず、LocationとSet-Cookieをブラウザへ返します。
+SPAの設定は [Cloudflareの公式仕様](https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/) に従います。
+APIと認証のリクエストはWorkerを先に実行します。
+
+```sh
+pnpm install --frozen-lockfile
+pnpm --filter @playground/web typecheck
+pnpm --filter @playground/web lint
+pnpm --filter @playground/web test
+pnpm --filter @playground/web dev:worker
+```
+
+`dev:worker` はViteでビルドしてからローカルのWranglerを起動します。
+表示URLは通常 `http://localhost:8787` です。
+中継先は本番サービスなので、認証操作には本番のCookie・origin設定が適用されます。
+ローカル配信の成功だけでは本番のOIDCログイン成功を確認できません。
+
+デプロイ前にZITADELのReact用OIDCクライアントへ次のredirect URIを登録します。
+
+```text
+https://react-app-playground.aknr.dev/auth/callback
+```
+
+gatewayのReact設定のoriginとバックエンドの `PUBLIC_ORIGIN` は `https://react-app-playground.aknr.dev` に合わせます。
+Cloudflareへログイン済みの環境で、次のコマンドを実行します。
+[Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) の設定はデプロイ時に適用されます。
+
+```sh
+pnpm --filter @playground/web run deploy
+```
+
+本番へのデプロイ、Cloudflareの設定適用、ZITADELの登録はこの実装では実行していません。
+
 ## 実サービスのE2E
 
 backendとauth-gatewayを起動し、2ユーザー分の認証済みstorage stateを用意します。
