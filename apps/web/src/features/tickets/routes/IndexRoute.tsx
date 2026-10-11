@@ -1,6 +1,6 @@
 import { Paper, Stack } from '@mantine/core'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TicketDeleteModal } from '@/features/tickets/components/dialogs/TicketDeleteModal'
 import { TicketsListPanel } from '@/features/tickets/components/list/TicketsListPanel'
 import { TicketsSearchForm } from '@/features/tickets/components/list/TicketsSearchForm'
@@ -57,18 +57,21 @@ export function IndexRoute() {
   const items = hasTableError ? [] : (data?.items ?? [])
   const computedTotal = data?.total ?? 0
   const computedTotalPages = Math.max(1, Math.ceil(computedTotal / normalizedSearch.pageSize))
-  const lastListMetaRef = useRef({
+  const [lastListMeta, setLastListMeta] = useState({
     total: computedTotal,
     totalPages: computedTotalPages,
   })
-  if (!hasTableError) {
-    lastListMetaRef.current = {
+  if (
+    !hasTableError &&
+    (lastListMeta.total !== computedTotal || lastListMeta.totalPages !== computedTotalPages)
+  ) {
+    setLastListMeta({
       total: computedTotal,
       totalPages: computedTotalPages,
-    }
+    })
   }
-  const total = hasTableError ? lastListMetaRef.current.total : computedTotal
-  const totalPages = hasTableError ? lastListMetaRef.current.totalPages : computedTotalPages
+  const total = hasTableError ? lastListMeta.total : computedTotal
+  const totalPages = hasTableError ? lastListMeta.totalPages : computedTotalPages
   const from =
     total === 0 ? 0 : Math.min((normalizedSearch.page - 1) * normalizedSearch.pageSize + 1, total)
   const to = Math.min(total, normalizedSearch.page * normalizedSearch.pageSize)
