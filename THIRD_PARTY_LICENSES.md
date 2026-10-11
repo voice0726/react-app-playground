@@ -2,7 +2,7 @@
 
 ## Mock Service Worker (msw)
 
-`apps/web/public/mockServiceWorker.js` は msw 2.15.0 が生成するファイルで、そのまま同梱しています。
+`apps/web/public/mockServiceWorker.js` は msw 3.0.2 が生成するファイルで、そのまま同梱しています。
 
 ```
 MIT License
