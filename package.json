@@ -12,7 +12,9 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:e2e": "turbo run test:e2e",
+    "test:e2e": "pnpm test:e2e:backend",
+    "test:e2e:backend": "pnpm --filter @playground/web test:e2e:backend",
+    "test:e2e:standalone": "pnpm --filter @playground/web test:e2e:standalone",
     "check-deps": "turbo run check-deps",
     "knip": "knip"
   },

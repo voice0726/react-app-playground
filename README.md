@@ -6,7 +6,7 @@ BtBアプリケーションのPlaygroundです。pnpm + Turborepoのモノレポ
 
 - `apps/web`: Webアプリ本体とCloudflare Worker
 - `packages/lint-config`: 共有のlint設定
-- `tests`: バックエンド結合E2Eの設定
+- `tests`: バックエンド結合E2EとMSW単体E2E
 
 画面は `customers`・`deals`・`invoices`・`projects`・`tasks`・`tickets` のfeatureと、ダッシュボードで構成します。
 
@@ -33,7 +33,9 @@ pnpm --filter @playground/web dev
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm lint` | oxlint |
 | `pnpm test` | VitestとWorkerのテスト |
-| `pnpm test:e2e` | バックエンド結合E2E |
+| `pnpm test:e2e` | バックエンド結合E2E（既定） |
+| `pnpm test:e2e:backend` | バックエンド結合E2E |
+| `pnpm test:e2e:standalone` | MSWを使うフロントエンド単体E2E |
 | `pnpm check-deps` | feature間の依存ルール検査 |
 | `pnpm knip` | 未使用コードの検出 |
 

@@ -12,7 +12,9 @@
     "dev:worker": "pnpm build && wrangler dev --local",
     "deploy": "pnpm build && wrangler deploy",
     "test:watch": "vitest",
-    "test:e2e": "playwright test --config=../../tests/backend-integration.config.ts",
+    "test:e2e": "pnpm test:e2e:backend",
+    "test:e2e:backend": "playwright test --config=../../tests/backend-integration.config.ts",
+    "test:e2e:standalone": "playwright test --config=../../tests/standalone.config.ts",
     "check-deps": "depcruise src --config .dependency-cruiser.cjs"
   },
   "dependencies": {
