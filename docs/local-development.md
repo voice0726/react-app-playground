@@ -66,6 +66,8 @@ pnpm test:e2e:backend
 
 ルートの `pnpm test:e2e:backend` は Turbo を経由せず `apps/web` のスクリプトを直接呼ぶため、上の環境変数はそのまま Playwright に渡ります。
 
+最後に実行するログアウトのテストが、ユーザーAのセッションを終了します。JSONファイルが残っていても、保存済みのユーザーA stateは次の実行では認証されません。再実行する前に、「E2E用ユーザー状態」の手順でユーザーAのstateを作り直してください（`apps/web/README.md` にも同じ注意があります）。
+
 Playwrightが自身のViteサーバーを起動します。終了後に起動スクリプトを `Ctrl-C` で止めます。ComposeのDB、ZITADEL、gatewayは起動したままで構いません。
 
 E2E開始時に `/api/healthz`、匿名 `/auth/me`、両storage stateの認証状態と異なる `user_id` を確認します。
