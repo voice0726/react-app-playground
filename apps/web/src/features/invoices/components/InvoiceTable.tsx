@@ -11,7 +11,7 @@ import { useMemo } from 'react'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
 import { formatInvoiceDate } from '@/features/invoices/date'
-import { features } from "@/lib/tableFeatures"
+import { features } from '@/lib/tableFeatures'
 import type { Invoice } from '@/features/invoices/types'
 
 type InvoiceTableProps = {
@@ -114,7 +114,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
         }),
       })
     },
-    globalFilterFn: "includesString",
+    globalFilterFn: 'includesString',
   })
 
   return (

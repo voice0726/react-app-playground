@@ -12,7 +12,7 @@ import { createContext, useContext, useMemo, useRef, useState } from 'react'
 
 import { useDeleteCustomer } from '@/features/customers/api/mutations'
 import { CustomerStatusBadge } from '@/features/customers/components/CustomerStatusBadge'
-import { features } from "@/lib/tableFeatures"
+import { features } from '@/lib/tableFeatures'
 import type { Customer } from '@/types/customer.types'
 
 type CustomerTableProps = {
@@ -183,7 +183,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         }),
       })
     },
-    globalFilterFn: "includesString",
+    globalFilterFn: 'includesString',
   })
 
   return (

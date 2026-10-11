@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import { useMemo } from 'react'
 
 import { DealStatusBadge } from '@/features/deals/components/DealStatusBadge'
-import { features } from "@/lib/tableFeatures"
+import { features } from '@/lib/tableFeatures'
 import type { Deal } from '@/features/deals/types'
 
 type DealTableProps = {
@@ -110,7 +110,7 @@ export function DealTable({ deals }: DealTableProps) {
         }),
       })
     },
-    globalFilterFn: "includesString",
+    globalFilterFn: 'includesString',
   })
 
   return (
