@@ -12,6 +12,12 @@ function setup(response = new Response('upstream')) {
   return { upstreamFetch, assets }
 }
 
+const forwarded = async (headers: Record<string, string>, env: { AUTH_PROXY_TOKEN?: string }) => {
+  const { upstreamFetch, assets } = setup()
+  await worker.fetch(new Request(`${origin}/auth/login`, { headers }), { ASSETS: assets, ...env })
+  return upstreamFetch.mock.calls[0]?.[0] as Request
+}
+
 describe('Worker の中継', () => {
   it.each(['evil-app', 'evil-app, other-app', undefined])(
     '認証のアプリIDを固定値で上書きする: %s',
@@ -69,12 +75,6 @@ describe('Worker の中継', () => {
   })
 
   describe('gateway へ渡す接続元 IP', () => {
-    const forwarded = async (headers: Record<string, string>, env: { AUTH_PROXY_TOKEN?: string }) => {
-      const { upstreamFetch, assets } = setup()
-      await worker.fetch(new Request(`${origin}/auth/login`, { headers }), { ASSETS: assets, ...env })
-      return upstreamFetch.mock.calls[0]?.[0] as Request
-    }
-
     it('proxy_token と CF-Connecting-IP を gateway へ渡す', async () => {
       const request = await forwarded({ 'CF-Connecting-IP': '203.0.113.1' }, { AUTH_PROXY_TOKEN: 'secret' })
       expect(request.headers.get('X-Proxy-Token')).toBe('secret')
