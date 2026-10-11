@@ -14,7 +14,7 @@ declare module '@tanstack/react-router' { interface Register { router: typeof ro
 async function startMockWorker(): Promise<void> {
   if (!import.meta.env.DEV || import.meta.env.VITE_USE_MSW !== 'true') return
   const { worker } = await import('@/mocks/browser')
-  await worker.start({ onUnhandledRequest: 'bypass' })
+  await worker.start({ onUnhandledFrame: 'bypass' })
 }
 
 async function restoreSession(): Promise<void> {
