@@ -11,7 +11,11 @@ describe('invoiceSearchSchema', () => {
     [{ q: ['invoice'] }, {}],
     [{ q: { value: 'invoice' } }, {}],
     [{ q: 'invoice', order: 'invalid' }, { q: 'invoice' }],
-    [{ sort: ['amount'], order: 'desc' }, { order: 'desc' }],
+    [{ sort: 'amount', order: 'desc' }, { sort: 'amount', order: 'desc' }],
+    [{ sort: 'dueDate', order: 'asc' }, { sort: 'dueDate', order: 'asc' }],
+    [{ sort: 'unknown', order: 'asc', q: 'invoice' }, { q: 'invoice' }],
+    [{ sort: ['amount'], order: 'desc' }, {}],
+    [{ sort: 123, order: 'desc' }, {}],
   ])('normalizes %j to %j', (input, expected) => {
     expect(invoiceSearchSchema.parse(input)).toEqual(expected)
   })

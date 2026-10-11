@@ -3,11 +3,8 @@ import { IconEye, IconTrash } from '@tabler/icons-react'
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   type SortingState,
-  useReactTable,
+  useTable,
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
@@ -15,13 +12,14 @@ import { createContext, useContext, useMemo, useRef, useState } from 'react'
 
 import { useDeleteCustomer } from '@/features/customers/api/mutations'
 import { CustomerStatusBadge } from '@/features/customers/components/CustomerStatusBadge'
+import { features } from '@/lib/tableFeatures'
 import type { Customer } from '@/types/customer.types'
 
 type CustomerTableProps = {
   customers: Customer[]
 }
 
-const columnHelper = createColumnHelper<Customer>()
+const columnHelper = createColumnHelper<typeof features, Customer>()
 
 type CustomerActionsProps = {
   customer: Customer
@@ -65,7 +63,7 @@ function CustomerActions({ customer }: CustomerActionsProps) {
   )
 }
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor('name', {
     header: '名前',
     cell: (info) => info.getValue(),
@@ -92,7 +90,7 @@ const columns = [
     enableSorting: false,
     cell: ({ row }) => <CustomerActions customer={row.original} />,
   }),
-]
+])
 
 function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   if (sort === undefined || order === undefined) {
@@ -157,7 +155,8 @@ export function CustomerTable({ customers }: CustomerTableProps) {
     }
   }
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data: customers,
     columns,
     state: {
@@ -184,9 +183,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         }),
       })
     },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: 'includesString',
   })
 
   return (

@@ -1,5 +1,5 @@
 import { Alert, Button, Stack } from '@mantine/core'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { useAdvanceInvoiceStatus } from '@/features/invoices/api/mutations'
 import { getNextStatus, invoiceStatusLabels, type InvoiceStatus } from '@/features/invoices/types'
@@ -10,17 +10,21 @@ type InvoiceStatusTransitionProps = {
 }
 
 export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTransitionProps) {
+  return (
+    <InvoiceStatusTransitionContent
+      key={JSON.stringify([invoiceId, status])}
+      invoiceId={invoiceId}
+      status={status}
+    />
+  )
+}
+
+function InvoiceStatusTransitionContent({ invoiceId, status }: InvoiceStatusTransitionProps) {
   const advanceInvoiceStatus = useAdvanceInvoiceStatus()
   const [error, setError] = useState(false)
-  const [pendingGeneration, setPendingGeneration] = useState<number | null>(null)
+  const [pending, setPending] = useState(false)
   const requestGeneration = useRef(0)
   const nextStatus = getNextStatus(status)
-
-  useLayoutEffect(() => {
-    requestGeneration.current += 1
-    setError(false)
-    setPendingGeneration(null)
-  }, [invoiceId, status])
 
   if (nextStatus === null) {
     return null
@@ -29,7 +33,7 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
   const handleAdvance = async () => {
     const generation = ++requestGeneration.current
     setError(false)
-    setPendingGeneration(generation)
+    setPending(true)
     try {
       await advanceInvoiceStatus.mutateAsync({ id: invoiceId, nextStatus })
     } catch {
@@ -38,7 +42,7 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
       }
     } finally {
       if (requestGeneration.current === generation) {
-        setPendingGeneration(null)
+        setPending(false)
       }
     }
   }
@@ -52,7 +56,7 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
       ) : null}
       <Button
         variant="light"
-        loading={pendingGeneration === requestGeneration.current}
+        loading={pending}
         onClick={handleAdvance}
       >
         → {invoiceStatusLabels[nextStatus]}
