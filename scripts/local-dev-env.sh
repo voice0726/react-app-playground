@@ -68,6 +68,13 @@ if [[ "$mode" == e2e ]]; then
     printf 'E2E_DATABASE_NAME must match [a-z_][a-z0-9_]*: %s\n' "$e2e_database" >&2
     exit 2
   fi
+  # 起動時と終了時に強制削除するため、通常開発用とシステムの database は指定させない
+  case "$e2e_database" in
+    playground | postgres | template0 | template1)
+      printf 'E2E_DATABASE_NAME must not be a reserved database: %s\n' "$e2e_database" >&2
+      exit 2
+      ;;
+  esac
   export DATABASE_URL="postgres://playground:playground@localhost:5432/${e2e_database}?sslmode=disable"
 fi
 drop_e2e_database() {
@@ -75,6 +82,24 @@ drop_e2e_database() {
     psql -v ON_ERROR_STOP=1 -U playground -d postgres \
     -c "DROP DATABASE IF EXISTS ${e2e_database} WITH (FORCE)") >/dev/null
 }
+
+children=()
+cleanup() {
+  trap - EXIT INT TERM
+  local child
+  for child in ${children[@]+"${children[@]}"}; do
+    kill -TERM -- "-$child" 2>/dev/null || true
+  done
+  wait 2>/dev/null || true
+  if [[ -n "$e2e_database" ]]; then
+    drop_e2e_database || printf 'Failed to drop database %s; it will be recreated on the next e2e start.\n' "$e2e_database" >&2
+  fi
+}
+# database を作る前に登録し、migration の失敗や中断でも破棄する
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 if [[ -n "$e2e_database" ]]; then
   printf 'Recreating disposable database %s...\n' "$e2e_database"
   drop_e2e_database
@@ -88,21 +113,6 @@ printf 'Applying backend migrations...\n'
 # 各サービスを独自のプロセスグループで起動し、終了時にグループごと止める。
 # go run と pnpm は孫プロセスにサーバーを起動するため、サブシェルの PID だけでは止まらない。
 set -m
-children=()
-cleanup() {
-  trap - EXIT INT TERM
-  local child
-  for child in "${children[@]}"; do
-    kill -TERM -- "-$child" 2>/dev/null || true
-  done
-  wait 2>/dev/null || true
-  if [[ -n "$e2e_database" ]]; then
-    drop_e2e_database || printf 'Failed to drop database %s; it will be recreated on the next e2e start.\n' "$e2e_database" >&2
-  fi
-}
-trap cleanup EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
 
 health_timeout="${HEALTH_TIMEOUT_SECONDS:-120}"
 
