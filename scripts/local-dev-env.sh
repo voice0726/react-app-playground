@@ -61,21 +61,34 @@ printf 'Starting backend PostgreSQL...\n'
 printf 'Applying backend migrations...\n'
 (cd "$backend_repo" && go run ./cmd/migrate up)
 
+# 各サービスを独自のプロセスグループで起動し、終了時にグループごと止める。
+# go run と pnpm は孫プロセスにサーバーを起動するため、サブシェルの PID だけでは止まらない。
+set -m
 children=()
 cleanup() {
+  trap - EXIT INT TERM
   local child
   for child in "${children[@]}"; do
-    kill "$child" 2>/dev/null || true
+    kill -TERM -- "-$child" 2>/dev/null || true
   done
   wait 2>/dev/null || true
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-(cd "$backend_repo" && go run ./cmd/api) &
+health_timeout="${HEALTH_TIMEOUT_SECONDS:-120}"
+
+(cd "$backend_repo" && exec go run ./cmd/api) &
 children+=("$!")
-until curl --fail --silent http://localhost:18080/healthz >/dev/null; do
+deadline=$((SECONDS + health_timeout))
+until curl --fail --silent --max-time 2 http://localhost:18080/healthz >/dev/null; do
   if ! kill -0 "${children[0]}" 2>/dev/null; then
     printf 'Backend exited before becoming healthy.\n' >&2
+    exit 1
+  fi
+  if ((SECONDS >= deadline)); then
+    printf 'Backend did not become healthy within %ss.\n' "$health_timeout" >&2
     exit 1
   fi
   sleep 1
@@ -83,9 +96,19 @@ done
 
 if [[ "$mode" == dev ]]; then
   printf 'Starting frontend at http://react.localtest.me:5174 ...\n'
-  (cd "$repo_root" && pnpm --filter @playground/web dev) &
+  (cd "$repo_root" && exec pnpm --filter @playground/web dev) &
   children+=("$!")
 else
   printf 'E2E services are ready; start pnpm test:e2e in another terminal.\n'
 fi
-wait
+
+# いずれかの子プロセスが終了したら、残りを止めて非ゼロで終える
+while true; do
+  for child in "${children[@]}"; do
+    if ! kill -0 "$child" 2>/dev/null; then
+      printf 'A service (pid %s) exited; stopping the others.\n' "$child" >&2
+      exit 1
+    fi
+  done
+  sleep 1
+done

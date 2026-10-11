@@ -1,6 +1,6 @@
 # ローカル統合環境
 
-フロント、auth-gateway、バックエンドを Podman で起動し、バックエンド結合 E2E を実行する手順です。DB と ZITADEL は Compose、Go API と Vite はホストプロセスで動かします。
+フロント、auth-gateway、バックエンドをローカルで起動し、バックエンド結合 E2E を実行する手順です。DB・ZITADEL・auth-gateway は Podman の Compose で、Go API と Vite はホストプロセスで動かします。
 
 ## 前提
 
@@ -37,6 +37,8 @@ bash scripts/local-dev-env.sh e2e
 
 E2E は異なる ZITADEL ユーザー2名の認証済みstorage stateを必要とします。各コマンドでブラウザーが開くため、ZITADELに実際にログインしてください。
 
+stateの作成には `http://react.localtest.me:5174` のViteが必要です。先に既定モードの `bash scripts/local-dev-env.sh` を起動し、別ターミナルで次の手順を実行してください。作成後は `Ctrl-C` で止め、「E2E実行」に進みます。
+
 1. ユーザーA用stateを作ります。
 
    ```sh
@@ -59,8 +61,10 @@ PlaywrightはログインCookieをブラウザーコンテキストから保存�
 ```sh
 E2E_USER_A_STORAGE_STATE="$PWD/tests/fixtures/e2e-user-a.json" \
 E2E_USER_B_STORAGE_STATE="$PWD/tests/fixtures/e2e-user-b.json" \
-pnpm test:e2e
+pnpm test:e2e:backend
 ```
+
+ルートの `pnpm test:e2e:backend` は Turbo を経由せず `apps/web` のスクリプトを直接呼ぶため、上の環境変数はそのまま Playwright に渡ります。
 
 Playwrightが自身のViteサーバーを起動します。終了後に起動スクリプトを `Ctrl-C` で止めます。ComposeのDB、ZITADEL、gatewayは起動したままで構いません。
 
