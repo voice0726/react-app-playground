@@ -25,6 +25,8 @@ pnpm --filter @playground/web dev
 
 `.env.example` は実バックエンドへ接続する設定（`VITE_USE_MSW=false`）です。MSWのモックで動かすときは `VITE_USE_MSW=true` にします。接続手順は次節に従ってください。
 
+フロント、auth-gateway、バックエンドをまとめて起動する手順は[ローカル統合環境](docs/local-development.md)を参照してください。
+
 ## コマンド
 
 | コマンド | 内容 |
