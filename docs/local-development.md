@@ -29,6 +29,8 @@ bash scripts/local-dev-env.sh
 
 E2EではPlaywright専用のViteとポートが競合するため、次のモードで起動します。このモードはDB、ZITADEL、gateway、migration、Go APIを準備し、Viteは起動しません。
 
+E2Eは案件・請求書などの業務データを作り、削除APIがないものがあります。通常開発のDBを汚さないよう、このモードは同じPostgreSQL内に使い捨てのdatabase `playground_e2e`（`E2E_DATABASE_NAME` で変更可）を作り直してmigrationとAPIに使い、終了時に破棄します。通常開発用の `playground` には触れません。
+
 ```sh
 bash scripts/local-dev-env.sh e2e
 ```

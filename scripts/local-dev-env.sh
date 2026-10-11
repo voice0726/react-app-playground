@@ -59,6 +59,29 @@ printf 'Starting auth-gateway...\n'
 
 printf 'Starting backend PostgreSQL...\n'
 (cd "$backend_repo" && "$container_engine" compose up -d --wait db)
+
+# e2e モードは通常開発の DB を汚さないよう、使い捨ての database を作り直して使い、終了時に破棄する
+e2e_database=""
+if [[ "$mode" == e2e ]]; then
+  e2e_database="${E2E_DATABASE_NAME:-playground_e2e}"
+  if [[ ! "$e2e_database" =~ ^[a-z_][a-z0-9_]*$ ]]; then
+    printf 'E2E_DATABASE_NAME must match [a-z_][a-z0-9_]*: %s\n' "$e2e_database" >&2
+    exit 2
+  fi
+  export DATABASE_URL="postgres://playground:playground@localhost:5432/${e2e_database}?sslmode=disable"
+fi
+drop_e2e_database() {
+  (cd "$backend_repo" && "$container_engine" compose exec -T db \
+    psql -v ON_ERROR_STOP=1 -U playground -d postgres \
+    -c "DROP DATABASE IF EXISTS ${e2e_database} WITH (FORCE)") >/dev/null
+}
+if [[ -n "$e2e_database" ]]; then
+  printf 'Recreating disposable database %s...\n' "$e2e_database"
+  drop_e2e_database
+  (cd "$backend_repo" && "$container_engine" compose exec -T db \
+    psql -v ON_ERROR_STOP=1 -U playground -d postgres -c "CREATE DATABASE ${e2e_database}") >/dev/null
+fi
+
 printf 'Applying backend migrations...\n'
 (cd "$backend_repo" && go run ./cmd/migrate up)
 
@@ -73,6 +96,9 @@ cleanup() {
     kill -TERM -- "-$child" 2>/dev/null || true
   done
   wait 2>/dev/null || true
+  if [[ -n "$e2e_database" ]]; then
+    drop_e2e_database || printf 'Failed to drop database %s; it will be recreated on the next e2e start.\n' "$e2e_database" >&2
+  fi
 }
 trap cleanup EXIT
 trap 'exit 130' INT
