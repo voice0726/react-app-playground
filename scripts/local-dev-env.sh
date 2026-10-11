@@ -6,6 +6,7 @@ backend_repo="${REACT_APP_PLAYGROUND_BACKEND_DIR:-$HOME/ghq/github.com/voice0726
 gateway_repo="${AUTH_GATEWAY_DIR:-$HOME/ghq/github.com/voice0726/auth-gateway}"
 gateway_token="${AUTH_GATEWAY_INTERNAL_TOKEN:-replace-with-react-internal-token}"
 mode="${1:-dev}"
+container_engine="${CONTAINER_ENGINE:-docker}"
 
 if [[ "$mode" != dev && "$mode" != e2e ]]; then
   printf 'Usage: bash scripts/local-dev-env.sh [dev|e2e]\n' >&2
@@ -19,14 +20,14 @@ for required_path in "$backend_repo/docker-compose.yml" "$gateway_repo/docker-co
   fi
 done
 
-for required_command in podman go curl; do
+for required_command in "$container_engine" go curl; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
     printf 'Required command not found: %s\n' "$required_command" >&2
     exit 1
   fi
 done
-if ! podman compose version >/dev/null 2>&1; then
-  printf 'podman compose is not available. Install a Podman Compose provider.\n' >&2
+if ! "$container_engine" compose version >/dev/null 2>&1; then
+  printf '%s compose is not available. Install a Compose provider, or set CONTAINER_ENGINE.\n' "$container_engine" >&2
   exit 1
 fi
 if [[ "$mode" == dev ]] && ! command -v pnpm >/dev/null 2>&1; then
@@ -50,14 +51,14 @@ export VITE_BACKEND_URL=http://localhost:18080
 export VITE_AUTH_GATEWAY_URL=http://localhost:8800
 
 printf 'Starting auth-gateway PostgreSQL and ZITADEL...\n'
-(cd "$gateway_repo" && podman compose up -d --wait db zitadel)
+(cd "$gateway_repo" && "$container_engine" compose up -d --wait db zitadel)
 printf 'Applying auth-gateway migrations...\n'
-(cd "$gateway_repo" && podman compose --profile tools run --build --rm migrate)
+(cd "$gateway_repo" && "$container_engine" compose --profile tools run --build --rm migrate)
 printf 'Starting auth-gateway...\n'
-(cd "$gateway_repo" && podman compose up -d --build --wait gateway login)
+(cd "$gateway_repo" && "$container_engine" compose up -d --build --wait gateway login)
 
 printf 'Starting backend PostgreSQL...\n'
-(cd "$backend_repo" && podman compose up -d --wait db)
+(cd "$backend_repo" && "$container_engine" compose up -d --wait db)
 printf 'Applying backend migrations...\n'
 (cd "$backend_repo" && go run ./cmd/migrate up)
 
