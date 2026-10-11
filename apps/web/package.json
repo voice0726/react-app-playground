@@ -34,7 +34,7 @@
     "date-fns": "4.4.0",
     "dayjs": "1.11.21",
     "react": "19.3.0",
-    "react-dom": "19.2.8",
+    "react-dom": "19.3.0",
     "react-hook-form": "7.89.0",
     "ts-pattern": "5.9.0",
     "zod": "4.4.3",
