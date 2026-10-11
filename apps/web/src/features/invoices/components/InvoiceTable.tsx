@@ -3,24 +3,22 @@ import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   type SortingState,
-  useReactTable,
+  useTable,
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
 import { formatInvoiceDate } from '@/features/invoices/date'
+import { features } from '@/lib/tableFeatures'
 import type { Invoice } from '@/features/invoices/types'
 
 type InvoiceTableProps = {
   invoices: Invoice[]
 }
 
-const columnHelper = createColumnHelper<Invoice>()
+const columnHelper = createColumnHelper<typeof features, Invoice>()
 
 const currencyFormatter = new Intl.NumberFormat('ja-JP', {
   style: 'currency',
@@ -36,7 +34,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   return [{ id: sort, desc: order === 'desc' }]
 }
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor('number', {
     header: '請求書',
     cell: (info) => info.getValue(),
@@ -77,7 +75,7 @@ const columns = [
       </Group>
     ),
   }),
-]
+])
 
 export function InvoiceTable({ invoices }: InvoiceTableProps) {
   const search = useSearch({ from: '/_authenticated/invoices' })
@@ -88,7 +86,8 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
   )
   const globalFilter = search.q ?? ''
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data: invoices,
     columns,
     state: {
@@ -115,9 +114,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
         }),
       })
     },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: 'includesString',
   })
 
   return (
