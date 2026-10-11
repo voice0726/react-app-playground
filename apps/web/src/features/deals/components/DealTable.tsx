@@ -3,24 +3,22 @@ import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   type SortingState,
-  useReactTable,
+  useTable,
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { useMemo } from 'react'
 
 import { DealStatusBadge } from '@/features/deals/components/DealStatusBadge'
+import { features } from "@/lib/tableFeatures"
 import type { Deal } from '@/features/deals/types'
 
 type DealTableProps = {
   deals: Deal[]
 }
 
-const columnHelper = createColumnHelper<Deal>()
+const columnHelper = createColumnHelper<typeof features, Deal>()
 
 const currencyFormatter = new Intl.NumberFormat('ja-JP', {
   style: 'currency',
@@ -36,7 +34,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   return [{ id: sort, desc: order === 'desc' }]
 }
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor('title', {
     header: 'タイトル',
     cell: (info) => info.getValue(),
@@ -73,7 +71,7 @@ const columns = [
       </Group>
     ),
   }),
-]
+])
 
 export function DealTable({ deals }: DealTableProps) {
   const search = useSearch({ from: '/_authenticated/deals' })
@@ -84,7 +82,8 @@ export function DealTable({ deals }: DealTableProps) {
   )
   const globalFilter = search.q ?? ''
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data: deals,
     columns,
     state: {
@@ -111,9 +110,7 @@ export function DealTable({ deals }: DealTableProps) {
         }),
       })
     },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: "includesString",
   })
 
   return (
