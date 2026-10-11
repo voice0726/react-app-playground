@@ -5,13 +5,13 @@
 ## 前提
 
 - Podman の machine が起動し、`podman compose` が使えること
-- Go と pnpm がインストール済みであること
+- Go、pnpm、curl がインストール済みであること
 - `pnpm install` 済みであること
 - 関連リポジトリが既定の場所にあること。異なる場合は `AUTH_GATEWAY_DIR` と `REACT_APP_PLAYGROUND_BACKEND_DIR` で指定します
 - auth-gateway の ZITADEL にReact用OIDCクライアントがあり、redirect URI が `http://react.localtest.me:5174/auth/callback` であること
 - auth-gateway の `config/compose.yaml` に登録した `internal_token` と同じ値を `AUTH_GATEWAY_INTERNAL_TOKEN` に指定すること。未指定時は開発設定の `replace-with-react-internal-token` を使います
 
-ZITADEL の新しいDBを使う場合は、初回起動後にConsoleでReact用OIDCクライアントを登録してください。PKCEを使う公開クライアントを作り、リダイレクトURIに `http://react.localtest.me:5174/auth/callback` を登録します。発行されたClient IDをauth-gatewayの `config/compose.yaml` の `applications[].client_id` に設定してから起動します。初期管理者の案内は `podman compose logs zitadel` で確認できます。
+ZITADEL の新しいDBを使う場合は、初回起動後にConsoleでReact用OIDCクライアントを登録してください。PKCEを使う公開クライアントを作り、リダイレクトURIに `http://react.localtest.me:5174/auth/callback` を登録します。発行されたClient IDをauth-gatewayの `config/compose.yaml` の `applications[].client_id` に設定してから起動します。初期管理者の案内は、auth-gateway リポジトリのディレクトリで `podman compose logs zitadel` を実行して確認できます。
 
 E2E用の2ユーザーもZITADELに事前作成してください。認証情報をこのリポジトリに保存しないため、ユーザー登録とOIDCクライアントの初回登録は自動化しません。
 
