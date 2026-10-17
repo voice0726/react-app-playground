@@ -23,7 +23,7 @@
     "@dnd-kit/utilities": "3.2.2",
     "@hookform/resolvers": "5.9.1",
     "@mantine/core": "9.7.1",
-    "@mantine/dates": "9.7.1",
+    "@mantine/dates": "9.7.2",
     "@mantine/hooks": "9.7.1",
     "@mantine/modals": "^9.7.1",
     "@mantine/notifications": "9.7.1",
