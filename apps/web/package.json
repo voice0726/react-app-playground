@@ -26,7 +26,7 @@
     "@mantine/dates": "9.7.1",
     "@mantine/hooks": "9.7.1",
     "@mantine/modals": "^9.7.1",
-    "@mantine/notifications": "9.7.1",
+    "@mantine/notifications": "9.7.2",
     "@tabler/icons-react": "^3.49.0",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-query-devtools": "^5.104.1",
