@@ -4,7 +4,8 @@ import standalone from './standalone.config'
 export default defineConfig({
   ...standalone,
   testMatch: '**/*.visual.spec.ts',
-  snapshotPathTemplate: '{testDir}/screenshots/{platform}/{projectName}/{arg}{ext}',
+  globalSetup: './visual-setup.ts',
+  snapshotPathTemplate: '{testDir}/screenshots/linux/{projectName}/{arg}{ext}',
   updateSnapshots: 'none',
   reporter: [['list'], ['html', { open: 'never' }]],
   expect: {
