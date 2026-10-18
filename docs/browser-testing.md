@@ -51,7 +51,7 @@ API 障害・401・ログアウト再試行・ユーザー間分離は既存の�
 | モバイル | 390 x 844、deviceScaleFactor 1、タッチ有効 |
 | 言語・時刻 | ja-JP、Asia/Tokyo、2026-04-06 12:00 |
 | 表示 | ライト、reducedMotion、アニメーション無効、キャレット非表示 |
-| フォント | コンテナの WenQuanYi Zen Hei を削除し、既存の IPA を使用 |
+| フォント | Noto Sans CJK JP を追加し、日本語の sans-serif で優先 |
 | データ | MSW の初期データ、読み込み後に撮影 |
 | 比較 | ページ全体、差分ピクセル数は最大 20、色差閾値は Playwright 既定 |
 | 保存先 | `tests/screenshots/linux/{desktop,mobile}/` |
@@ -62,9 +62,11 @@ Linux のアーキテクチャ間で生じ得る微小差に備えます。
 OS 間の描画差を吸収するために許容を広げる運用はしません。
 
 比較と更新の両ジョブで `.github/scripts/setup-browser-fonts.sh` を実行します。
-スクリプトは `fonts-wqy-zenhei` を削除し、fontconfig のキャッシュを更新します。
-日本語の sans-serif が IPAGothic または IPAPGothic であることも確認します。
-日本語フォントはコンテナ内にあるため、追加の取得は不要です。
+スクリプトは `fonts-noto-cjk` をインストールします。
+fontconfig で日本語の sans-serif に Noto Sans CJK JP を優先指定します。
+IPA などの既存フォントは残し、他言語の設定は変えません。
+キャッシュ更新後、日本語の sans-serif が Noto Sans CJK JP に解決されることを確認します。
+追加パッケージの取得時間はネットワーク状況に依存します。
 アプリにはフォントを同梱しません。
 
 通常実行は基準画像を作成・更新しません。
