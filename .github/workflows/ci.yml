@@ -41,6 +41,8 @@ jobs:
       options: --shm-size=1g
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: 日本語フォントを設定
+        run: bash .github/scripts/setup-browser-fonts.sh
       - uses: pnpm/action-setup@v6.1.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:e2e:standalone
@@ -67,6 +69,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+      - name: 日本語フォントを設定
+        run: bash .github/scripts/setup-browser-fonts.sh
       - uses: pnpm/action-setup@v6.1.0
       - run: pnpm install --frozen-lockfile
       - name: 基準画像を一式生成
