@@ -38,8 +38,12 @@ pnpm --filter @playground/web dev
 | `pnpm test:e2e` | バックエンド結合E2E（既定） |
 | `pnpm test:e2e:backend` | バックエンド結合E2E |
 | `pnpm test:e2e:standalone` | MSWを使うフロントエンド単体E2E |
+| `pnpm test:vrt` | Chromium の画面を基準画像と比較 |
+| `pnpm test:vrt:update` | 現在の OS の VRT 基準画像を更新 |
 | `pnpm check-deps` | feature間の依存ルール検査 |
 | `pnpm knip` | 未使用コードの検出 |
+
+E2E の対象範囲と VRT 基準画像の更新手順は[ブラウザテスト](docs/browser-testing.md)を参照してください。
 
 ## アプリ別のgatewayセッション
 

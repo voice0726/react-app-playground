@@ -15,6 +15,8 @@
     "test:e2e": "pnpm test:e2e:backend",
     "test:e2e:backend": "pnpm --filter @playground/web test:e2e:backend",
     "test:e2e:standalone": "pnpm --filter @playground/web test:e2e:standalone",
+    "test:vrt": "pnpm --filter @playground/web test:vrt",
+    "test:vrt:update": "pnpm --filter @playground/web test:vrt:update",
     "check-deps": "turbo run check-deps",
     "knip": "knip"
   },
