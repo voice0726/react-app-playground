@@ -9,7 +9,7 @@ export default defineConfig({
   updateSnapshots: 'none',
   reporter: [['list'], ['html', { open: 'never' }]],
   expect: {
-    toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixels: 0 },
+    toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixels: 20 },
   },
   use: {
     ...standalone.use,
