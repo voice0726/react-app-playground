@@ -1,6 +1,7 @@
 name: CI and Deploy
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
   push:
@@ -15,6 +16,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -31,6 +33,7 @@ jobs:
       - run: pnpm test
 
   browser:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -47,6 +50,49 @@ jobs:
         uses: actions/upload-artifact@v7.0.2
         with:
           name: browser-test-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  update-vrt:
+    name: Linux の VRT 基準画像を更新
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --shm-size=1g
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.0
+      - run: pnpm install --frozen-lockfile
+      - name: 基準画像を一式生成
+        run: |
+          rm -rf tests/screenshots/linux
+          pnpm test:vrt:update
+      - name: 更新なしで再比較
+        run: pnpm test:vrt
+      - name: 画像一式と生成元コミットを梱包
+        run: |
+          tar -czf vrt-baselines.tar.gz tests/screenshots/linux
+          git rev-parse HEAD > source-commit.txt
+      - name: レビュー用の基準画像を保存
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: vrt-baselines-${{ github.sha }}
+          path: |
+            vrt-baselines.tar.gz
+            source-commit.txt
+          if-no-files-found: error
+          retention-days: 7
+      - name: 更新失敗のレポートを保存
+        if: failure()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: vrt-update-report
           path: |
             playwright-report/
             test-results/
