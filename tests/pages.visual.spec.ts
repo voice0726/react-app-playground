@@ -25,6 +25,7 @@ for (const screen of screens) {
     await page.goto(screen.path)
     await expect(page.getByText(screen.ready, { exact: true })).toBeVisible()
     await expect(page.getByRole('status', { name: /読み込み中|更新中/ })).toHaveCount(0)
+
     await expect(page).toHaveScreenshot(`${screen.name}.png`, { fullPage: true })
   })
 }
@@ -38,9 +39,11 @@ test('ダッシュボードの表示', async ({ page }) => {
 test('顧客作成モーダルの入力エラー', async ({ page }) => {
   await page.goto('/customers')
   await expect(page.getByText('Acme Corporation', { exact: true })).toBeVisible()
+
   await page.getByRole('button', { name: '新規顧客', exact: true }).click()
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByText('名前を入力してください', { exact: true })).toBeVisible()
+
   await expect(page).toHaveScreenshot('customer-validation.png', { fullPage: true })
 })
 
@@ -48,11 +51,13 @@ test('顧客削除の確認ダイアログ', async ({ page }) => {
   await page.goto('/customers')
   await page.getByRole('button', { name: 'Acme Corporation を削除', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
+
   await expect(page).toHaveScreenshot('customer-delete.png', { fullPage: true })
 })
 
 test('顧客の検索結果が空の表示', async ({ page }) => {
   await page.goto('/customers?q=no-matching-customer')
   await expect(page.getByText('顧客が見つかりません。', { exact: true })).toBeVisible()
+
   await expect(page).toHaveScreenshot('customers-empty.png', { fullPage: true })
 })

@@ -8,6 +8,7 @@ test('ダッシュボードに各リソースの件数を表示する', async ({
 
 test('案件を作成し、顧客情報を表示して編集できる', async ({ page }) => {
   await page.goto('/deals')
+
   await page.getByRole('button', { name: '新規案件', exact: true }).click()
   await page.getByLabel('タイトル', { exact: true }).fill('E2E 新規案件')
   await page.getByRole('combobox', { name: '顧客', exact: true }).click()
@@ -15,21 +16,25 @@ test('案件を作成し、顧客情報を表示して編集できる', async ({
   await page.getByLabel('金額', { exact: true }).fill('123000')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
+
   await page.getByRole('button', { name: 'E2E 新規案件 の詳細を見る', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'E2E 新規案件', exact: true })).toBeVisible()
   await expect(page.getByText('Acme Corporation', { exact: true })).toBeVisible()
+
   await page.getByRole('button', { name: '編集', exact: true }).click()
   await page.getByLabel('タイトル', { exact: true }).fill('E2E 受注案件')
   await page.getByRole('combobox', { name: 'ステータス', exact: true }).click()
   await page.getByRole('option', { name: '受注', exact: true }).click()
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
+
   await expect(page.getByRole('heading', { name: 'E2E 受注案件', exact: true })).toBeVisible()
   await expect(page.getByText('受注', { exact: true })).toBeVisible()
 })
 
 test('請求書を作成し、送付・支払・キャンセルへ遷移できる', async ({ page }) => {
   await page.goto('/invoices')
+
   await page.getByRole('button', { name: '新規請求書', exact: true }).click()
   await page.getByLabel('請求書番号', { exact: true }).fill('INV-E2E')
   await page.getByLabel('顧客 ID', { exact: true }).fill('customer-001')
@@ -40,28 +45,34 @@ test('請求書を作成し、送付・支払・キャンセルへ遷移でき�
   await page.getByLabel('支払期日', { exact: true }).press('Tab')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
+
   await page.getByRole('button', { name: 'INV-E2E の詳細を見る', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'INV-E2E', exact: true })).toBeVisible()
+
   await page.getByRole('button', { name: '→ 送付済み', exact: true }).click()
   await expect(page.getByText('送付済み', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '→ 支払済み', exact: true }).click()
   await expect(page.getByText('支払済み', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /^→/ })).toHaveCount(0)
+
   await page.getByRole('button', { name: '編集', exact: true }).click()
   await page.getByRole('combobox', { name: 'ステータス', exact: true }).click()
   await page.getByRole('option', { name: 'キャンセル', exact: true }).click()
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
+
   await expect(page.getByText('キャンセル', { exact: true })).toBeVisible()
 })
 
 test('タスクを作成し、選択欄から状態を変更できる', async ({ page }) => {
   await page.goto('/tasks')
+
   await page.getByRole('button', { name: '未着手にタスクを追加', exact: true }).click()
   await page.getByLabel('タイトル', { exact: true }).fill('E2E 状態選択')
   await page.getByLabel('説明', { exact: true }).fill('選択欄から状態を変更する')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
+
   const move = page.getByRole('combobox', { name: 'E2E 状態選択 を移動', exact: true })
   const inProgress = page.waitForResponse((response) => response.url().includes('/api/tasks/') && response.request().method() === 'PATCH')
   await move.selectOption('IN_PROGRESS')
@@ -78,6 +89,7 @@ test('タスクを作成し、選択欄から状態を変更できる', async ({
 
 test('タスクをドラッグして完了へ移動できる', async ({ page }) => {
   await page.goto('/tasks')
+
   const handle = page.getByRole('button', { name: 'Review Acme contract をドラッグ', exact: true })
   const target = page.getByRole('button', { name: '完了にタスクを追加', exact: true })
   const from = await handle.boundingBox()
@@ -91,12 +103,14 @@ test('タスクをドラッグして完了へ移動できる', async ({ page }) 
   await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 20 })
   await page.mouse.up()
   expect((await saved).status()).toBe(200)
+
   await expect(page.getByRole('combobox', { name: 'Review Acme contract を移動', exact: true })).toBeEnabled()
   await expect(page.getByRole('combobox', { name: 'Review Acme contract を移動', exact: true })).toHaveValue('DONE')
 })
 
 test('プロジェクトの必須項目を検証し、API 未実装を伝える', async ({ page }) => {
   await page.goto('/projects/new')
+
   await page.getByRole('button', { name: 'プロジェクトを作成', exact: true }).click()
   await expect(page.getByText('名前を入力してください', { exact: true })).toBeVisible()
   await expect(page.getByText('担当者を入力してください', { exact: true })).toBeVisible()
@@ -105,12 +119,14 @@ test('プロジェクトの必須項目を検証し、API 未実装を伝える'
   await page.getByLabel('開始日', { exact: true }).fill('2026/01/01')
   await page.getByLabel('開始日', { exact: true }).press('Tab')
   await page.getByLabel('ステータス', { exact: true }).fill('計画中')
+
   await page.getByRole('button', { name: 'プロジェクトを作成', exact: true }).click()
   await expect(page.getByText('プロジェクト API の実装が完了するまで、プロジェクトは作成できません。')).toBeVisible()
 })
 
 test('サインアウトするとログイン画面へ戻る', async ({ page }) => {
   await page.goto('/dashboard')
+
   await page.getByRole('button', { name: 'サインアウト', exact: true }).click()
   await expect(page).toHaveURL(/\/login$/)
   await expect(page.getByRole('heading', { name: 'サインイン', exact: true })).toBeVisible()
