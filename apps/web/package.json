@@ -15,6 +15,8 @@
     "test:e2e": "pnpm test:e2e:backend",
     "test:e2e:backend": "playwright test --config=../../tests/backend-integration.config.ts",
     "test:e2e:standalone": "playwright test --config=../../tests/standalone.config.ts",
+    "test:vrt": "playwright test --config=../../tests/visual.config.ts",
+    "test:vrt:update": "playwright test --config=../../tests/visual.config.ts --update-snapshots=all",
     "check-deps": "depcruise src --config .dependency-cruiser.cjs"
   },
   "dependencies": {

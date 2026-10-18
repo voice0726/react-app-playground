@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('MSWで顧客を作成し、詳細を開ける', async ({ page }) => {
+test('MSWで顧客を作成・編集し、確認後に削除できる', async ({ page }) => {
   const customerName = `単体 E2E 顧客 ${Date.now()}`
   await page.goto('/customers')
   await expect(page.getByRole('heading', { name: '顧客' })).toBeVisible()
@@ -9,8 +9,92 @@ test('MSWで顧客を作成し、詳細を開ける', async ({ page }) => {
   await page.getByLabel('名前', { exact: true }).fill(customerName)
   await page.getByLabel('メールアドレス', { exact: true }).fill(`e2e-${Date.now()}@example.com`)
   await page.getByLabel('電話番号', { exact: true }).fill('123')
+
   await page.getByRole('button', { name: '保存', exact: true }).click()
 
   await page.getByRole('button', { name: `${customerName} の詳細を見る`, exact: true }).click()
   await expect(page.getByRole('heading', { name: customerName })).toBeVisible()
+
+  await page.getByRole('button', { name: '編集', exact: true }).click()
+  await page.getByLabel('名前', { exact: true }).fill(`${customerName} 更新`)
+
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
+  await expect(page.getByRole('heading', { name: `${customerName} 更新`, exact: true })).toBeVisible()
+
+  await page.getByRole('link', { name: '顧客一覧に戻る', exact: true }).click()
+
+  await page.getByRole('button', { name: `${customerName} 更新 を削除`, exact: true }).click()
+  await page.getByRole('button', { name: 'キャンセル', exact: true }).click()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
+  await expect(page.getByRole('button', { name: `${customerName} 更新 の詳細を見る`, exact: true })).toBeVisible()
+
+  await page.getByRole('button', { name: `${customerName} 更新 を削除`, exact: true }).click()
+  await page.getByRole('button', { name: '削除する', exact: true }).click()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
+  await expect(page.getByRole('button', { name: `${customerName} 更新 の詳細を見る`, exact: true })).toHaveCount(0)
+})
+
+test('顧客の検索とソートを URL に保持し、再読み込み後も復元する', async ({ page }) => {
+  await page.goto('/customers')
+  await page.getByLabel('検索', { exact: true }).fill('Acme')
+  await expect(page.locator('tbody tr')).toHaveCount(1)
+  await expect(page.getByText('Acme Corporation', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/q=Acme/)
+
+  await page.reload()
+  await expect(page.getByLabel('検索', { exact: true })).toHaveValue('Acme')
+  await expect(page.locator('tbody tr')).toHaveCount(1)
+  await expect(page.getByText('Acme Corporation', { exact: true })).toBeVisible()
+  await page.getByLabel('検索', { exact: true }).fill('')
+  await expect(page.locator('tbody tr')).toHaveCount(10)
+
+  const ascendingNames = [
+    'Acme Corporation',
+    'Blue Ridge Trading',
+    'Greenfield Partners',
+    'Harbor Labs',
+    'Metro Digital',
+    'Northstar Systems',
+    'Orion Foods',
+    'Silverline Media',
+    'Summit Works',
+    'Vertex Logistics',
+  ]
+
+  const names = page.locator('tbody tr td:first-child')
+  await page.getByRole('button', { name: '名前', exact: true }).click()
+  await expect(page).toHaveURL(/sort=name/)
+  await expect(page).toHaveURL(/order=asc/)
+  await expect(names).toHaveText(ascendingNames)
+
+  await page.reload()
+  await expect(page).toHaveURL(/sort=name/)
+  await expect(page).toHaveURL(/order=asc/)
+  await expect(names).toHaveText(ascendingNames)
+  await page.getByRole('button', { name: /^名前/ }).click()
+  await expect(page).toHaveURL(/order=desc/)
+  await expect(names).toHaveText(ascendingNames.toReversed())
+
+  await page.reload()
+  await expect(page).toHaveURL(/sort=name/)
+  await expect(page).toHaveURL(/order=desc/)
+  await expect(names).toHaveText(ascendingNames.toReversed())
+
+  await page.getByLabel('検索', { exact: true }).fill('見つからない顧客')
+  await expect(page.getByText('顧客が見つかりません。', { exact: true })).toBeVisible()
+  await page.getByLabel('検索', { exact: true }).fill('')
+  await expect(page.locator('tbody tr')).toHaveCount(10)
+})
+
+test('顧客フォームの必須項目を検証する', async ({ page }) => {
+  await page.goto('/customers')
+
+  await page.getByRole('button', { name: '新規顧客', exact: true }).click()
+
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByText('名前を入力してください', { exact: true })).toBeVisible()
+  await expect(page.getByText('有効なメールアドレスを入力してください', { exact: true })).toBeVisible()
+  await expect(page.getByText('電話番号を入力してください', { exact: true })).toBeVisible()
+  await expect(page.getByRole('dialog')).toBeVisible()
 })
