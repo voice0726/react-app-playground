@@ -37,7 +37,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ github.workspace }}/playwright-report
       PLAYWRIGHT_HTML_OPEN: never
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble
@@ -46,6 +45,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+      - name: レポートの保存先を設定
+        run: printf 'PLAYWRIGHT_HTML_OUTPUT_DIR=%s/playwright-report\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
       - name: 日本語フォントを設定
         run: bash .github/scripts/setup-browser-fonts.sh
       - uses: pnpm/action-setup@v6.1.0
@@ -68,7 +69,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ github.workspace }}/playwright-report
       PLAYWRIGHT_HTML_OPEN: never
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble
@@ -77,6 +77,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+      - name: レポートの保存先を設定
+        run: printf 'PLAYWRIGHT_HTML_OUTPUT_DIR=%s/playwright-report\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
       - name: 日本語フォントを設定
         run: bash .github/scripts/setup-browser-fonts.sh
       - uses: pnpm/action-setup@v6.1.0
