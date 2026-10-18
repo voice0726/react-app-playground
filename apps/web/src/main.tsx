@@ -1,3 +1,4 @@
+import '@fontsource-variable/noto-sans-jp/wght.css'
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import { createRouter, RouterProvider } from '@tanstack/react-router'

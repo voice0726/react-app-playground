@@ -51,6 +51,7 @@ API 障害・401・ログアウト再試行・ユーザー間分離は既存の�
 | モバイル | 390 x 844、deviceScaleFactor 1、タッチ有効 |
 | 言語・時刻 | ja-JP、Asia/Tokyo、2026-04-06 12:00 |
 | 表示 | ライト、reducedMotion、アニメーション無効、キャレット非表示 |
+| フォント | アプリ同梱の Noto Sans JP Variable、通常体の weight 軸 |
 | データ | MSW の初期データ、読み込み後に撮影 |
 | 比較 | ページ全体、差分ピクセル数は最大 20、色差閾値は Playwright 既定 |
 | 保存先 | `tests/screenshots/linux/{desktop,mobile}/` |

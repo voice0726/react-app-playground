@@ -1,4 +1,4 @@
-import { MantineProvider } from '@mantine/core'
+import { createTheme, MantineProvider } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -8,6 +8,9 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import { queryClient } from '@/lib/queryClient'
 
+const fontFamily = "'Noto Sans JP Variable', sans-serif"
+const theme = createTheme({ fontFamily, headings: { fontFamily } })
+
 export const Route = createRootRoute({
   component: RootLayout,
 })
@@ -16,7 +19,7 @@ function RootLayout() {
   const showDevtools = import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEVTOOLS !== 'true'
 
   return (
-    <MantineProvider>
+    <MantineProvider theme={theme}>
       <ModalsProvider>
         <QueryClientProvider client={queryClient}>
           <Notifications />
