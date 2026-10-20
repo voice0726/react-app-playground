@@ -63,6 +63,35 @@ jobs:
             test-results/
           retention-days: 7
 
+  auto-merge-runtime-deps:
+    name: 本番依存の自動マージ
+    needs: [check, browser]
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@v3.1.0
+      - id: notes
+        name: リリースノートの破壊的変更を検出する
+        run: |
+          if printf '%s' "$PR_BODY" | grep -qiE 'breaking|deprecat|removed|drop(ped)? support|migrat'; then
+            echo "risky=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+      - name: 本番依存の patch/minor を E2E・VRT 通過後に squash マージする
+        if: >-
+          steps.metadata.outputs.update-type != 'version-update:semver-major'
+          && steps.notes.outputs.risky != 'true'
+          && steps.metadata.outputs.dependency-type != 'direct:development'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+
   update-vrt:
     name: Linux の VRT 基準画像を更新
     if: github.event_name == 'workflow_dispatch'

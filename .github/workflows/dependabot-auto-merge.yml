@@ -9,11 +9,25 @@ permissions:
   pull-requests: write
 
 jobs:
-  auto-merge:
+  dev-dependencies:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: 必須チェック通過後にsquashマージする
+      - id: metadata
+        uses: dependabot/fetch-metadata@v3.1.0
+      - id: notes
+        name: リリースノートの破壊的変更を検出する
+        run: |
+          if printf '%s' "$PR_BODY" | grep -qiE 'breaking|deprecat|removed|drop(ped)? support|migrat'; then
+            echo "risky=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+      - name: 開発依存の patch/minor を必須チェック通過後に squash マージする
+        if: >-
+          steps.metadata.outputs.update-type != 'version-update:semver-major'
+          && steps.notes.outputs.risky != 'true'
+          && steps.metadata.outputs.dependency-type == 'direct:development'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
