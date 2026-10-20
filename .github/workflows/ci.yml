@@ -1,7 +1,19 @@
 name: CI and Deploy
+run-name: >-
+  ${{ github.event_name == 'push' && format('Deploy {0}', github.sha)
+  || (github.event_name == 'workflow_dispatch' && inputs.task == 'deploy'
+  && format('Deploy {0}', github.sha))
+  || format('CI {0} {1}', github.event_name, github.ref) }}
 
 on:
   workflow_dispatch:
+    inputs:
+      task:
+        description: 実行する処理
+        type: choice
+        options: [update-vrt, deploy]
+        default: update-vrt
+        required: true
   pull_request:
     branches: [main]
   push:
@@ -11,12 +23,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{ (github.event_name == 'workflow_dispatch' && inputs.task == 'update-vrt' && 'update-vrt')
+    || (github.event_name == 'pull_request' && 'pull-request') || 'deploy' }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   check:
-    if: github.event_name != 'workflow_dispatch'
+    if: github.event_name != 'workflow_dispatch' || inputs.task == 'deploy'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -26,6 +40,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: node .github/scripts/test-dependabot-auto-merge.mjs
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm typecheck
@@ -33,7 +48,7 @@ jobs:
       - run: pnpm test
 
   browser:
-    if: github.event_name != 'workflow_dispatch'
+    if: github.event_name != 'workflow_dispatch' || inputs.task == 'deploy'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -63,9 +78,96 @@ jobs:
             test-results/
           retention-days: 7
 
+  auto-merge-runtime-deps:
+    name: 本番依存の自動マージ
+    needs: [check, browser]
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
+    concurrency:
+      group: dependabot-merge-runtime-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      actions: write
+      checks: read
+      contents: write
+      pull-requests: write
+      statuses: read
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@v3.1.0
+      - id: notes
+        name: リリースノートの破壊的変更を検出する
+        run: |
+          if printf '%s' "$PR_BODY" | grep -qiE 'breaking|deprecat|removed|drop(ped)? support|migrat'; then
+            echo "risky=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+      - id: merge
+        name: 本番依存の patch/minor を E2E・VRT 通過後に squash マージする
+        if: >-
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch'
+          || steps.metadata.outputs.update-type == 'version-update:semver-minor')
+          && steps.notes.outputs.risky != 'true'
+          && steps.metadata.outputs.dependency-type != 'direct:development'
+        run: |
+          gh pr checks "$PR_URL" --required --watch --fail-fast
+          gh pr merge --squash --match-head-commit "$PR_HEAD_SHA" "$PR_URL"
+          echo 'merged=true' >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+  request-deploy:
+    needs: [auto-merge-runtime-deps]
+    if: needs.auto-merge-runtime-deps.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: dependabot-deploy-request
+      cancel-in-progress: false
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: マージ後のデプロイ要求を直列化する
+        run: |
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
+          test "$(jq -r '.merged_at != null' <<< "$pr")" = true
+          if [ "$(jq -r '.merged_by.login' <<< "$pr")" != 'github-actions[bot]' ]; then
+            exit 0
+          fi
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          for attempt in {1..30}; do
+            runs=$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs" \
+              -f "head_sha=$main_sha" -f per_page=100 --paginate)
+            requests=$(jq -s --arg sha "$main_sha" '[.[].workflow_runs[]
+              | select(.head_sha == $sha)
+              | select(.event == "push"
+                or (.event == "workflow_dispatch" and (.display_title | startswith("Deploy "))))
+              | select(.status != "completed" or .conclusion == "success")] | length' <<< "$runs")
+            if [ "$requests" -gt 0 ]; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 1 ]; then
+              gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main -f task=deploy
+            fi
+            sleep 2
+          done
+          echo 'Deployment request did not become visible' >&2
+          exit 1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
   update-vrt:
     name: Linux の VRT 基準画像を更新
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.task == 'update-vrt'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -113,7 +215,10 @@ jobs:
           retention-days: 7
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main'
+      && (github.event_name == 'push'
+      || (github.event_name == 'workflow_dispatch' && inputs.task == 'deploy'))
     needs: [check, browser]
     runs-on: ubuntu-latest
     steps:
@@ -124,7 +229,18 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - id: current
+        name: main の最新コミットだけをデプロイ対象にする
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [ "$main_sha" = "$DEPLOY_SHA" ]; then
+            echo 'deploy=true' >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_SHA: ${{ github.sha }}
       - name: Deploy Worker
+        if: steps.current.outputs.deploy == 'true'
         run: pnpm --filter @playground/web run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
