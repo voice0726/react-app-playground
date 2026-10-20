@@ -39,8 +39,8 @@ importers:
         specifier: 9.7.1
         version: 9.7.1(@mantine/hooks@9.7.1(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@mantine/dates':
-        specifier: 9.7.1
-        version: 9.7.1(@mantine/core@9.7.1(@mantine/hooks@9.7.1(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.7.1(react@19.3.0))(dayjs@1.11.23)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        specifier: 9.7.3
+        version: 9.7.3(@mantine/core@9.7.1(@mantine/hooks@9.7.1(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.7.1(react@19.3.0))(dayjs@1.11.23)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@mantine/hooks':
         specifier: 9.7.1
         version: 9.7.1(react@19.3.0)
@@ -860,11 +860,11 @@ packages:
       react: ^19.2.0
       react-dom: ^19.2.0
 
-  '@mantine/dates@9.7.1':
-    resolution: {integrity: sha512-oFQf8b0cW2ArcdP6r0ATMA4gJN3D8Nc29J7wE4E2xM5mI1+nW6k47L0E45uKwxFb9CqdhXaN+XA9lbrkWkMfsg==}
+  '@mantine/dates@9.7.3':
+    resolution: {integrity: sha512-Ea7coqQp3iNs+1XTEjbcoPLP5M9DG5jcxWuEmJC21KUwpBmZKq+RyT0ovxoS8PrWBqvtu/bss8qbjE97wxyqrw==}
     peerDependencies:
-      '@mantine/core': 9.7.1
-      '@mantine/hooks': 9.7.1
+      '@mantine/core': 9.7.3
+      '@mantine/hooks': 9.7.3
       dayjs: '>=1.0.0'
       react: ^19.2.0
       react-dom: ^19.2.0
@@ -3599,7 +3599,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@mantine/dates@9.7.1(@mantine/core@9.7.1(@mantine/hooks@9.7.1(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.7.1(react@19.3.0))(dayjs@1.11.23)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@mantine/dates@9.7.3(@mantine/core@9.7.1(@mantine/hooks@9.7.1(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@mantine/hooks@9.7.1(react@19.3.0))(dayjs@1.11.23)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@mantine/core': 9.7.1(@mantine/hooks@9.7.1(react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@mantine/hooks': 9.7.1(react@19.3.0)
