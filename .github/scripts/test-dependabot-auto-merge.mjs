@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 const workflows = new URL('../workflows/', import.meta.url);
 const ci = fs.readFileSync(new URL('ci.yml', workflows), 'utf8');
@@ -11,36 +11,47 @@ let total = 0;
 
 function runMerge(script, scenario, runs, mergeSha = 'merge-sha', mainSha = 'main-sha') {
   const pr = {
-    mergedAt: scenario === 'unmerged' ? null : '2026-10-20T13:00:00Z',
-    mergeCommit: { oid: mergeSha },
-    mergedBy: { login: scenario === 'manual' ? 'human' : 'github-actions[bot]' },
+    merged_at: scenario === 'unmerged' ? null : '2026-10-20T13:00:00Z',
+    merge_commit_sha: mergeSha,
+    merged_by: { login: scenario === 'manual' ? 'human' : 'github-actions[bot]' },
   };
   const mock = `gh() {
     printf '%s\\n' "$*" >&2
     case "$1 $2" in
       'pr checks') [ "$SCENARIO" != checks-fail ] ;;
       'pr merge') [ "$SCENARIO" != stale-head ] ;;
-      'pr view') printf '%s' "$MOCK_PR" ;;
-      'api --method') printf '%s' "$MOCK_RUNS" ;;
+      'api repos/example/project/pulls/1') printf '%s' "$MOCK_PR" ;;
+      'api --method') if [ -f "$REQUESTED_FILE" ] && [ "$SCENARIO" != invisible ]; then printf '%s' "$CREATED_RUN"; else printf '%s' "$MOCK_RUNS"; fi ;;
       'api repos/example/project/git/ref/heads/main') printf '%s' "$MAIN_SHA" ;;
-      'workflow run') [ "$SCENARIO" != dispatch-fail ] ;;
+      'workflow run') [ "$SCENARIO" != dispatch-fail ] && touch "$REQUESTED_FILE" ;;
       *) return 1 ;;
     esac
-  }\n`;
-  return spawnSync('bash', ['-e', '-o', 'pipefail', '-c', mock + script], {
+  }\nsleep() { :; }\n`;
+  const requested = fs.mkdtempSync(path.join(os.tmpdir(), 'pr55-request-'));
+  const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', mock + script], {
     encoding: 'utf8',
     env: {
       ...process.env, SCENARIO: scenario, MOCK_PR: JSON.stringify(pr),
       MOCK_RUNS: runs, MAIN_SHA: mainSha, GITHUB_REPOSITORY: 'example/project',
-      PR_URL: 'https://github.com/example/project/pull/1', PR_HEAD_SHA: 'expected-sha',
+      PR_URL: 'https://github.com/example/project/pull/1', PR_HEAD_SHA: 'expected-sha', PR_NUMBER: '1',
+      GITHUB_OUTPUT: '/dev/null', REQUESTED_FILE: path.join(requested, 'requested'),
+      CREATED_RUN: JSON.stringify({workflow_runs:[{event:'workflow_dispatch',head_sha:mainSha,display_title:`Deploy ${mainSha}`,status:'queued'}]}),
     },
   });
+  fs.rmSync(requested, {recursive: true});
+  return result;
 }
 
+const requestScripts = [];
+const requestGroups = [];
 for (const file of ['ci.yml', 'dependabot-auto-merge.yml']) {
   const text = fs.readFileSync(new URL(file, workflows), 'utf8');
   const script = text.match(/        run: \|\n(          gh pr checks[\s\S]*?)\n        env:/)[1].replace(/^          /gm, '');
-  scripts.push(script);
+  const request = text.match(/        run: \|\n(          pr=\$\(gh api[\s\S]*?)\n        env:/)[1].replace(/^          /gm, '');
+  requestScripts.push(request);
+  requestGroups.push(text.split('\n  request-deploy:')[1].match(/group: (.*)/)[1]);
+  const combined = script + '\n' + request;
+  scripts.push(combined);
   const expression = text.match(/if: >-\n([\s\S]*?)\n        run: \|/)[1].trim()
     .replaceAll('.update-type', "['update-type']").replaceAll('.dependency-type', "['dependency-type']");
   const eligible = new Function('steps', `return (${expression})`);
@@ -54,8 +65,8 @@ for (const file of ['ci.yml', 'dependabot-auto-merge.yml']) {
       }
     }
   }
-  for (const scenario of ['new', 'manual', 'checks-fail', 'stale-head', 'unmerged', 'queued', 'running', 'success', 'failed', 'cancelled', 'other-sha', 'vrt', 'push', 'second-page', 'dispatch-fail']) {
-    const requested = ['new', 'failed', 'cancelled', 'other-sha', 'vrt', 'dispatch-fail'].includes(scenario);
+  for (const scenario of ['new', 'manual', 'checks-fail', 'stale-head', 'unmerged', 'queued', 'running', 'success', 'failed', 'cancelled', 'other-sha', 'vrt', 'push', 'second-page', 'dispatch-fail', 'invisible']) {
+    const requested = ['new', 'failed', 'cancelled', 'other-sha', 'vrt', 'dispatch-fail', 'invisible'].includes(scenario);
     const entry = { event: 'workflow_dispatch', head_sha: 'main-sha', display_title: 'Deploy main-sha', status: 'completed', conclusion: 'success' };
     const runs = ['queued', 'running', 'success', 'failed', 'cancelled', 'other-sha', 'vrt', 'push', 'second-page'].includes(scenario) ? [entry] : [];
     if (scenario === 'queued') entry.status = 'queued';
@@ -66,9 +77,9 @@ for (const file of ['ci.yml', 'dependabot-auto-merge.yml']) {
     if (scenario === 'vrt') entry.display_title = 'CI workflow_dispatch refs/heads/main';
     if (scenario === 'push') entry.event = 'push';
     const response = (scenario === 'second-page' ? '{"workflow_runs":[]}\n' : '') + JSON.stringify({ workflow_runs: runs });
-    const result = runMerge(script, scenario, response);
+    const result = runMerge(combined, scenario, response);
     assert.equal(result.stderr.includes('workflow run'), requested, `${file}: ${scenario} dispatch`);
-    assert.equal(result.status === 0, !['checks-fail', 'stale-head', 'unmerged', 'dispatch-fail'].includes(scenario), `${file}: ${scenario}: ${result.stderr}`);
+    assert.equal(result.status === 0, !['checks-fail', 'stale-head', 'unmerged', 'dispatch-fail', 'invisible'].includes(scenario), `${file}: ${scenario}: ${result.stderr}`);
     if (requested) {
       assert.match(result.stderr, /head_sha=main-sha/);
       assert.match(result.stderr, /--ref main -f task=deploy/);
@@ -79,7 +90,7 @@ for (const file of ['ci.yml', 'dependabot-auto-merge.yml']) {
   }
   for (const status of ['queued', 'in_progress', 'completed']) {
     const runs = { workflow_runs: [{ event: 'workflow_dispatch', head_sha: 'main-B', display_title: 'Deploy merge-A', status, conclusion: 'success' }] };
-    const result = runMerge(script, 'consecutive-merges', JSON.stringify(runs), 'merge-B', 'main-B');
+    const result = runMerge(combined, 'consecutive-merges', JSON.stringify(runs), 'merge-B', 'main-B');
     assert.equal(result.status, 0);
     assert.doesNotMatch(result.stderr, /workflow run/, `${file}: consecutive merges with ${status} request`);
     assert.match(result.stderr, /head_sha=main-B/);
@@ -87,6 +98,8 @@ for (const file of ['ci.yml', 'dependabot-auto-merge.yml']) {
   }
 }
 assert.equal(scripts[0], scripts[1]);
+assert.equal(requestGroups[0], requestGroups[1]);
+assert.notEqual(ci.match(/group: dependabot-merge-runtime-.*/)[0], fs.readFileSync(new URL('dependabot-auto-merge.yml',workflows),'utf8').match(/group: dependabot-merge-dev-.*/)[0]);
 assert.doesNotMatch(ci, /merge_commit/);
 assert.match(ci, /format\('Deploy \{0\}', github.sha\)/);
 
@@ -115,4 +128,51 @@ try {
   fs.rmSync(temp, { recursive: true });
 }
 assert.match(ci, /if: steps.current.outputs.deploy == 'true'/);
+const overlap = fs.mkdtempSync(path.join(os.tmpdir(), 'pr55-overlap-'));
+try {
+  const stateFile = path.join(overlap, 'state.json');
+  fs.writeFileSync(stateFile, JSON.stringify({ dispatches: 0, polls: 0 }));
+  fs.writeFileSync(path.join(overlap, 'gh'), `#!${process.execPath}
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+const file = process.env.REQUEST_STATE;
+const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+if (args[0] === 'workflow') {
+  state.dispatches++;
+  fs.writeFileSync(file, JSON.stringify(state));
+} else if (args.includes('repos/example/project/pulls/1')) {
+  process.stdout.write(JSON.stringify({merged_at:'2026-10-20',merged_by:{login:'github-actions[bot]'}}));
+} else if (args.includes('--method')) {
+  if (state.dispatches) state.polls++;
+  fs.writeFileSync(file, JSON.stringify(state));
+  process.stdout.write(JSON.stringify({workflow_runs:state.polls >= 2 ? [{event:'workflow_dispatch',head_sha:'main-sha',display_title:'Deploy main-sha',status:'queued'}] : []}));
+} else {
+  process.stdout.write('main-sha');
+}
+`, { mode: 0o755 });
+  const lanes = new Map();
+  const results = await Promise.all(requestScripts.map((script, index) => {
+    const group = requestGroups[index];
+    const previous = lanes.get(group) || Promise.resolve();
+    const next = previous.then(() => new Promise((resolve, reject) => {
+      const child = spawn('bash', ['-e', '-o', 'pipefail', '-c', 'sleep() { :; }\n' + script], {
+        env: { ...process.env, PATH: overlap + path.delimiter + process.env.PATH,
+          REQUEST_STATE: stateFile, GITHUB_REPOSITORY: 'example/project', PR_NUMBER: '1' },
+      });
+      let stderr = '';
+      child.stderr.on('data', chunk => { stderr += chunk; });
+      child.on('error', reject);
+      child.on('close', code => code === 0 ? resolve(code) : reject(new Error(stderr)));
+    }));
+    lanes.set(group, next);
+    return next;
+  }));
+  assert.deepEqual(results, [0, 0]);
+  const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+  assert.equal(state.dispatches, 1);
+  assert.ok(state.polls >= 2);
+  total++;
+} finally {
+  fs.rmSync(overlap, { recursive: true });
+}
 console.log(`${total} cases passed`);
