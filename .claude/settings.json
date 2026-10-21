@@ -1,0 +1,47 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat >/dev/null || true; command -v code-review-graph >/dev/null 2>&1 || exit 0; git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph update --skip-flows --repo \"$(git rev-parse --show-toplevel 2>/dev/null)\" || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat >/dev/null || true; command -v code-review-graph >/dev/null 2>&1 || exit 0; git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph status --repo \"$(git rev-parse --show-toplevel 2>/dev/null)\" || echo 'Not a git repo, skipping'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm build:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm check-deps:*)",
+      "Bash(pnpm knip:*)",
+      "Bash(pnpm test:e2e:*)",
+      "Bash(pnpm test:e2e:backend:*)",
+      "Bash(pnpm test:e2e:standalone:*)",
+      "Bash(pnpm test:vrt:*)",
+      "Bash(pnpm --filter @playground/web typecheck:*)",
+      "Bash(pnpm --filter @playground/web build:*)",
+      "Bash(pnpm --filter @playground/web lint:*)",
+      "Bash(pnpm --filter @playground/web test:*)",
+      "Bash(pnpm --filter @playground/web check-deps:*)"
+    ]
+  }
+}
