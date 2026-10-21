@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildListUrl, outOfRangeLastPage, toListRequest } from './pagination'
+import { buildListUrl, keepPreviousPage, outOfRangeLastPage, pageToShow, toListRequest } from './pagination'
+
+function fetched(total: number) {
+  return { data: { items: [], total, page: 3, pageSize: 10 }, isFetching: false, isPlaceholderData: false }
+}
 
 describe('一覧のページング条件', () => {
   it('URL の条件を既定値で補い、空白だけの検索語を送らない', () => {
@@ -20,9 +24,41 @@ describe('一覧のページング条件', () => {
   })
 
   it('取得済みの最終ページを越えたときだけ移動先を返す', () => {
-    expect(outOfRangeLastPage(3, { total: 15, pageSize: 10 }, false)).toBe(2)
-    expect(outOfRangeLastPage(2, { total: 15, pageSize: 10 }, false)).toBeUndefined()
-    expect(outOfRangeLastPage(3, { total: 0, pageSize: 10 }, false)).toBe(1)
-    expect(outOfRangeLastPage(3, { total: 15, pageSize: 10 }, true)).toBeUndefined()
+    expect(outOfRangeLastPage(3, fetched(15))).toBe(2)
+    expect(outOfRangeLastPage(2, fetched(15))).toBeUndefined()
+    expect(outOfRangeLastPage(3, fetched(0))).toBe(1)
+    expect(outOfRangeLastPage(3, { ...fetched(15), isFetching: true, isPlaceholderData: true })).toBeUndefined()
+  })
+
+  it('再取得中のキャッシュでは、件数が古い可能性があるので移動しない', () => {
+    const stale = { data: { items: [], total: 10, page: 2, pageSize: 10 }, isFetching: true, isPlaceholderData: false }
+
+    expect(outOfRangeLastPage(2, stale)).toBeUndefined()
+  })
+
+  it('取得に失敗した条件でも、空のページを返して一覧を残す', () => {
+    const request = { page: 2, pageSize: 20, q: 'x' }
+
+    expect(pageToShow(request, { data: undefined, isError: true })).toEqual({
+      items: [],
+      total: 0,
+      page: 2,
+      pageSize: 20,
+    })
+    expect(pageToShow(request, { data: undefined, isError: false })).toBeUndefined()
+  })
+
+  it('直前の条件が失敗していたら、次の取得中も空のページで一覧を残す', () => {
+    const request = { page: 1, pageSize: 10 }
+    const previous = { items: [], total: 3, page: 1, pageSize: 10 }
+
+    expect(keepPreviousPage(request)(previous, { state: { status: 'success' } })).toBe(previous)
+    expect(keepPreviousPage(request)(undefined, { state: { status: 'error' } })).toEqual({
+      items: [],
+      total: 0,
+      page: 1,
+      pageSize: 10,
+    })
+    expect(keepPreviousPage(request)(undefined, undefined)).toBeUndefined()
   })
 })

@@ -68,7 +68,10 @@ export function listResponse<T extends { id: string }, K extends keyof T & strin
   const sort = params.get('sort') ?? options.defaultSort
   const order = params.get('order')?.toLowerCase() ?? 'asc'
 
-  if (page === undefined || pageSize === undefined || query.length > MAX_QUERY_LENGTH) return invalidListQuery()
+  // バックエンドは utf8.RuneCountInString で数えるので、UTF-16 の length ではなくコードポイント数で比べる
+  if (page === undefined || pageSize === undefined || [...query].length > MAX_QUERY_LENGTH) {
+    return invalidListQuery()
+  }
   if (!options.sortableFields.some((field) => field === sort) || (order !== 'asc' && order !== 'desc')) {
     return invalidListQuery()
   }

@@ -1,10 +1,10 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import type { Deal } from '@/features/deals/types'
 import type { Customer } from '@/types/customer.types'
 import { customerKeys } from '@/types/queryKeys'
 import { fetchJson } from '@/lib/apiClient'
-import { buildListUrl, type ListRequest, type PaginatedResponse } from '@/lib/pagination'
+import { buildListUrl, keepPreviousPage, type ListRequest, type PaginatedResponse } from '@/lib/pagination'
 
 export const dealKeys = {
   all: ['deals'] as const,
@@ -24,7 +24,7 @@ export function useDealPage(request: ListRequest) {
   return useQuery({
     queryKey: dealKeys.page(request),
     queryFn: () => fetchJson<PaginatedResponse<Deal>>(buildListUrl('/api/deals', request)),
-    placeholderData: keepPreviousData,
+    placeholderData: keepPreviousPage<Deal>(request),
   })
 }
 

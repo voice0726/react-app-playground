@@ -60,15 +60,43 @@ export function pageCount(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize))
 }
 
+type PageQueryState<T> = {
+  data: PaginatedResponse<T> | undefined
+  isError: boolean
+  isFetching: boolean
+  isPlaceholderData: boolean
+}
+
 // 削除や絞り込みで件数が減ると、URL のページが末尾を越える。そのときだけ移動先の末尾ページを返す
+// 再取得中のキャッシュは追加前の件数のことがあり、有効なページから戻してしまうので取得後だけ判定する
 export function outOfRangeLastPage(
   requestedPage: number,
-  data: Pick<PaginatedResponse<unknown>, 'total' | 'pageSize'> | undefined,
-  isPlaceholderData: boolean,
+  { data, isFetching, isPlaceholderData }: Omit<PageQueryState<unknown>, 'isError'>,
 ): number | undefined {
-  if (data === undefined || isPlaceholderData) return undefined
+  if (data === undefined || isPlaceholderData || isFetching) return undefined
   const lastPage = pageCount(data.total, data.pageSize)
   return requestedPage > lastPage ? lastPage : undefined
+}
+
+function emptyPage<T>(request: ListRequest): PaginatedResponse<T> {
+  return { items: [], total: 0, page: request.page, pageSize: request.pageSize }
+}
+
+// 取得に失敗した条件でも一覧を消さず、検索欄から条件を直せるようにする
+export function pageToShow<T>(
+  request: ListRequest,
+  { data, isError }: Pick<PageQueryState<T>, 'data' | 'isError'>,
+): PaginatedResponse<T> | undefined {
+  return data ?? (isError ? emptyPage<T>(request) : undefined)
+}
+
+// keepPreviousData は直前の条件が失敗していると何も返さず、条件を直す途中で一覧が消える
+export function keepPreviousPage<T>(request: ListRequest) {
+  return (
+    previousData: PaginatedResponse<T> | undefined,
+    previousQuery: { state: { status: string } } | undefined,
+  ): PaginatedResponse<T> | undefined =>
+    previousData ?? (previousQuery?.state.status === 'error' ? emptyPage<T>(request) : undefined)
 }
 
 export function toPageParam(page: number): number | undefined {

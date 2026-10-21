@@ -9,7 +9,7 @@ import { DealForm } from '@/features/deals/components/DealForm'
 import { DealTable } from '@/features/deals/components/DealTable'
 import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
-import { outOfRangeLastPage, toListRequest, toPageParam } from '@/lib/pagination'
+import { outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 const dealSearchSchema = createListSearchSchema([
   'title',
@@ -59,10 +59,11 @@ function DealsRoute() {
     return <Outlet />
   }
 
-  const lastPage = outOfRangeLastPage(request.page, dealsQuery.data, dealsQuery.isPlaceholderData)
+  const lastPage = outOfRangeLastPage(request.page, dealsQuery)
   if (lastPage !== undefined) {
     return <Navigate to="/deals" search={{ ...search, page: toPageParam(lastPage) }} replace />
   }
+  const page = pageToShow(request, dealsQuery)
 
   return (
     <Stack gap="lg">
@@ -77,9 +78,7 @@ function DealsRoute() {
           案件を読み込めませんでした。
         </Alert>
       ) : null}
-      {dealsQuery.data !== undefined ? (
-        <DealTable page={dealsQuery.data} isUpdating={dealsQuery.isPlaceholderData} />
-      ) : null}
+      {page !== undefined ? <DealTable page={page} isUpdating={dealsQuery.isPlaceholderData} /> : null}
 
       <Modal opened={opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />

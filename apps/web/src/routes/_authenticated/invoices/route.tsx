@@ -8,7 +8,7 @@ import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceTable } from '@/features/invoices/components/InvoiceTable'
 import { invoiceSearchSchema } from '@/features/invoices/schemas/search'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
-import { outOfRangeLastPage, toListRequest, toPageParam } from '@/lib/pagination'
+import { outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 export const Route = createFileRoute('/_authenticated/invoices')({
   validateSearch: invoiceSearchSchema,
@@ -25,10 +25,11 @@ function InvoicesRoute() {
     return <Outlet />
   }
 
-  const lastPage = outOfRangeLastPage(request.page, invoicesQuery.data, invoicesQuery.isPlaceholderData)
+  const lastPage = outOfRangeLastPage(request.page, invoicesQuery)
   if (lastPage !== undefined) {
     return <Navigate to="/invoices" search={{ ...search, page: toPageParam(lastPage) }} replace />
   }
+  const page = pageToShow(request, invoicesQuery)
 
   return (
     <Stack gap="lg">
@@ -43,9 +44,7 @@ function InvoicesRoute() {
           請求書を読み込めませんでした。
         </Alert>
       ) : null}
-      {invoicesQuery.data !== undefined ? (
-        <InvoiceTable page={invoicesQuery.data} isUpdating={invoicesQuery.isPlaceholderData} />
-      ) : null}
+      {page !== undefined ? <InvoiceTable page={page} isUpdating={invoicesQuery.isPlaceholderData} /> : null}
     </Stack>
   )
 }

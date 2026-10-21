@@ -31,9 +31,17 @@ describe('一覧 API のモック', () => {
     'page=1&pageSize=10&order=up',
     'page=0&pageSize=10',
     'page=1&pageSize=101',
+    `page=1&pageSize=10&q=${'a'.repeat(201)}`,
   ])('許可しない条件 %s は 400 にする', async (query) => {
     const response = await fetch(`http://localhost/api/customers?${query}`)
 
     expect(response.status).toBe(400)
+  })
+
+  it('検索語の長さはバックエンドと同じくコードポイント数で数える', async () => {
+    const q = encodeURIComponent('😀'.repeat(200))
+    const response = await fetch(`http://localhost/api/customers?page=1&pageSize=10&q=${q}`)
+
+    expect(response.status).toBe(200)
   })
 })

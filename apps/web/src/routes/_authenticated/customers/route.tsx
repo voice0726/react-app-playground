@@ -9,7 +9,7 @@ import { CustomerForm } from '@/features/customers/components/CustomerForm'
 import { CustomerTable } from '@/features/customers/components/CustomerTable'
 import type { CustomerFormValues } from '@/features/customers/schemas/customer.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
-import { outOfRangeLastPage, toListRequest, toPageParam } from '@/lib/pagination'
+import { outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 const customerSearchSchema = createListSearchSchema([
   'name',
@@ -59,10 +59,11 @@ function CustomersRoute() {
     return <Outlet />
   }
 
-  const lastPage = outOfRangeLastPage(request.page, customersQuery.data, customersQuery.isPlaceholderData)
+  const lastPage = outOfRangeLastPage(request.page, customersQuery)
   if (lastPage !== undefined) {
     return <Navigate to="/customers" search={{ ...search, page: toPageParam(lastPage) }} replace />
   }
+  const page = pageToShow(request, customersQuery)
 
   return (
     <Stack gap="lg">
@@ -77,9 +78,7 @@ function CustomersRoute() {
           顧客を読み込めませんでした。
         </Alert>
       ) : null}
-      {customersQuery.data !== undefined ? (
-        <CustomerTable page={customersQuery.data} isUpdating={customersQuery.isPlaceholderData} />
-      ) : null}
+      {page !== undefined ? <CustomerTable page={page} isUpdating={customersQuery.isPlaceholderData} /> : null}
 
       <Modal opened={opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />

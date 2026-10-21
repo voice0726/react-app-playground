@@ -1,8 +1,8 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import type { Invoice } from '@/features/invoices/types'
 import { fetchJson } from '@/lib/apiClient'
-import { buildListUrl, type ListRequest, type PaginatedResponse } from '@/lib/pagination'
+import { buildListUrl, keepPreviousPage, type ListRequest, type PaginatedResponse } from '@/lib/pagination'
 
 export const invoiceKeys = {
   all: ['invoices'] as const,
@@ -22,7 +22,7 @@ export function useInvoicePage(request: ListRequest) {
   return useQuery({
     queryKey: invoiceKeys.page(request),
     queryFn: () => fetchJson<PaginatedResponse<Invoice>>(buildListUrl('/api/invoices', request)),
-    placeholderData: keepPreviousData,
+    placeholderData: keepPreviousPage<Invoice>(request),
   })
 }
 
