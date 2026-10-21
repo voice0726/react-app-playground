@@ -1,0 +1,38 @@
+name: React Doctor
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: react-doctor-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  react-doctor:
+    if: >-
+      github.actor != 'dependabot[bot]'
+      && (github.event_name != 'pull_request'
+          || github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      statuses: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: millionco/react-doctor@v2.4.0
+        with:
+          directory: apps/web
+          scope: changed
+          blocking: none
+          comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          review-comments: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          commit-status: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
