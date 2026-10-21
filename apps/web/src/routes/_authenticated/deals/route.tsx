@@ -1,14 +1,15 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
 import { useCreateDeal } from '@/features/deals/api/mutations'
-import { useDeals } from '@/features/deals/api/queries'
+import { useDealPage } from '@/features/deals/api/queries'
 import { DealForm } from '@/features/deals/components/DealForm'
 import { DealTable } from '@/features/deals/components/DealTable'
 import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
+import { outOfRangeLastPage, toListRequest, toPageParam } from '@/lib/pagination'
 
 const dealSearchSchema = createListSearchSchema([
   'title',
@@ -28,7 +29,9 @@ function DealsRoute() {
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const modalSession = useRef(0)
-  const dealsQuery = useDeals()
+  const search = Route.useSearch()
+  const request = toListRequest(search)
+  const dealsQuery = useDealPage(request)
   const createDeal = useCreateDeal()
 
   const handleCreate = async (values: DealFormValues) => {
@@ -56,6 +59,11 @@ function DealsRoute() {
     return <Outlet />
   }
 
+  const lastPage = outOfRangeLastPage(request.page, dealsQuery.data, dealsQuery.isPlaceholderData)
+  if (lastPage !== undefined) {
+    return <Navigate to="/deals" search={{ ...search, page: toPageParam(lastPage) }} replace />
+  }
+
   return (
     <Stack gap="lg">
       <Group justify="space-between">
@@ -69,7 +77,9 @@ function DealsRoute() {
           案件を読み込めませんでした。
         </Alert>
       ) : null}
-      {dealsQuery.data !== undefined ? <DealTable deals={dealsQuery.data} /> : null}
+      {dealsQuery.data !== undefined ? (
+        <DealTable page={dealsQuery.data} isUpdating={dealsQuery.isPlaceholderData} />
+      ) : null}
 
       <Modal opened={opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />

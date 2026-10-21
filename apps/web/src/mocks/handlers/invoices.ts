@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 
 import { invoices as seedInvoices, type Invoice, type InvoiceStatus } from '../data/seed'
-import { createId, notFound, numberValue, readJsonObject, stringValue } from './utils'
+import { createId, listResponse, notFound, numberValue, readJsonObject, stringValue } from './utils'
 
 let invoices: Invoice[] = [...seedInvoices]
 
@@ -32,7 +32,14 @@ function canTransitionInvoiceStatus(current: InvoiceStatus, next: InvoiceStatus)
 }
 
 export const invoiceHandlers = [
-  http.get('*/api/invoices', () => HttpResponse.json(invoices)),
+  http.get('*/api/invoices', ({ request }) =>
+    listResponse(request, invoices, {
+      sortableFields: ['number', 'customerId', 'amount', 'issueDate', 'dueDate', 'status', 'id'],
+      // 請求書のモックは作成日時を持たないため、作成順と一致する ID で既定の並びを作る
+      defaultSort: 'id',
+      matches: (invoice, query) => invoice.number.toLowerCase().includes(query),
+    }),
+  ),
   http.get('*/api/invoices/:id', ({ params }) => {
     const id = stringValue(params.id)
     const invoice = id === undefined ? undefined : findInvoice(id)

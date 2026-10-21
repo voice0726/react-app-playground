@@ -17,6 +17,8 @@ test('案件を作成し、顧客情報を表示して編集できる', async ({
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
 
+  // 既定の並びでは作成した案件が2ページ目に入るため、検索で絞り込んでから開く
+  await page.getByLabel('検索', { exact: true }).fill('E2E 新規案件')
   await page.getByRole('button', { name: 'E2E 新規案件 の詳細を見る', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'E2E 新規案件', exact: true })).toBeVisible()
   await expect(page.getByText('Acme Corporation', { exact: true })).toBeVisible()

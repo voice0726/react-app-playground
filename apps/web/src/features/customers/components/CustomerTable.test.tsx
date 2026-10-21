@@ -10,10 +10,10 @@ import { customers as seedCustomers } from '@/mocks/data/seed'
 import { useSessionStore } from '@/lib/stores/session.store'
 import type { Customer } from '@/types/customer.types'
 
-function renderCustomers() {
+function renderCustomers(entry = '/customers') {
   const router = createRouter({
     routeTree,
-    history: createMemoryHistory({ initialEntries: ['/customers'] }),
+    history: createMemoryHistory({ initialEntries: [entry] }),
   })
 
   render(<RouterProvider router={router} />)
@@ -25,9 +25,13 @@ function setupCustomerApi(initialCustomers: Customer[], onDelete: (id: string) =
   let listRequests = 0
   const deleteRequests: string[] = []
   server.use(
-    http.get('*/api/customers', () => {
+    http.get('*/api/customers', ({ request }) => {
       listRequests += 1
-      return HttpResponse.json(customers)
+      const params = new URL(request.url).searchParams
+      const page = Number(params.get('page'))
+      const pageSize = Number(params.get('pageSize'))
+      const start = (page - 1) * pageSize
+      return HttpResponse.json({ items: customers.slice(start, start + pageSize), total: customers.length, page, pageSize })
     }),
     http.delete('*/api/customers/:id', async ({ params }) => {
       const id = String(params.id)
@@ -147,5 +151,27 @@ describe('顧客一覧の削除確認', () => {
     expect(api.deleteRequests).toEqual(['customer-001', 'customer-001'])
     await waitFor(() => expect(screen.queryByText('Acme Corporation')).toBeNull())
 
+  })
+
+  it('最終ページの最後の1件を削除すると、残っている最終ページへ移る', async () => {
+    const extraCustomer: Customer = {
+      id: 'customer-011',
+      name: 'Last Page Customer',
+      email: 'last-page@example.com',
+      phone: '03-0000-0011',
+      status: 'active',
+      createdAt: '2026-12-31T00:00:00.000Z',
+    }
+    setupCustomerApi([...seedCustomers, extraCustomer], () => HttpResponse.json({ success: true }))
+    const router = renderCustomers('/customers?page=2')
+    await screen.findByText('Last Page Customer')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Last Page Customer を削除' }))
+    await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: '削除する' }))
+
+    await screen.findByText('Acme Corporation')
+    expect(router.state.location.search).not.toHaveProperty('page')
+    expect(screen.queryByText('Last Page Customer')).toBeNull()
   })
 })

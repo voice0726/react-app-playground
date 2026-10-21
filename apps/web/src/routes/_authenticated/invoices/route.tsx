@@ -1,13 +1,14 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 import { useCreateInvoice } from '@/features/invoices/api/mutations'
-import { useInvoices } from '@/features/invoices/api/queries'
+import { useInvoicePage } from '@/features/invoices/api/queries'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceTable } from '@/features/invoices/components/InvoiceTable'
 import { invoiceSearchSchema } from '@/features/invoices/schemas/search'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
+import { outOfRangeLastPage, toListRequest, toPageParam } from '@/lib/pagination'
 
 export const Route = createFileRoute('/_authenticated/invoices')({
   validateSearch: invoiceSearchSchema,
@@ -16,10 +17,17 @@ export const Route = createFileRoute('/_authenticated/invoices')({
 
 function InvoicesRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const invoicesQuery = useInvoices()
+  const search = Route.useSearch()
+  const request = toListRequest(search)
+  const invoicesQuery = useInvoicePage(request)
 
   if (pathname !== '/invoices') {
     return <Outlet />
+  }
+
+  const lastPage = outOfRangeLastPage(request.page, invoicesQuery.data, invoicesQuery.isPlaceholderData)
+  if (lastPage !== undefined) {
+    return <Navigate to="/invoices" search={{ ...search, page: toPageParam(lastPage) }} replace />
   }
 
   return (
@@ -35,7 +43,9 @@ function InvoicesRoute() {
           請求書を読み込めませんでした。
         </Alert>
       ) : null}
-      {invoicesQuery.data !== undefined ? <InvoiceTable invoices={invoicesQuery.data} /> : null}
+      {invoicesQuery.data !== undefined ? (
+        <InvoiceTable page={invoicesQuery.data} isUpdating={invoicesQuery.isPlaceholderData} />
+      ) : null}
     </Stack>
   )
 }

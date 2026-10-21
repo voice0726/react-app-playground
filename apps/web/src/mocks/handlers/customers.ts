@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw'
 import type { Customer, CustomerStatus } from '@/types/customer.types'
 
 import { customers as seedCustomers } from '../data/seed'
-import { createId, notFound, readJsonObject, stringValue } from './utils'
+import { createId, listResponse, notFound, readJsonObject, stringValue } from './utils'
 
 let customers: Customer[] = [...seedCustomers]
 
@@ -26,7 +26,14 @@ function customerStatus(value: unknown, fallback: CustomerStatus): CustomerStatu
 }
 
 export const customerHandlers = [
-  http.get('*/api/customers', () => HttpResponse.json(customers)),
+  http.get('*/api/customers', ({ request }) =>
+    listResponse(request, customers, {
+      sortableFields: ['name', 'email', 'phone', 'status', 'createdAt'],
+      defaultSort: 'createdAt',
+      matches: (customer, query) =>
+        [customer.name, customer.email, customer.phone].some((value) => value.toLowerCase().includes(query)),
+    }),
+  ),
   http.get('*/api/customers/:id', ({ params }) => {
     const id = stringValue(params.id)
     const customer = id === undefined ? undefined : findCustomer(id)

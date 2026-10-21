@@ -11,7 +11,10 @@ test('MSWで顧客を作成・編集し、確認後に削除できる', async ({
   await page.getByLabel('電話番号', { exact: true }).fill('123')
 
   await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
 
+  // 既定の並びでは作成した顧客が2ページ目に入るため、検索で絞り込んでから開く
+  await page.getByLabel('検索', { exact: true }).fill(customerName)
   await page.getByRole('button', { name: `${customerName} の詳細を見る`, exact: true }).click()
   await expect(page.getByRole('heading', { name: customerName })).toBeVisible()
 
@@ -23,6 +26,7 @@ test('MSWで顧客を作成・編集し、確認後に削除できる', async ({
   await expect(page.getByRole('heading', { name: `${customerName} 更新`, exact: true })).toBeVisible()
 
   await page.getByRole('link', { name: '顧客一覧に戻る', exact: true }).click()
+  await page.getByLabel('検索', { exact: true }).fill(customerName)
 
   await page.getByRole('button', { name: `${customerName} 更新 を削除`, exact: true }).click()
   await page.getByRole('button', { name: 'キャンセル', exact: true }).click()

@@ -1,14 +1,15 @@
 import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
 import { useCreateCustomer } from '@/features/customers/api/mutations'
-import { useCustomers } from '@/features/customers/api/queries'
+import { useCustomerPage } from '@/features/customers/api/queries'
 import { CustomerForm } from '@/features/customers/components/CustomerForm'
 import { CustomerTable } from '@/features/customers/components/CustomerTable'
 import type { CustomerFormValues } from '@/features/customers/schemas/customer.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
+import { outOfRangeLastPage, toListRequest, toPageParam } from '@/lib/pagination'
 
 const customerSearchSchema = createListSearchSchema([
   'name',
@@ -28,7 +29,9 @@ function CustomersRoute() {
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const modalSession = useRef(0)
-  const customersQuery = useCustomers()
+  const search = Route.useSearch()
+  const request = toListRequest(search)
+  const customersQuery = useCustomerPage(request)
   const createCustomer = useCreateCustomer()
 
   const handleCreate = async (values: CustomerFormValues) => {
@@ -56,6 +59,11 @@ function CustomersRoute() {
     return <Outlet />
   }
 
+  const lastPage = outOfRangeLastPage(request.page, customersQuery.data, customersQuery.isPlaceholderData)
+  if (lastPage !== undefined) {
+    return <Navigate to="/customers" search={{ ...search, page: toPageParam(lastPage) }} replace />
+  }
+
   return (
     <Stack gap="lg">
       <Group justify="space-between">
@@ -69,7 +77,9 @@ function CustomersRoute() {
           顧客を読み込めませんでした。
         </Alert>
       ) : null}
-      {customersQuery.data !== undefined ? <CustomerTable customers={customersQuery.data} /> : null}
+      {customersQuery.data !== undefined ? (
+        <CustomerTable page={customersQuery.data} isUpdating={customersQuery.isPlaceholderData} />
+      ) : null}
 
       <Modal opened={opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />
