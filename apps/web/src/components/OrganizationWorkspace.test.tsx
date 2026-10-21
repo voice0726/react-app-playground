@@ -1,12 +1,12 @@
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
 import { afterEach, expect, it, vi } from 'vitest'
 
 import { useKanbanStore } from '@/features/tasks/stores/kanban.store'
 import { queryClient } from '@/lib/queryClient'
 import { useSessionStore } from '@/lib/stores/session.store'
-import { MOCK_ORGANIZATION_ID, MOCK_VIEWER_ORGANIZATION_ID } from '@/mocks/handlers/organizations'
+import { MOCK_EDITOR_ORGANIZATION_ID, MOCK_ORGANIZATION_ID, MOCK_VIEWER_ORGANIZATION_ID } from '@/mocks/handlers/organizations'
 import { server } from '@/mocks/server'
 import { routeTree } from '@/routeTree.gen'
 
@@ -63,4 +63,36 @@ it('組織の新規作成でも以前の組織のキャッシュを破棄する'
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   expect(router.state.location.pathname).toBe('/dashboard')
   expect(queryClient.getQueryCache().getAll().some((query) => query.queryKey.includes(MOCK_ORGANIZATION_ID))).toBe(false)
+})
+
+it.each([false, true])('一覧の先頭に組織が追加されても初期選択を保つ（保存不可: %s）', async (storageUnavailable) => {
+  if (storageUnavailable) {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('Storage unavailable') })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Storage unavailable') })
+  }
+  const initialOrganization = { id: MOCK_ORGANIZATION_ID, name: 'A', role: 'admin' }
+  const newOrganization = { id: '00000000-0000-4000-8000-000000000004', name: '0-new-membership', role: 'editor' }
+  let memberships = [initialOrganization, { id: MOCK_EDITOR_ORGANIZATION_ID, name: 'B', role: 'editor' }]
+  server.use(http.get('*/api/organizations', () => HttpResponse.json(memberships)))
+  const router = renderRoute('/tasks')
+  const selector = await screen.findByRole('combobox', { name: '組織' })
+  await waitFor(() => expect((selector as HTMLInputElement).value).toBe('A'))
+  await screen.findByText('Review Acme contract')
+  act(() => useKanbanStore.setState({ activeTaskId: 'task-001' }))
+  const taskKey = ['tasks', 'list', MOCK_ORGANIZATION_ID]
+  const cachedTasks = queryClient.getQueryData(taskKey)
+  expect(cachedTasks).toBeDefined()
+
+  memberships = [newOrganization, ...memberships]
+  await act(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['organizations', '1'] })
+  })
+
+  await waitFor(() => expect(queryClient.getQueryData<{ id: string }[]>(['organizations', '1'])?.[0]?.id).toBe(newOrganization.id))
+  expect((screen.getByRole('combobox', { name: '組織' }) as HTMLInputElement).value).toBe('A')
+  expect(router.state.location.pathname).toBe('/tasks')
+  expect(useKanbanStore.getState().activeTaskId).toBe('task-001')
+  expect(queryClient.getQueryData(taskKey)).toBe(cachedTasks)
+  expect(queryClient.getQueryCache().getAll().some((query) => query.queryKey.includes(newOrganization.id))).toBe(false)
+  if (!storageUnavailable) expect(sessionStorage.getItem('playground:organization:1')).toBe(MOCK_ORGANIZATION_ID)
 })

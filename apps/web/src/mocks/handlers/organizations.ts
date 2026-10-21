@@ -55,7 +55,8 @@ export const organizationHandlers = [
   }),
   http.get('*/api/organizations/:id/members', ({ params }) => {
     const id = String(params.id)
-    return requireAdmin(id) ?? HttpResponse.json(organizations.find((item) => item.id === id)?.members)
+    if (!membership(id)) return error(404, 'Organization not found.')
+    return HttpResponse.json(organizations.find((item) => item.id === id)?.members)
   }),
   http.post('*/api/organizations/:id/members', async ({ params, request }) => {
     const id = String(params.id)

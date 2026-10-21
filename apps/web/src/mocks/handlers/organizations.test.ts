@@ -18,7 +18,7 @@ describe('組織ごとの認可とデータ分離', () => {
   it('編集者はチケットを共有編集でき、メンバー管理はできない', async () => {
     const response = await send('/tickets', MOCK_EDITOR_ORGANIZATION_ID, { method: 'POST', body: JSON.stringify({ title: '共有チケット', status: 'open', assignee: null }) })
     expect(response.status).toBe(201)
-    expect((await send(`/organizations/${MOCK_EDITOR_ORGANIZATION_ID}/members`)).status).toBe(403)
+    expect((await send(`/organizations/${MOCK_EDITOR_ORGANIZATION_ID}/members`, MOCK_EDITOR_ORGANIZATION_ID, { method: 'POST', body: JSON.stringify({ userId: 'new-member', role: 'viewer' }) })).status).toBe(403)
   })
 
   it('新しい組織に既存組織のデータと集計を引き継がない', async () => {
@@ -35,4 +35,18 @@ describe('組織ごとの認可とデータ分離', () => {
     expect((await send(path, MOCK_ORGANIZATION_ID, { method: 'DELETE' })).status).toBe(409)
     expect((await send(path, MOCK_ORGANIZATION_ID, { method: 'PATCH', body: JSON.stringify({ role: 'viewer' }) })).status).toBe(409)
   })
+})
+
+it.each([MOCK_ORGANIZATION_ID, MOCK_EDITOR_ORGANIZATION_ID, MOCK_VIEWER_ORGANIZATION_ID])('所属メンバーは一覧を取得でき、変更は管理者に限る（%s）', async (id) => {
+  const response = await send(`/organizations/${id}/members`, id)
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual(expect.arrayContaining([expect.objectContaining({ userId: '1' })]))
+  if (id === MOCK_ORGANIZATION_ID) return
+  const memberPath = `/organizations/${id}/members/2`
+  expect((await send(memberPath, id, { method: 'PATCH', body: JSON.stringify({ role: 'viewer' }) })).status).toBe(403)
+  expect((await send(memberPath, id, { method: 'DELETE' })).status).toBe(403)
+})
+
+it('組織外からメンバー一覧を取得できない', async () => {
+  expect((await send('/organizations/00000000-0000-4000-8000-000000000099/members')).status).toBe(404)
 })

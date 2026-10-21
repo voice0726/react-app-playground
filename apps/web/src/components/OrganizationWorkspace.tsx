@@ -1,7 +1,7 @@
 import { Alert, Button, Group, Loader, Modal, Select, Stack, Text, TextInput } from '@mantine/core'
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -27,22 +27,22 @@ export function OrganizationWorkspace({ children }: { children: ReactNode }) {
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     try { return sessionStorage.getItem(selectionKey) } catch { return null }
   })
+  useEffect(() => {
+    if (selectedId === null) return
+    try { sessionStorage.setItem(selectionKey, selectedId) } catch { /* 保存不可でも選択した組織を維持する。 */ }
+  }, [selectedId, selectionKey])
   const [opened, setOpened] = useState(false)
   const [switching, setSwitching] = useState(false)
   const mutationCount = useIsMutating()
   const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues: { name: '' } })
-  const organization = selectedId === null ? organizations.data?.[0] : organizations.data?.find((item) => item.id === selectedId)
-  const rememberOrganization = (id: string) => {
-    setSelectedId(id)
-    try { sessionStorage.setItem(selectionKey, id) } catch { /* 保存不可でも組織の切り替えは継続する。 */ }
-  }
+  const organization = organizations.data?.find((item) => item.id === selectedId)
   const activateOrganization = async (id: string) => {
     setSwitching(true)
     await queryClient.cancelQueries({ predicate: (query) => query.queryKey[0] !== 'organizations' || query.queryKey.length !== 2 })
     queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'organizations' || query.queryKey.length !== 2 })
     queryClient.getMutationCache().clear()
     useKanbanStore.setState({ tasks: [], activeTaskId: null })
-    rememberOrganization(id)
+    setSelectedId(id)
     try {
       await navigate({ to: '/dashboard', search: {} })
     } finally {
@@ -58,6 +58,9 @@ export function OrganizationWorkspace({ children }: { children: ReactNode }) {
       await activateOrganization(created.id)
     },
   })
+
+  const initialId = organizations.data?.[0]?.id
+  if (selectedId === null && initialId !== undefined) setSelectedId(initialId)
 
   if (organizations.isPending) return <Loader aria-label="組織を読み込み中" />
   if (organizations.isError) return <Alert color="red" title="組織を取得できませんでした"><Button onClick={() => { void organizations.refetch() }}>再読み込み</Button></Alert>
