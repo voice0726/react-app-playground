@@ -7,7 +7,7 @@ type ReactDoctorAntipatternDemoProps = {
 export function ReactDoctorAntipatternDemo({ title, items }: ReactDoctorAntipatternDemoProps) {
   return (
     <section aria-label="React Doctor 検知確認">
-      <h3>{title.toUpperCase()}</h3>
+      <p><strong>{title.toUpperCase()}</strong></p>
       <p>動作確認用。マージしない</p>
       <ul>
         {items.map((item, index) => (
