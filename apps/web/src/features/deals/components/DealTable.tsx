@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Center, Group, Loader, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -18,6 +18,7 @@ import type { Deal } from '@/features/deals/types'
 
 type DealTableProps = {
   page: PaginatedResponse<Deal>
+  isLoading: boolean
   isUpdating: boolean
   isError: boolean
 }
@@ -77,7 +78,7 @@ const columns = columnHelper.columns([
   }),
 ])
 
-export function DealTable({ page, isUpdating, isError }: DealTableProps) {
+export function DealTable({ page, isLoading, isUpdating, isError }: DealTableProps) {
   const search = useSearch({ from: '/_authenticated/deals' })
   const navigate = useNavigate({ from: '/deals' })
   const sorting = useMemo(
@@ -175,6 +176,10 @@ export function DealTable({ page, isUpdating, isError }: DealTableProps) {
                     <Text c="red" ta="center" role="alert">
                       案件を読み込めませんでした。
                     </Text>
+                  ) : isLoading ? (
+                    <Center>
+                      <Loader size="sm" role="status" aria-label="読み込み中" />
+                    </Center>
                   ) : (
                     <Text c="dimmed" ta="center">
                       案件が見つかりません。

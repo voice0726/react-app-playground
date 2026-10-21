@@ -82,28 +82,15 @@ function emptyPage<T>(request: ListRequest): PaginatedResponse<T> {
   return { items: [], total: 0, page: request.page, pageSize: request.pageSize }
 }
 
-// 取得に失敗した条件でも一覧を消さず、検索欄から条件を直せるようにする
-export function pageToShow<T>(
-  request: ListRequest,
-  { data, isError }: Pick<PageQueryState<T>, 'data' | 'isError'>,
-): PaginatedResponse<T> | undefined {
-  return data ?? (isError ? emptyPage<T>(request) : undefined)
+// 読み込み中や取得失敗でも一覧を消さない。消すと検索欄のフォーカスが外れ、入力中の検索語を直せなくなる
+export function pageToShow<T>(request: ListRequest, { data }: Pick<PageQueryState<T>, 'data'>): PaginatedResponse<T> {
+  return data ?? emptyPage<T>(request)
 }
 
 // 行が無い失敗は一覧の中で伝える。表示中の行を残したまま再取得に失敗したときだけ、一覧の外で伝える
 export function failedToRefresh<T>({ data, isError }: Pick<PageQueryState<T>, 'data' | 'isError'>): boolean {
   return isError && data !== undefined && data.items.length > 0
 }
-
-// keepPreviousData は直前の条件が失敗していると何も返さず、条件を直す途中で一覧が消える
-export function keepPreviousPage<T>(request: ListRequest) {
-  return (
-    previousData: PaginatedResponse<T> | undefined,
-    previousQuery: { state: { status: string } } | undefined,
-  ): PaginatedResponse<T> | undefined =>
-    previousData ?? (previousQuery?.state.status === 'error' ? emptyPage<T>(request) : undefined)
-}
-
 export function toPageParam(page: number): number | undefined {
   return page > 1 ? page : undefined
 }

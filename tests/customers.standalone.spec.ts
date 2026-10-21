@@ -128,6 +128,32 @@ test('末尾ページを消して移動した後に件数が戻ったら、2ペ�
   await expect(page).toHaveURL(/page=2/)
 })
 
+const lists = [
+  { path: '/customers', label: '顧客' },
+  { path: '/deals', label: '案件' },
+  { path: '/invoices', label: '請求書' },
+] as const
+
+for (const { path, label } of lists) {
+  test(`${label}一覧: 無効な検索語の URL を直接開いても、検索欄から直せる`, async ({ page }) => {
+    await page.goto(`${path}?q=${'a'.repeat(201)}`)
+    await expect(page.locator('tbody').getByText(`${label}を読み込めませんでした。`, { exact: true })).toBeVisible()
+    const searchInput = page.getByLabel('検索', { exact: true })
+
+    await searchInput.focus()
+    await searchInput.press('End')
+    await searchInput.press('Backspace')
+    await expect(searchInput).toBeFocused()
+    await expect(page.locator('tbody').getByText(`${label}を読み込めませんでした。`, { exact: true })).toHaveCount(0)
+
+    await searchInput.press('ControlOrMeta+a')
+    await searchInput.pressSequentially('zz-none')
+    await expect(searchInput).toBeFocused()
+    await expect(searchInput).toHaveValue('zz-none')
+    await expect(page.getByText(`${label}が見つかりません。`, { exact: true })).toBeVisible()
+  })
+}
+
 test('検索に失敗しても検索欄を残し、検索語を直せる', async ({ page }) => {
   await page.goto('/customers')
   const searchInput = page.getByLabel('検索', { exact: true })

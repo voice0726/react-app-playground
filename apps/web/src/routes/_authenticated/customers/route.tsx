@@ -1,4 +1,4 @@
-import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
@@ -72,15 +72,17 @@ function CustomersRoute() {
         <Button onClick={open}>新規顧客</Button>
       </Group>
 
-      {customersQuery.isLoading ? <Loader /> : null}
       {failedToRefresh(customersQuery) ? (
         <Alert color="red" variant="light">
           顧客の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {page !== undefined ? (
-        <CustomerTable page={page} isUpdating={customersQuery.isPlaceholderData} isError={customersQuery.isError} />
-      ) : null}
+      <CustomerTable
+        page={page}
+        isLoading={customersQuery.isLoading}
+        isUpdating={customersQuery.isPlaceholderData}
+        isError={customersQuery.isError}
+      />
 
       <Modal opened={opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />

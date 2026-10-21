@@ -1,4 +1,4 @@
-import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
@@ -38,15 +38,17 @@ function InvoicesRoute() {
         <InvoiceCreateModal />
       </Group>
 
-      {invoicesQuery.isLoading ? <Loader /> : null}
       {failedToRefresh(invoicesQuery) ? (
         <Alert color="red" variant="light">
           請求書の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {page !== undefined ? (
-        <InvoiceTable page={page} isUpdating={invoicesQuery.isPlaceholderData} isError={invoicesQuery.isError} />
-      ) : null}
+      <InvoiceTable
+        page={page}
+        isLoading={invoicesQuery.isLoading}
+        isUpdating={invoicesQuery.isPlaceholderData}
+        isError={invoicesQuery.isError}
+      />
     </Stack>
   )
 }

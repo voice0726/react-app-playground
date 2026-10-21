@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Center, Group, Loader, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -18,6 +18,7 @@ import type { Invoice } from '@/features/invoices/types'
 
 type InvoiceTableProps = {
   page: PaginatedResponse<Invoice>
+  isLoading: boolean
   isUpdating: boolean
   isError: boolean
 }
@@ -81,7 +82,7 @@ const columns = columnHelper.columns([
   }),
 ])
 
-export function InvoiceTable({ page, isUpdating, isError }: InvoiceTableProps) {
+export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTableProps) {
   const search = useSearch({ from: '/_authenticated/invoices' })
   const navigate = useNavigate({ from: '/invoices' })
   const sorting = useMemo(
@@ -179,6 +180,10 @@ export function InvoiceTable({ page, isUpdating, isError }: InvoiceTableProps) {
                     <Text c="red" ta="center" role="alert">
                       請求書を読み込めませんでした。
                     </Text>
+                  ) : isLoading ? (
+                    <Center>
+                      <Loader size="sm" role="status" aria-label="読み込み中" />
+                    </Center>
                   ) : (
                     <Text c="dimmed" ta="center">
                       請求書が見つかりません。

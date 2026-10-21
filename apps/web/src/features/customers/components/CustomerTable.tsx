@@ -1,4 +1,17 @@
-import { ActionIcon, Alert, Button, Group, Modal, Stack, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import {
+  ActionIcon,
+  Alert,
+  Button,
+  Center,
+  Group,
+  Loader,
+  Modal,
+  Stack,
+  Table,
+  Text,
+  TextInput,
+  Tooltip,
+} from '@mantine/core'
 import { IconEye, IconTrash } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -19,6 +32,7 @@ import type { Customer } from '@/types/customer.types'
 
 type CustomerTableProps = {
   page: PaginatedResponse<Customer>
+  isLoading: boolean
   isUpdating: boolean
   isError: boolean
 }
@@ -104,7 +118,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   return [{ id: sort, desc: order === 'desc' }]
 }
 
-export function CustomerTable({ page, isUpdating, isError }: CustomerTableProps) {
+export function CustomerTable({ page, isLoading, isUpdating, isError }: CustomerTableProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [displayedCustomerName, setDisplayedCustomerName] = useState<string | null>(null)
   const deleteCustomer = useDeleteCustomer()
@@ -249,6 +263,10 @@ export function CustomerTable({ page, isUpdating, isError }: CustomerTableProps)
                       <Text c="red" ta="center" role="alert">
                         顧客を読み込めませんでした。
                       </Text>
+                    ) : isLoading ? (
+                      <Center>
+                        <Loader size="sm" role="status" aria-label="読み込み中" />
+                      </Center>
                     ) : (
                       <Text c="dimmed" ta="center">
                         顧客が見つかりません。

@@ -188,6 +188,28 @@ describe('顧客一覧の取得失敗', () => {
     expect(screen.getByLabelText('検索')).toBeTruthy()
   })
 
+  it('最初の取得から失敗しても、検索語を直して再取得する間に検索欄を消さない', async () => {
+    server.use(
+      http.get('*/api/customers', async ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q') ?? ''
+        if (q.length > 200) return HttpResponse.json({ message: 'Invalid list query.' }, { status: 400 })
+        await delay(50)
+        return HttpResponse.json({ items: seedCustomers, total: seedCustomers.length, page: 1, pageSize: 10 })
+      }),
+    )
+    renderCustomers(`/customers?q=${'a'.repeat(201)}`)
+    await screen.findByText('顧客を読み込めませんでした。')
+
+    const input = screen.getByLabelText('検索')
+    input.focus()
+    fireEvent.change(input, { target: { value: 'a'.repeat(200) } })
+
+    expect(await screen.findByRole('status', { name: '読み込み中' })).toBeTruthy()
+    expect(screen.getByLabelText('検索')).toBe(input)
+    expect(document.activeElement).toBe(input)
+    await screen.findByText('Acme Corporation')
+  })
+
   it('表示中の行を残したまま再取得に失敗したら、一覧の外で伝える', async () => {
     let failing = false
     server.use(

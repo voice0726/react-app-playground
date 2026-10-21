@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildListUrl, failedToRefresh, keepPreviousPage, outOfRangeLastPage, pageToShow, toListRequest } from './pagination'
+import { buildListUrl, failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest } from './pagination'
 
 function fetched(total: number) {
   return { data: { items: [], total, page: 3, pageSize: 10 }, isFetching: false, isPlaceholderData: false }
@@ -36,16 +36,12 @@ describe('一覧のページング条件', () => {
     expect(outOfRangeLastPage(2, stale)).toBeUndefined()
   })
 
-  it('取得に失敗した条件でも、空のページを返して一覧を残す', () => {
+  it('取得済みのページが無いときは、空のページを返して一覧を残す', () => {
     const request = { page: 2, pageSize: 20, q: 'x' }
+    const fetchedPage = { items: [{ id: 'a' }], total: 21, page: 2, pageSize: 20 }
 
-    expect(pageToShow(request, { data: undefined, isError: true })).toEqual({
-      items: [],
-      total: 0,
-      page: 2,
-      pageSize: 20,
-    })
-    expect(pageToShow(request, { data: undefined, isError: false })).toBeUndefined()
+    expect(pageToShow(request, { data: undefined })).toEqual({ items: [], total: 0, page: 2, pageSize: 20 })
+    expect(pageToShow(request, { data: fetchedPage })).toBe(fetchedPage)
   })
 
   it('表示中の行があるまま失敗したときだけ、再取得の失敗とみなす', () => {
@@ -55,19 +51,5 @@ describe('一覧のページング条件', () => {
     expect(failedToRefresh({ data: { ...rows, items: [], total: 0 }, isError: true })).toBe(false)
     expect(failedToRefresh({ data: undefined, isError: true })).toBe(false)
     expect(failedToRefresh({ data: rows, isError: false })).toBe(false)
-  })
-
-  it('直前の条件が失敗していたら、次の取得中も空のページで一覧を残す', () => {
-    const request = { page: 1, pageSize: 10 }
-    const previous = { items: [], total: 3, page: 1, pageSize: 10 }
-
-    expect(keepPreviousPage(request)(previous, { state: { status: 'success' } })).toBe(previous)
-    expect(keepPreviousPage(request)(undefined, { state: { status: 'error' } })).toEqual({
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 10,
-    })
-    expect(keepPreviousPage(request)(undefined, undefined)).toBeUndefined()
   })
 })

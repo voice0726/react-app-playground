@@ -1,4 +1,4 @@
-import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
@@ -72,15 +72,17 @@ function DealsRoute() {
         <Button onClick={open}>新規案件</Button>
       </Group>
 
-      {dealsQuery.isLoading ? <Loader /> : null}
       {failedToRefresh(dealsQuery) ? (
         <Alert color="red" variant="light">
           案件の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {page !== undefined ? (
-        <DealTable page={page} isUpdating={dealsQuery.isPlaceholderData} isError={dealsQuery.isError} />
-      ) : null}
+      <DealTable
+        page={page}
+        isLoading={dealsQuery.isLoading}
+        isUpdating={dealsQuery.isPlaceholderData}
+        isError={dealsQuery.isError}
+      />
 
       <Modal opened={opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />
