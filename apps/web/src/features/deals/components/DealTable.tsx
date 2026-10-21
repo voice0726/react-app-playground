@@ -1,30 +1,15 @@
-import { ActionIcon, Group, Table, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconEye } from '@tabler/icons-react'
-import {
-  createColumnHelper,
-  flexRender,
-  type SortingState,
-  useTable,
-} from '@tanstack/react-table'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { format } from 'date-fns'
+import { Table, Text, TextInput } from '@mantine/core'
+import { flexRender, type SortingState, useTable } from '@tanstack/react-table'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
-import { DealStatusBadge } from '@/features/deals/components/DealStatusBadge'
-import { features } from '@/lib/tableFeatures'
+import { dealColumns } from '@/features/deals/components/dealColumns'
 import type { Deal } from '@/features/deals/types'
+import { features } from '@/lib/tableFeatures'
 
 type DealTableProps = {
   deals: Deal[]
 }
-
-const columnHelper = createColumnHelper<typeof features, Deal>()
-
-const currencyFormatter = new Intl.NumberFormat('ja-JP', {
-  style: 'currency',
-  currency: 'JPY',
-  maximumFractionDigits: 0,
-})
 
 function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   if (sort === undefined || order === undefined) {
@@ -33,45 +18,6 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 
   return [{ id: sort, desc: order === 'desc' }]
 }
-
-const columns = columnHelper.columns([
-  columnHelper.accessor('title', {
-    header: 'タイトル',
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor('customerId', {
-    header: '顧客',
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor('amount', {
-    header: '金額',
-    cell: (info) => currencyFormatter.format(info.getValue()),
-  }),
-  columnHelper.accessor('status', {
-    header: 'ステータス',
-    cell: (info) => <DealStatusBadge status={info.getValue()} />,
-  }),
-  columnHelper.accessor('createdAt', {
-    header: '作成日',
-    cell: (info) => format(new Date(info.getValue()), 'yyyy/MM/dd'),
-  }),
-  columnHelper.display({
-    id: 'actions',
-    header: '操作',
-    enableSorting: false,
-    cell: ({ row }) => (
-      <Group gap="xs" justify="flex-end">
-        <Tooltip label="詳細を見る">
-          <Link to="/deals/$dealId" params={{ dealId: row.original.id }}>
-            <ActionIcon variant="subtle" aria-label={`${row.original.title} の詳細を見る`}>
-              <IconEye size={16} />
-            </ActionIcon>
-          </Link>
-        </Tooltip>
-      </Group>
-    ),
-  }),
-])
 
 export function DealTable({ deals }: DealTableProps) {
   const search = useSearch({ from: '/_authenticated/deals' })
@@ -85,7 +31,7 @@ export function DealTable({ deals }: DealTableProps) {
   const table = useTable({
     features,
     data: deals,
-    columns,
+    columns: dealColumns,
     state: {
       sorting,
       globalFilter,
@@ -163,7 +109,7 @@ export function DealTable({ deals }: DealTableProps) {
               ))
             ) : (
               <Table.Tr>
-                <Table.Td colSpan={columns.length}>
+                <Table.Td colSpan={dealColumns.length}>
                   <Text c="dimmed" ta="center">
                     案件が見つかりません。
                   </Text>
