@@ -194,7 +194,8 @@ jobs:
       - name: 画像一式と生成元コミットを梱包
         run: |
           tar -czf vrt-baselines.tar.gz tests/screenshots/linux
-          git rev-parse HEAD > source-commit.txt
+          # コンテナ内では checkout の所有者が異なり、git コマンドが dubious ownership で失敗する
+          printf '%s\n' "$GITHUB_SHA" > source-commit.txt
       - name: レビュー用の基準画像を保存
         uses: actions/upload-artifact@v7.0.2
         with:
