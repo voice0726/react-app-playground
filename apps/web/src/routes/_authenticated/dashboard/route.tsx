@@ -1,5 +1,6 @@
 import { Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { createFileRoute } from '@tanstack/react-router'
+import { ReactDoctorAntipatternDemo } from '@/components/ReactDoctorAntipatternDemo'
 import { useCustomers } from '@/features/customers/api/queries'
 import { useDeals } from '@/features/deals/api/queries'
 import { useInvoices } from '@/features/invoices/api/queries'
@@ -48,6 +49,10 @@ function DashboardRoute() {
           </Card>
         ))}
       </SimpleGrid>
+      <ReactDoctorAntipatternDemo
+        title="React Doctor demo"
+        items={summaryItems.map((item) => item.label)}
+      />
     </Stack>
   )
 }
