@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildListUrl, keepPreviousPage, outOfRangeLastPage, pageToShow, toListRequest } from './pagination'
+import { buildListUrl, failedToRefresh, keepPreviousPage, outOfRangeLastPage, pageToShow, toListRequest } from './pagination'
 
 function fetched(total: number) {
   return { data: { items: [], total, page: 3, pageSize: 10 }, isFetching: false, isPlaceholderData: false }
@@ -46,6 +46,15 @@ describe('一覧のページング条件', () => {
       pageSize: 20,
     })
     expect(pageToShow(request, { data: undefined, isError: false })).toBeUndefined()
+  })
+
+  it('表示中の行があるまま失敗したときだけ、再取得の失敗とみなす', () => {
+    const rows = { items: [{ id: 'a' }], total: 1, page: 1, pageSize: 10 }
+
+    expect(failedToRefresh({ data: rows, isError: true })).toBe(true)
+    expect(failedToRefresh({ data: { ...rows, items: [], total: 0 }, isError: true })).toBe(false)
+    expect(failedToRefresh({ data: undefined, isError: true })).toBe(false)
+    expect(failedToRefresh({ data: rows, isError: false })).toBe(false)
   })
 
   it('直前の条件が失敗していたら、次の取得中も空のページで一覧を残す', () => {

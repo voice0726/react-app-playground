@@ -20,6 +20,7 @@ import type { Customer } from '@/types/customer.types'
 type CustomerTableProps = {
   page: PaginatedResponse<Customer>
   isUpdating: boolean
+  isError: boolean
 }
 
 const columnHelper = createColumnHelper<typeof features, Customer>()
@@ -103,7 +104,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   return [{ id: sort, desc: order === 'desc' }]
 }
 
-export function CustomerTable({ page, isUpdating }: CustomerTableProps) {
+export function CustomerTable({ page, isUpdating, isError }: CustomerTableProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [displayedCustomerName, setDisplayedCustomerName] = useState<string | null>(null)
   const deleteCustomer = useDeleteCustomer()
@@ -244,9 +245,15 @@ export function CustomerTable({ page, isUpdating }: CustomerTableProps) {
               ) : (
                 <Table.Tr>
                   <Table.Td colSpan={columns.length}>
-                    <Text c="dimmed" ta="center">
-                      顧客が見つかりません。
-                    </Text>
+                    {isError ? (
+                      <Text c="red" ta="center" role="alert">
+                        顧客を読み込めませんでした。
+                      </Text>
+                    ) : (
+                      <Text c="dimmed" ta="center">
+                        顧客が見つかりません。
+                      </Text>
+                    )}
                   </Table.Td>
                 </Table.Tr>
               )}

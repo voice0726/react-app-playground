@@ -8,7 +8,7 @@ import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceTable } from '@/features/invoices/components/InvoiceTable'
 import { invoiceSearchSchema } from '@/features/invoices/schemas/search'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
-import { outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
+import { failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 export const Route = createFileRoute('/_authenticated/invoices')({
   validateSearch: invoiceSearchSchema,
@@ -39,12 +39,14 @@ function InvoicesRoute() {
       </Group>
 
       {invoicesQuery.isLoading ? <Loader /> : null}
-      {invoicesQuery.isError ? (
+      {failedToRefresh(invoicesQuery) ? (
         <Alert color="red" variant="light">
-          請求書を読み込めませんでした。
+          請求書の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {page !== undefined ? <InvoiceTable page={page} isUpdating={invoicesQuery.isPlaceholderData} /> : null}
+      {page !== undefined ? (
+        <InvoiceTable page={page} isUpdating={invoicesQuery.isPlaceholderData} isError={invoicesQuery.isError} />
+      ) : null}
     </Stack>
   )
 }

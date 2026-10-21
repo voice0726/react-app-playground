@@ -175,3 +175,36 @@ describe('顧客一覧の削除確認', () => {
     expect(screen.queryByText('Last Page Customer')).toBeNull()
   })
 })
+
+describe('顧客一覧の取得失敗', () => {
+  it('行が無いまま失敗したら、空表示ではなくエラーを一覧の中に出す', async () => {
+    server.use(http.get('*/api/customers', () => HttpResponse.json({ message: 'failed' }, { status: 500 })))
+    renderCustomers()
+
+    const error = await screen.findByRole('alert')
+    expect(error.textContent).toBe('顧客を読み込めませんでした。')
+    expect(error.closest('tbody')).not.toBeNull()
+    expect(screen.queryByText('顧客が見つかりません。')).toBeNull()
+    expect(screen.getByLabelText('検索')).toBeTruthy()
+  })
+
+  it('表示中の行を残したまま再取得に失敗したら、一覧の外で伝える', async () => {
+    let failing = false
+    server.use(
+      http.get('*/api/customers', () =>
+        failing
+          ? HttpResponse.json({ message: 'failed' }, { status: 500 })
+          : HttpResponse.json({ items: seedCustomers, total: seedCustomers.length, page: 1, pageSize: 10 }),
+      ),
+    )
+    renderCustomers()
+    await screen.findByText('Acme Corporation')
+
+    failing = true
+    await queryClient.refetchQueries()
+
+    expect(await screen.findByText('顧客の一覧を更新できませんでした。前回読み込んだ内容を表示しています。')).toBeTruthy()
+    expect(screen.getByText('Acme Corporation')).toBeTruthy()
+    expect(screen.queryByText('顧客を読み込めませんでした。')).toBeNull()
+  })
+})

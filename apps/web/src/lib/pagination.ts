@@ -90,6 +90,11 @@ export function pageToShow<T>(
   return data ?? (isError ? emptyPage<T>(request) : undefined)
 }
 
+// 行が無い失敗は一覧の中で伝える。表示中の行を残したまま再取得に失敗したときだけ、一覧の外で伝える
+export function failedToRefresh<T>({ data, isError }: Pick<PageQueryState<T>, 'data' | 'isError'>): boolean {
+  return isError && data !== undefined && data.items.length > 0
+}
+
 // keepPreviousData は直前の条件が失敗していると何も返さず、条件を直す途中で一覧が消える
 export function keepPreviousPage<T>(request: ListRequest) {
   return (

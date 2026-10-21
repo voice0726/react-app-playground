@@ -9,7 +9,7 @@ import { CustomerForm } from '@/features/customers/components/CustomerForm'
 import { CustomerTable } from '@/features/customers/components/CustomerTable'
 import type { CustomerFormValues } from '@/features/customers/schemas/customer.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
-import { outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
+import { failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 const customerSearchSchema = createListSearchSchema([
   'name',
@@ -73,12 +73,14 @@ function CustomersRoute() {
       </Group>
 
       {customersQuery.isLoading ? <Loader /> : null}
-      {customersQuery.isError ? (
+      {failedToRefresh(customersQuery) ? (
         <Alert color="red" variant="light">
-          顧客を読み込めませんでした。
+          顧客の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {page !== undefined ? <CustomerTable page={page} isUpdating={customersQuery.isPlaceholderData} /> : null}
+      {page !== undefined ? (
+        <CustomerTable page={page} isUpdating={customersQuery.isPlaceholderData} isError={customersQuery.isError} />
+      ) : null}
 
       <Modal opened={opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />

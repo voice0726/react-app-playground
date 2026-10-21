@@ -9,7 +9,7 @@ import { DealForm } from '@/features/deals/components/DealForm'
 import { DealTable } from '@/features/deals/components/DealTable'
 import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
-import { outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
+import { failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 const dealSearchSchema = createListSearchSchema([
   'title',
@@ -73,12 +73,14 @@ function DealsRoute() {
       </Group>
 
       {dealsQuery.isLoading ? <Loader /> : null}
-      {dealsQuery.isError ? (
+      {failedToRefresh(dealsQuery) ? (
         <Alert color="red" variant="light">
-          案件を読み込めませんでした。
+          案件の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {page !== undefined ? <DealTable page={page} isUpdating={dealsQuery.isPlaceholderData} /> : null}
+      {page !== undefined ? (
+        <DealTable page={page} isUpdating={dealsQuery.isPlaceholderData} isError={dealsQuery.isError} />
+      ) : null}
 
       <Modal opened={opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />

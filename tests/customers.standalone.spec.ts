@@ -133,7 +133,8 @@ test('検索に失敗しても検索欄を残し、検索語を直せる', async
   const searchInput = page.getByLabel('検索', { exact: true })
 
   await searchInput.fill('a'.repeat(201))
-  await expect(page.getByText('顧客を読み込めませんでした。', { exact: true })).toBeVisible()
+  await expect(page.locator('tbody').getByText('顧客を読み込めませんでした。', { exact: true })).toBeVisible()
+  await expect(page.getByText('顧客が見つかりません。', { exact: true })).toHaveCount(0)
   await expect(searchInput).toBeVisible()
 
   await searchInput.fill('Acme')

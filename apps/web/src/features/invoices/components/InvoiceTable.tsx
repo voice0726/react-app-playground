@@ -19,6 +19,7 @@ import type { Invoice } from '@/features/invoices/types'
 type InvoiceTableProps = {
   page: PaginatedResponse<Invoice>
   isUpdating: boolean
+  isError: boolean
 }
 
 const columnHelper = createColumnHelper<typeof features, Invoice>()
@@ -80,7 +81,7 @@ const columns = columnHelper.columns([
   }),
 ])
 
-export function InvoiceTable({ page, isUpdating }: InvoiceTableProps) {
+export function InvoiceTable({ page, isUpdating, isError }: InvoiceTableProps) {
   const search = useSearch({ from: '/_authenticated/invoices' })
   const navigate = useNavigate({ from: '/invoices' })
   const sorting = useMemo(
@@ -174,9 +175,15 @@ export function InvoiceTable({ page, isUpdating }: InvoiceTableProps) {
             ) : (
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
-                  <Text c="dimmed" ta="center">
-                    請求書が見つかりません。
-                  </Text>
+                  {isError ? (
+                    <Text c="red" ta="center" role="alert">
+                      請求書を読み込めませんでした。
+                    </Text>
+                  ) : (
+                    <Text c="dimmed" ta="center">
+                      請求書が見つかりません。
+                    </Text>
+                  )}
                 </Table.Td>
               </Table.Tr>
             )}

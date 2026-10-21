@@ -19,6 +19,7 @@ import type { Deal } from '@/features/deals/types'
 type DealTableProps = {
   page: PaginatedResponse<Deal>
   isUpdating: boolean
+  isError: boolean
 }
 
 const columnHelper = createColumnHelper<typeof features, Deal>()
@@ -76,7 +77,7 @@ const columns = columnHelper.columns([
   }),
 ])
 
-export function DealTable({ page, isUpdating }: DealTableProps) {
+export function DealTable({ page, isUpdating, isError }: DealTableProps) {
   const search = useSearch({ from: '/_authenticated/deals' })
   const navigate = useNavigate({ from: '/deals' })
   const sorting = useMemo(
@@ -170,9 +171,15 @@ export function DealTable({ page, isUpdating }: DealTableProps) {
             ) : (
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
-                  <Text c="dimmed" ta="center">
-                    案件が見つかりません。
-                  </Text>
+                  {isError ? (
+                    <Text c="red" ta="center" role="alert">
+                      案件を読み込めませんでした。
+                    </Text>
+                  ) : (
+                    <Text c="dimmed" ta="center">
+                      案件が見つかりません。
+                    </Text>
+                  )}
                 </Table.Td>
               </Table.Tr>
             )}
