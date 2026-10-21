@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import {
   ActionIcon,
   Alert,
@@ -51,6 +52,7 @@ type CustomerActionsContextValue = {
 const CustomerActionsContext = createContext<CustomerActionsContextValue | null>(null)
 
 function CustomerActions({ customer }: CustomerActionsProps) {
+  const { canEdit } = useOrganization()
   const actionContext = useContext(CustomerActionsContext)
 
   if (actionContext === null) {
@@ -71,8 +73,7 @@ function CustomerActions({ customer }: CustomerActionsProps) {
           color="red"
           variant="subtle"
           aria-label={`${customer.name} を削除`}
-          disabled={actionContext.isDeleting}
-          onClick={() => actionContext.onDelete(customer)}
+          disabled={!canEdit || actionContext.isDeleting} onClick={() => actionContext.onDelete(customer)}
         >
           <IconTrash size={16} />
         </ActionIcon>
@@ -119,6 +120,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
 }
 
 export function CustomerTable({ page, isLoading, isUpdating, isError }: CustomerTableProps) {
+  const { canEdit } = useOrganization()
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [displayedCustomerName, setDisplayedCustomerName] = useState<string | null>(null)
   const deleteCustomer = useDeleteCustomer()
@@ -312,9 +314,8 @@ export function CustomerTable({ page, isLoading, isUpdating, isError }: Customer
             </Button>
             <Button
               color="red"
-              disabled={deleteCustomer.isPending}
-              loading={deleteCustomer.isPending}
-              onClick={() => void handleConfirmDelete()}
+              disabled={!canEdit || deleteCustomer.isPending}
+              loading={deleteCustomer.isPending} onClick={() => void handleConfirmDelete()}
             >
               削除する
             </Button>

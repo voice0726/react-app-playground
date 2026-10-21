@@ -1,10 +1,12 @@
+import { useOrganization } from '@/lib/organization'
+import { customerKeys } from '@/types/queryKeys'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 
 import { dealSchema, type DealFormValues } from '@/features/deals/schemas/deal.schema'
-import { fetchJson } from '@/lib/apiClient'
+import { fetchOrganizationJson } from '@/lib/apiClient'
 import type { Customer } from '@/types/customer.types'
 
 type DealFormProps = {
@@ -27,14 +29,11 @@ const statusOptions = [
   { value: 'lost', label: '失注' },
 ] as const
 
-const dealCustomerKeys = {
-  list: () => ['deals', 'customer-options'] as const,
-}
-
 function useCustomerOptions() {
+  const { organization } = useOrganization()
   return useQuery({
-    queryKey: dealCustomerKeys.list(),
-    queryFn: () => fetchJson<Customer[]>('/api/customers'),
+    queryKey: customerKeys.list(organization.id),
+    queryFn: ({ signal }) => fetchOrganizationJson<Customer[]>(organization.id, '/api/customers', { signal }),
   })
 }
 

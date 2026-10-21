@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Modal, SimpleGrid, Stack } from '@mantine/core'
 import {
   DndContext,
@@ -45,6 +46,7 @@ function getTaskStatus(tasks: Task[], id: UniqueIdentifier): TaskStatus | null {
 }
 
 export function KanbanBoard() {
+  const { canEdit } = useOrganization()
   const tasks = useKanbanStore((state) => state.tasks)
   const activeTaskId = useKanbanStore((state) => state.activeTaskId)
   const setActiveTaskId = useKanbanStore((state) => state.setActiveTaskId)
@@ -87,7 +89,7 @@ export function KanbanBoard() {
   const handleStatusChange = async (taskId: string, nextStatus: TaskStatus) => {
     const task = useKanbanStore.getState().tasks.find((item) => item.id === taskId)
 
-    if (statusChangeLock.current || task === undefined || task.status === nextStatus) {
+    if (!canEdit || statusChangeLock.current || task === undefined || task.status === nextStatus) {
       return
     }
 
@@ -155,7 +157,7 @@ export function KanbanBoard() {
       </DndContext>
 
       <Modal
-        opened={newTaskStatus !== null}
+        opened={canEdit && newTaskStatus !== null}
         onClose={handleCloseCreate}
         title={newTaskStatus === null ? '新規タスク' : `新規タスク(${columnLabels[newTaskStatus]})`}
       >

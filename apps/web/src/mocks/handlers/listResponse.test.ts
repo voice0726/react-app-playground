@@ -1,10 +1,11 @@
+import { fetchAsOrganization } from '@/test/organization'
 import { describe, expect, it } from 'vitest'
 
 type Page = { items: { title: string; amount: number }[]; total: number; page: number; pageSize: number }
 
 describe('一覧 API のモック', () => {
   it('page と pageSize があれば件数付きのページを返す', async () => {
-    const response = await fetch('http://localhost/api/deals?page=2&pageSize=4&sort=amount&order=desc')
+    const response = await fetchAsOrganization('http://localhost/api/deals?page=2&pageSize=4&sort=amount&order=desc')
     const body = (await response.json()) as Page
 
     expect(body).toMatchObject({ total: 15, page: 2, pageSize: 4 })
@@ -14,14 +15,14 @@ describe('一覧 API のモック', () => {
   })
 
   it('検索語で絞り込んだ件数を total に返す', async () => {
-    const response = await fetch('http://localhost/api/invoices?page=1&pageSize=10&q=inv-2026-0001')
+    const response = await fetchAsOrganization('http://localhost/api/invoices?page=1&pageSize=10&q=inv-2026-0001')
     const body = (await response.json()) as Page
 
     expect(body.total).toBe(1)
   })
 
   it('page と pageSize が無ければ配列を返す', async () => {
-    const response = await fetch('http://localhost/api/customers')
+    const response = await fetchAsOrganization('http://localhost/api/customers')
 
     expect(Array.isArray(await response.json())).toBe(true)
   })
@@ -33,14 +34,14 @@ describe('一覧 API のモック', () => {
     'page=1&pageSize=101',
     `page=1&pageSize=10&q=${'a'.repeat(201)}`,
   ])('許可しない条件 %s は 400 にする', async (query) => {
-    const response = await fetch(`http://localhost/api/customers?${query}`)
+    const response = await fetchAsOrganization(`http://localhost/api/customers?${query}`)
 
     expect(response.status).toBe(400)
   })
 
   it('検索語の長さはバックエンドと同じくコードポイント数で数える', async () => {
     const q = encodeURIComponent('😀'.repeat(200))
-    const response = await fetch(`http://localhost/api/customers?page=1&pageSize=10&q=${q}`)
+    const response = await fetchAsOrganization(`http://localhost/api/customers?page=1&pageSize=10&q=${q}`)
 
     expect(response.status).toBe(200)
   })

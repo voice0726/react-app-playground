@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_authenticated/customers/$customerId')({
 })
 
 function CustomerDetailRoute() {
+  const { canEdit } = useOrganization()
   const { customerId } = Route.useParams()
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -65,7 +67,7 @@ function CustomerDetailRoute() {
           </Anchor>
           <Title order={2}>{customer.name}</Title>
         </Stack>
-        <Button onClick={open}>編集</Button>
+        <Button disabled={!canEdit} onClick={open}>編集</Button>
       </Group>
 
       <Card withBorder radius="sm" padding="lg">
@@ -89,7 +91,7 @@ function CustomerDetailRoute() {
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={close} title="顧客を編集">
+      <Modal opened={canEdit && opened} onClose={close} title="顧客を編集">
         <CustomerForm
           initialValues={{
             name: customer.name,

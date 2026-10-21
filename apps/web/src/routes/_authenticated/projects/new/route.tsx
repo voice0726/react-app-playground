@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Paper, Stack, Title } from '@mantine/core'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -10,6 +11,7 @@ export const Route = createFileRoute('/_authenticated/projects/new')({
 })
 
 function NewProjectRoute() {
+  const { canEdit } = useOrganization()
   const [apiMessage, setApiMessage] = useState<string | null>(null)
 
   const handleSubmit = async (_values: ProjectFormValues) => {
@@ -25,7 +27,7 @@ function NewProjectRoute() {
         </Alert>
       ) : null}
       <Paper withBorder p="lg" radius="sm">
-        <ProjectForm onSubmit={handleSubmit} />
+        {canEdit ? <ProjectForm onSubmit={handleSubmit} /> : <Alert>閲覧者はプロジェクトを作成できません。</Alert>}
       </Paper>
     </Stack>
   )

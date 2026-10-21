@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
@@ -22,6 +23,7 @@ export const Route = createFileRoute('/_authenticated/invoices/$invoiceId')({
 })
 
 function InvoiceDetailRoute() {
+  const { canEdit } = useOrganization()
   const { invoiceId } = Route.useParams()
   const [opened, { close, open }] = useDisclosure()
   const [updateError, setUpdateError] = useState(false)
@@ -74,6 +76,7 @@ function InvoiceDetailRoute() {
         <Group>
           <InvoiceStatusTransition invoiceId={invoice.id} status={invoice.status} />
           <Button
+            disabled={!canEdit}
             onClick={() => {
               editFormGeneration.current += 1
               setUpdateError(false)
@@ -110,7 +113,7 @@ function InvoiceDetailRoute() {
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={handleClose} title="請求書を編集">
+      <Modal opened={canEdit && opened} onClose={handleClose} title="請求書を編集">
         {updateError ? (
           <Alert color="red" variant="light" mb="md">
             請求書を更新できませんでした。もう一度お試しください。

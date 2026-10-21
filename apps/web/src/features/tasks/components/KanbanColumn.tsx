@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Button, Group, Paper, Stack, Text, Title } from '@mantine/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
@@ -15,6 +16,7 @@ type KanbanColumnProps = {
 }
 
 export function KanbanColumn({ title, status, tasks, isStatusChangePending, onStatusChange, onAddTask }: KanbanColumnProps) {
+  const { canEdit } = useOrganization()
   const { setNodeRef } = useDroppable({ id: status })
 
   return (
@@ -30,6 +32,7 @@ export function KanbanColumn({ title, status, tasks, isStatusChangePending, onSt
             </Text>
           </Group>
           <Button
+            disabled={!canEdit}
             size="xs"
             variant="light"
             aria-label={`${title}にタスクを追加`}

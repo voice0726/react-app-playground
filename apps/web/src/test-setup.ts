@@ -19,6 +19,8 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 })
 
+Object.defineProperty(Element.prototype, 'scrollIntoView', { writable: true, value: () => {} })
+
 Object.defineProperty(window, 'scrollTo', { writable: true, value: () => {} })
 
 Object.defineProperty(document, 'fonts', {
@@ -36,6 +38,7 @@ Object.defineProperty(window, 'ResizeObserver', { writable: true, value: ResizeO
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
+  sessionStorage.clear()
   server.resetHandlers()
   resetMockState()
   queryClient.clear()

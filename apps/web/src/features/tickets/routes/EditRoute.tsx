@@ -1,3 +1,5 @@
+import { Alert } from '@mantine/core'
+import { useOrganization } from '@/lib/organization'
 import { Button, Group, Stack, Text } from '@mantine/core'
 import { useNavigate } from '@tanstack/react-router'
 import { TicketRequestError } from '@/features/tickets/components/feedback/TicketRequestError'
@@ -22,6 +24,7 @@ const toFormValues = (ticket: {
 })
 
 export function EditRoute({ ticketId, search }: { ticketId: number; search: TicketsSearch }) {
+  const { canEdit } = useOrganization()
   const navigate = useNavigate()
   const ticketQuery = useTicket({ id: ticketId })
   const updateTicket = useUpdateTicket()
@@ -44,6 +47,8 @@ export function EditRoute({ ticketId, search }: { ticketId: number; search: Tick
       <TicketsBackButton search={search} />
     </Group>
   )
+
+  if (!canEdit) return <Alert>閲覧者はチケットを変更できません。<TicketsBackButton search={search} /></Alert>
 
   return (
     <TicketPageLayout

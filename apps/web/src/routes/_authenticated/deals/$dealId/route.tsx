@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Anchor, Button, Card, Group, Loader, Modal, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Link, createFileRoute } from '@tanstack/react-router'
@@ -21,6 +22,7 @@ export const Route = createFileRoute('/_authenticated/deals/$dealId')({
 })
 
 function DealDetailRoute() {
+  const { canEdit } = useOrganization()
   const { dealId } = Route.useParams()
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -72,7 +74,7 @@ function DealDetailRoute() {
           </Anchor>
           <Title order={2}>{deal.title}</Title>
         </Stack>
-        <Button onClick={open}>編集</Button>
+        <Button disabled={!canEdit} onClick={open}>編集</Button>
       </Group>
 
       <Card withBorder radius="sm" padding="lg">
@@ -122,7 +124,7 @@ function DealDetailRoute() {
         </Stack>
       </Card>
 
-      <Modal opened={opened} onClose={close} title="案件を編集">
+      <Modal opened={canEdit && opened} onClose={close} title="案件を編集">
         <DealForm
           initialValues={{
             title: deal.title,

@@ -1,3 +1,4 @@
+import { testOrganization } from '@/test/organization'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
@@ -332,7 +333,7 @@ describe('invoice routes', () => {
     fireEvent.click(transition)
     expect(await screen.findByText('請求書のステータスを更新できませんでした。もう一度お試しください。')).toBeTruthy()
 
-    queryClient.setQueryData(invoiceKeys.detail('invoice-001'), {
+    queryClient.setQueryData(invoiceKeys.detail('invoice-001', testOrganization.id), {
       id: 'invoice-001',
       number: 'INV-2026-0001',
       customerId: 'customer-001',
@@ -370,7 +371,7 @@ describe('invoice routes', () => {
       await oldRequest.started
 
       if (changedValue === 'status') {
-        queryClient.setQueryData(invoiceKeys.detail('invoice-001'), {
+        queryClient.setQueryData(invoiceKeys.detail('invoice-001', testOrganization.id), {
           id: 'invoice-001',
           number: 'INV-2026-0001',
           customerId: 'customer-001',

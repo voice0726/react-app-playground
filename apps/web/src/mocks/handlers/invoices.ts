@@ -1,16 +1,18 @@
+import { organizationData } from './organizationData'
 import { http, HttpResponse } from 'msw'
 
 import { invoices as seedInvoices, type Invoice, type InvoiceStatus } from '../data/seed'
 import { createId, listResponse, notFound, numberValue, readJsonObject, stringValue } from './utils'
 
-let invoices: Invoice[] = [...seedInvoices]
+const store = organizationData<Invoice>(seedInvoices)
+export const invoiceSnapshot = store.snapshot
 
 export function resetInvoiceState(): void {
-  invoices = [...seedInvoices]
+  store.reset()
 }
 
-function findInvoice(id: string): Invoice | undefined {
-  return invoices.find((invoice) => invoice.id === id)
+function findInvoice(id: string, request: Request): Invoice | undefined {
+  return store.get(request).find((invoice) => invoice.id === id)
 }
 
 function invoiceStatus(value: unknown, fallback: InvoiceStatus): InvoiceStatus {
@@ -33,16 +35,16 @@ function canTransitionInvoiceStatus(current: InvoiceStatus, next: InvoiceStatus)
 
 export const invoiceHandlers = [
   http.get('*/api/invoices', ({ request }) =>
-    listResponse(request, invoices, {
+    listResponse(request, store.get(request), {
       sortableFields: ['number', 'customerId', 'amount', 'issueDate', 'dueDate', 'status', 'id'],
       // 請求書のモックは作成日時を持たないため、作成順と一致する ID で既定の並びを作る
       defaultSort: 'id',
       matches: (invoice, query) => invoice.number.toLowerCase().includes(query),
     }),
   ),
-  http.get('*/api/invoices/:id', ({ params }) => {
+  http.get('*/api/invoices/:id', ({ params, request }) => {
     const id = stringValue(params.id)
-    const invoice = id === undefined ? undefined : findInvoice(id)
+    const invoice = id === undefined ? undefined : findInvoice(id, request)
 
     if (invoice === undefined) {
       return notFound('Invoice')
@@ -51,6 +53,7 @@ export const invoiceHandlers = [
     return HttpResponse.json(invoice)
   }),
   http.post('*/api/invoices', async ({ request }) => {
+    const invoices = store.get(request)
     const body = await readJsonObject(request)
     const invoice: Invoice = {
       id: createId('invoice', invoices.length),
@@ -62,13 +65,14 @@ export const invoiceHandlers = [
       status: invoiceStatus(body.status, 'draft'),
     }
 
-    invoices = [...invoices, invoice]
+    store.set(request, [...invoices, invoice])
 
     return HttpResponse.json(invoice, { status: 201 })
   }),
   http.patch('*/api/invoices/:id', async ({ params, request }) => {
+    const invoices = store.get(request)
     const id = stringValue(params.id)
-    const invoice = id === undefined ? undefined : findInvoice(id)
+    const invoice = id === undefined ? undefined : findInvoice(id, request)
 
     if (id === undefined || invoice === undefined) {
       return notFound('Invoice')
@@ -91,7 +95,7 @@ export const invoiceHandlers = [
       status: nextStatus,
     }
 
-    invoices = invoices.map((item) => (item.id === id ? updated : item))
+    store.set(request, invoices.map((item) => (item.id === id ? updated : item)))
 
     return HttpResponse.json(updated)
   }),

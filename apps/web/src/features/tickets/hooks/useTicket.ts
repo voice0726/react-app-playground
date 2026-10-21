@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { useQuery } from '@tanstack/react-query'
 import { fetchTicket } from '@/features/tickets/api/tickets'
 import {
@@ -12,9 +13,10 @@ export type UseTicketOptions = {
 }
 
 export const useTicket = ({ id }: UseTicketOptions) => {
+  const { organization } = useOrganization()
   return useQuery({
-    queryKey: ticketsQueryKey.detail(id),
-    queryFn: () => fetchTicket(id),
+    queryKey: ticketsQueryKey.detail(id, organization.id),
+    queryFn: ({ signal }) => fetchTicket(id, organization.id, signal),
     staleTime: TICKETS_STALE_TIME,
     gcTime: TICKETS_GC_TIME,
   })

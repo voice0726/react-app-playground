@@ -3,7 +3,8 @@ import { expect, test } from '@playwright/test'
 test('ダッシュボードに各リソースの件数を表示する', async ({ page }) => {
   await page.goto('/dashboard')
   await expect(page.getByRole('heading', { name: 'ダッシュボード' })).toBeVisible()
-  await expect(page.getByRole('heading', { level: 3 })).toHaveText(['10', '15', '8', '10'])
+  await expect(page.getByRole('heading', { level: 3 }).filter({ hasText: /^\d+$/ })).toHaveText(['10', '15', '8', '10'])
+  await expect(page.getByRole('heading', { name: '請求の対応状況' })).toBeVisible()
 })
 
 test('案件を作成し、顧客情報を表示して編集できる', async ({ page }) => {

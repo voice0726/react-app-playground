@@ -1,7 +1,8 @@
+import { fetchAsOrganization } from '@/test/organization'
 import { describe, expect, it } from 'vitest'
 
 const send = (method: string, path: string, body?: string) =>
-  fetch(`http://localhost${path}`, {
+  fetchAsOrganization(`http://localhost${path}`, {
     method,
     headers: { 'content-type': 'application/json' },
     body,

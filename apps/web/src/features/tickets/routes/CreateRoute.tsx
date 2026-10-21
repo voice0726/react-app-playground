@@ -1,3 +1,5 @@
+import { Alert } from '@mantine/core'
+import { useOrganization } from '@/lib/organization'
 import { useNavigate } from '@tanstack/react-router'
 import { TicketForm } from '@/features/tickets/components/forms/TicketForm'
 import { TicketPageLayout } from '@/features/tickets/components/layout/TicketPageLayout'
@@ -9,8 +11,11 @@ import { getErrorMessage } from '@/features/tickets/utils/getErrorMessage'
 import { showToast } from '@/lib/toast'
 
 export function CreateRoute({ search }: { search: TicketsSearch }) {
+  const { canEdit } = useOrganization()
   const navigate = useNavigate()
   const createTicket = useCreateTicket()
+
+  if (!canEdit) return <Alert>閲覧者はチケットを変更できません。<TicketsBackButton search={search} /></Alert>
 
   return (
     <TicketPageLayout

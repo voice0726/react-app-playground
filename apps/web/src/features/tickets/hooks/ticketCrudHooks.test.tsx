@@ -1,3 +1,4 @@
+import { TestOrganization } from '@/test/organization'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
@@ -39,7 +40,7 @@ const createTestQueryClient = () =>
 const renderWithQueryClient = (ui: ReactNode) => {
   const queryClient = createTestQueryClient()
   const wrapper = ({ children }: PropsWithChildren) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}><TestOrganization>{children}</TestOrganization></QueryClientProvider>
   )
 
   return render(ui, { wrapper })

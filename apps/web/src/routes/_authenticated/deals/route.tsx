@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
@@ -25,6 +26,7 @@ export const Route = createFileRoute('/_authenticated/deals')({
 })
 
 function DealsRoute() {
+  const { canEdit } = useOrganization()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -69,7 +71,7 @@ function DealsRoute() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>案件</Title>
-        <Button onClick={open}>新規案件</Button>
+        <Button disabled={!canEdit} onClick={open}>新規案件</Button>
       </Group>
 
       {failedToRefresh(dealsQuery) ? (
@@ -84,7 +86,7 @@ function DealsRoute() {
         isError={dealsQuery.isError}
       />
 
-      <Modal opened={opened} onClose={close} title="新規案件">
+      <Modal opened={canEdit && opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />
       </Modal>
     </Stack>
