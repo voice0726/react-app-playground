@@ -10,7 +10,7 @@
   "categories": {
     "correctness": "error",
     "suspicious": "error",
-    "perf": "warn"
+    "perf": "error"
   },
   "rules": {
     "react/react-in-jsx-scope": "off"
