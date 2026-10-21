@@ -45,8 +45,6 @@
       "Bash(pnpm test:e2e:backend *)",
       "Bash(pnpm test:e2e:standalone)",
       "Bash(pnpm test:e2e:standalone *)",
-      "Bash(pnpm test:vrt)",
-      "Bash(pnpm test:vrt *)",
       "Bash(pnpm --filter @playground/web typecheck)",
       "Bash(pnpm --filter @playground/web typecheck *)",
       "Bash(pnpm --filter @playground/web build)",
