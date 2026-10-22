@@ -22,7 +22,9 @@ function InvoicesRoute() {
   const search = Route.useSearch()
   const request = toListRequest(search)
   const invoicesQuery = useInvoicePage(request)
-  const [today] = useState(() => format(new Date(), 'yyyy-MM-dd'))
+  // 再描画時に日付変更を queryKey へ反映する。
+  // eslint-disable-next-line react/purity
+  const today = format(new Date(), 'yyyy-MM-dd')
   const summary = useInvoiceSummary(today)
 
   if (pathname !== '/invoices') {

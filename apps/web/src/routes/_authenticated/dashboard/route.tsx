@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Alert, Button, Card, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
@@ -17,9 +16,11 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 
 function DashboardRoute() {
   const { organization } = useOrganization()
-  const [today] = useState(() => format(new Date(), 'yyyy-MM-dd'))
+  // 再描画時に日付変更を queryKey へ反映する。
+  // eslint-disable-next-line react/purity
+  const today = format(new Date(), 'yyyy-MM-dd')
   const dashboardQuery = useDashboard(organization.id, today)
-  const isLoading = dashboardQuery.isPending || dashboardQuery.isFetching
+  const isLoading = dashboardQuery.isPending
   const summary = dashboardQuery.data
 
   const summaryItems: SummaryItem[] = summary === undefined ? [] : [
