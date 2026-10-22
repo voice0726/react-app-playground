@@ -1,9 +1,11 @@
-import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
+import { format } from 'date-fns'
+import { useOrganization } from '@/lib/organization'
+import { Alert, Button, Group, Card, Modal, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 import { useCreateInvoice } from '@/features/invoices/api/mutations'
-import { useInvoicePage } from '@/features/invoices/api/queries'
+import { useInvoicePage, useInvoiceSummary } from '@/features/invoices/api/queries'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceTable } from '@/features/invoices/components/InvoiceTable'
 import { invoiceSearchSchema } from '@/features/invoices/schemas/search'
@@ -20,6 +22,10 @@ function InvoicesRoute() {
   const search = Route.useSearch()
   const request = toListRequest(search)
   const invoicesQuery = useInvoicePage(request)
+  // 再描画時に日付変更を queryKey へ反映する。
+  // eslint-disable-next-line react/purity
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const summary = useInvoiceSummary(today)
 
   if (pathname !== '/invoices') {
     return <Outlet />
@@ -38,6 +44,13 @@ function InvoicesRoute() {
         <InvoiceCreateModal />
       </Group>
 
+      {summary.isError ? <Alert color="red">請求の集計を取得できませんでした。<Button onClick={() => { void summary.refetch() }}>再読み込み</Button></Alert> : null}
+      {summary.data ? <SimpleGrid cols={{ base: 1, sm: 3 }}>
+        <Card withBorder><Text>送付待ち</Text><Text fw={600}>{summary.data.draftCount} 件</Text></Card>
+        <Card withBorder><Text>未入金（送付済み）</Text><Text fw={600}>¥{summary.data.outstandingAmount.toLocaleString('ja-JP')}</Text></Card>
+        <Card withBorder><Text>支払期限超過</Text><Text fw={600}>{summary.data.overdueCount} 件 · ¥{summary.data.overdueAmount.toLocaleString('ja-JP')}</Text></Card>
+      </SimpleGrid> : null}
+
       {failedToRefresh(invoicesQuery) ? (
         <Alert color="red" variant="light">
           請求書の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
@@ -54,6 +67,7 @@ function InvoicesRoute() {
 }
 
 function InvoiceCreateModal() {
+  const { canEdit } = useOrganization()
   const [opened, { close, open }] = useDisclosure()
   const [createError, setCreateError] = useState(false)
   const [pending, setPending] = useState(false)
@@ -89,6 +103,7 @@ function InvoiceCreateModal() {
   return (
     <>
       <Button
+        disabled={!canEdit}
         onClick={() => {
           createFormGeneration.current += 1
           setCreateError(false)
@@ -98,7 +113,7 @@ function InvoiceCreateModal() {
       >
         新規請求書
       </Button>
-      <Modal opened={opened} onClose={handleClose} title="新規請求書">
+      <Modal opened={canEdit && opened} onClose={handleClose} title="新規請求書">
         {createError ? (
           <Alert color="red" variant="light" mb="md">
             請求書を作成できませんでした。もう一度お試しください。

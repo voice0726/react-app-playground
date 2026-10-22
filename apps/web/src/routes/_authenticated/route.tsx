@@ -1,7 +1,8 @@
-import { AppShell, Burger, Group, Text, Title } from '@mantine/core'
+import { AppShell, Box, Burger, Divider, Group, Stack, Text, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
+import { OrganizationWorkspace } from '@/components/OrganizationWorkspace'
 import { AppNav } from '@/components/AppNav'
 import { shouldRedirectToLogin } from '@/lib/auth'
 import { useSessionStore } from '@/lib/stores/session.store'
@@ -22,36 +23,47 @@ function AuthenticatedLayout() {
   const user = useSessionStore((state) => state.user)
 
   return (
-    <AppShell
-      header={{ height: 64 }}
-      navbar={{
-        width: 260,
-        breakpoint: 'sm',
-        collapsed: { mobile: !opened },
-      }}
-      padding="md"
-    >
-      <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Title order={1} size="h3">
-              Playground CRM
-            </Title>
-          </Group>
-          <Text c="dimmed" size="sm">
-            {user?.name}
-          </Text>
-        </Group>
-      </AppShell.Header>
+    <OrganizationWorkspace key={user?.id} main={<Outlet />}>
+      {({ switcher, roleLabel, content }) => (
+        <AppShell
+          header={{ height: 64 }}
+          navbar={{
+            width: 260,
+            breakpoint: 'sm',
+            collapsed: { mobile: !opened },
+          }}
+          padding="md"
+        >
+          <AppShell.Header>
+            <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+              <Group wrap="nowrap">
+                <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+                <Title order={1} size="h3">
+                  Playground CRM
+                </Title>
+              </Group>
+              <Stack gap={0} align="flex-end">
+                <Text c="dimmed" size="sm">
+                  {user?.name}
+                </Text>
+                {roleLabel ? <Text c="dimmed" size="xs">権限: {roleLabel}</Text> : null}
+              </Stack>
+            </Group>
+          </AppShell.Header>
 
-      <AppShell.Navbar p="md">
-        <AppNav />
-      </AppShell.Navbar>
+          <AppShell.Navbar p="md">
+            <Stack h="100%" gap="md">
+              {switcher}
+              {switcher ? <Divider /> : null}
+              <Box flex={1}>
+                <AppNav />
+              </Box>
+            </Stack>
+          </AppShell.Navbar>
 
-      <AppShell.Main>
-        <Outlet />
-      </AppShell.Main>
-    </AppShell>
+          <AppShell.Main>{content}</AppShell.Main>
+        </AppShell>
+      )}
+    </OrganizationWorkspace>
   )
 }

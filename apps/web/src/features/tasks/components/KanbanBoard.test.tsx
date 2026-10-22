@@ -1,3 +1,4 @@
+import { TestOrganization } from '@/test/organization'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -19,11 +20,11 @@ function renderBoard() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
   return render(
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}><TestOrganization>
       <MantineProvider>
         <KanbanBoard />
       </MantineProvider>
-    </QueryClientProvider>,
+    </TestOrganization></QueryClientProvider>,
   )
 }
 

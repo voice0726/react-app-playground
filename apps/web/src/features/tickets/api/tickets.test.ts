@@ -1,3 +1,4 @@
+import { testOrganization } from '@/test/organization'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createTicket,
@@ -45,7 +46,7 @@ describe('ticket API', () => {
         sortOrder: 'asc',
         page: 2,
         pageSize: 10,
-      }),
+      }, testOrganization.id),
     ).resolves.toEqual({ items: [summary], total: 1 })
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       '/api/tickets?q=bug&status=open&sortBy=id&sortOrder=asc&page=2&pageSize=10',
@@ -64,7 +65,7 @@ describe('ticket API', () => {
         sortOrder: 'asc',
         page: 1,
         pageSize: 10,
-      }),
+      }, testOrganization.id),
     ).rejects.toMatchObject({
       name: 'NetworkError',
       endpoint: '/api/tickets?status=all&sortBy=id&sortOrder=asc&page=1&pageSize=10',
@@ -80,7 +81,7 @@ describe('ticket API', () => {
       .mockResolvedValueOnce(response({ items: [summary] }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchTicket(1)).rejects.toMatchObject({
+    await expect(fetchTicket(1, testOrganization.id)).rejects.toMatchObject({
       endpoint: '/api/tickets/1',
     } satisfies Partial<ApiContractError>)
     await expect(
@@ -91,7 +92,7 @@ describe('ticket API', () => {
         sortOrder: 'asc',
         page: 1,
         pageSize: 10,
-      }),
+      }, testOrganization.id),
     ).rejects.toBeInstanceOf(ApiContractError)
   })
 
@@ -99,21 +100,21 @@ describe('ticket API', () => {
     const fetchMock = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchTicket(0)).rejects.toThrow(/expected number to be >0/)
-    await expect(deleteTicket(1.5)).rejects.toThrow(/expected int/)
-    await expect(createTicketComment({ ticketId: Number.NaN, body: 'Comment' })).rejects.toThrow(
+    await expect(fetchTicket(0, testOrganization.id)).rejects.toThrow(/expected number to be >0/)
+    await expect(deleteTicket(1.5, testOrganization.id)).rejects.toThrow(/expected int/)
+    await expect(createTicketComment({ ticketId: Number.NaN, body: 'Comment' }, testOrganization.id)).rejects.toThrow(
       /expected number/,
     )
     await expect(
-      updateTicketComment({ ticketId: 0, commentId: 1, body: 'Comment' }),
+      updateTicketComment({ ticketId: 0, commentId: 1, body: 'Comment' }, testOrganization.id),
     ).rejects.toThrow(/expected number to be >0/)
     await expect(
-      updateTicketComment({ ticketId: 1, commentId: 0, body: 'Comment' }),
+      updateTicketComment({ ticketId: 1, commentId: 0, body: 'Comment' }, testOrganization.id),
     ).rejects.toThrow(/expected number to be >0/)
-    await expect(deleteTicketComment({ ticketId: -1, commentId: 1 })).rejects.toThrow(
+    await expect(deleteTicketComment({ ticketId: -1, commentId: 1 }, testOrganization.id)).rejects.toThrow(
       /expected number to be >0/,
     )
-    await expect(deleteTicketComment({ ticketId: 1, commentId: -1 })).rejects.toThrow(
+    await expect(deleteTicketComment({ ticketId: 1, commentId: -1 }, testOrganization.id)).rejects.toThrow(
       /expected number to be >0/,
     )
     expect(fetchMock).not.toHaveBeenCalled()
@@ -123,7 +124,7 @@ describe('ticket API', () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(response(detail))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchTicket(1)).resolves.toEqual(detail)
+    await expect(fetchTicket(1, testOrganization.id)).resolves.toEqual(detail)
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tickets/1')
   })
 
@@ -134,8 +135,8 @@ describe('ticket API', () => {
       .mockResolvedValueOnce(response(detail))
     vi.stubGlobal('fetch', fetchMock)
 
-    await createTicket({ title: 'New ticket', status: 'open', assignee: null })
-    await updateTicket({ id: 1, title: 'Updated ticket', status: 'closed', assignee: null })
+    await createTicket({ title: 'New ticket', status: 'open', assignee: null }, testOrganization.id)
+    await updateTicket({ id: 1, title: 'Updated ticket', status: 'closed', assignee: null }, testOrganization.id)
 
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       method: 'POST',
@@ -153,7 +154,7 @@ describe('ticket API', () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(deleteTicket(1)).resolves.toBeUndefined()
+    await expect(deleteTicket(1, testOrganization.id)).resolves.toBeUndefined()
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       method: 'DELETE',
       credentials: 'include',
@@ -168,9 +169,9 @@ describe('ticket API', () => {
       .mockResolvedValueOnce(response(detail))
     vi.stubGlobal('fetch', fetchMock)
 
-    await createTicketComment({ ticketId: 1, body: 'New comment' })
-    await updateTicketComment({ ticketId: 1, commentId: 2, body: 'Updated comment' })
-    await deleteTicketComment({ ticketId: 1, commentId: 2 })
+    await createTicketComment({ ticketId: 1, body: 'New comment' }, testOrganization.id)
+    await updateTicketComment({ ticketId: 1, commentId: 2, body: 'Updated comment' }, testOrganization.id)
+    await deleteTicketComment({ ticketId: 1, commentId: 2 }, testOrganization.id)
 
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       '/api/tickets/1/comments',

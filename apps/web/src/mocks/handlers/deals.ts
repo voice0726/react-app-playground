@@ -1,16 +1,18 @@
+import { organizationData } from './organizationData'
 import { http, HttpResponse } from 'msw'
 
 import { deals as seedDeals, type Deal, type DealStatus } from '../data/seed'
 import { createId, listResponse, notFound, numberValue, readJsonObject, stringValue } from './utils'
 
-let deals: Deal[] = [...seedDeals]
+const store = organizationData<Deal>(seedDeals)
+export const dealSnapshot = store.snapshot
 
 export function resetDealState(): void {
-  deals = [...seedDeals]
+  store.reset()
 }
 
-function findDeal(id: string): Deal | undefined {
-  return deals.find((deal) => deal.id === id)
+function findDeal(id: string, request: Request): Deal | undefined {
+  return store.get(request).find((deal) => deal.id === id)
 }
 
 function dealStatus(value: unknown, fallback: DealStatus): DealStatus {
@@ -25,15 +27,15 @@ function dealStatus(value: unknown, fallback: DealStatus): DealStatus {
 
 export const dealHandlers = [
   http.get('*/api/deals', ({ request }) =>
-    listResponse(request, deals, {
+    listResponse(request, store.get(request), {
       sortableFields: ['title', 'customerId', 'amount', 'status', 'createdAt'],
       defaultSort: 'createdAt',
       matches: (deal, query) => deal.title.toLowerCase().includes(query),
     }),
   ),
-  http.get('*/api/deals/:id', ({ params }) => {
+  http.get('*/api/deals/:id', ({ params, request }) => {
     const id = stringValue(params.id)
-    const deal = id === undefined ? undefined : findDeal(id)
+    const deal = id === undefined ? undefined : findDeal(id, request)
 
     if (deal === undefined) {
       return notFound('Deal')
@@ -42,6 +44,7 @@ export const dealHandlers = [
     return HttpResponse.json(deal)
   }),
   http.post('*/api/deals', async ({ request }) => {
+    const deals = store.get(request)
     const body = await readJsonObject(request)
     const deal: Deal = {
       id: createId('deal', deals.length),
@@ -52,13 +55,14 @@ export const dealHandlers = [
       createdAt: new Date().toISOString(),
     }
 
-    deals = [...deals, deal]
+    store.set(request, [...deals, deal])
 
     return HttpResponse.json(deal, { status: 201 })
   }),
   http.patch('*/api/deals/:id', async ({ params, request }) => {
+    const deals = store.get(request)
     const id = stringValue(params.id)
-    const deal = id === undefined ? undefined : findDeal(id)
+    const deal = id === undefined ? undefined : findDeal(id, request)
 
     if (id === undefined || deal === undefined) {
       return notFound('Deal')
@@ -73,7 +77,7 @@ export const dealHandlers = [
       status: dealStatus(body.status, deal.status),
     }
 
-    deals = deals.map((item) => (item.id === id ? updated : item))
+    store.set(request, deals.map((item) => (item.id === id ? updated : item)))
 
     return HttpResponse.json(updated)
   }),

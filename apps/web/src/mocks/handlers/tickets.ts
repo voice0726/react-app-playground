@@ -1,3 +1,4 @@
+import { organizationData } from './organizationData'
 import { HttpResponse, http } from 'msw'
 import {
   CreateTicketCommentRequest,
@@ -133,10 +134,10 @@ const cloneTickets = (tickets: MockTicket[]) => tickets.map((ticket) => structur
 
 const createTicketStore = () => [...cloneTickets(BASE_TICKETS), ...cloneTickets(GENERATED_TICKETS)]
 
-let ticketsStore: MockTicket[] = createTicketStore()
+const store = organizationData(createTicketStore())
 
 export const resetTicketState = () => {
-  ticketsStore = createTicketStore()
+  store.reset()
 }
 
 const sortFieldConfig: Record<TicketsSearch['sortBy'], 'id' | 'createdAt' | 'updatedAt'> = {
@@ -351,18 +352,18 @@ export const ticketHandlers = [
   http.get('*/api/tickets', async ({ request }) => {
     const url = new URL(request.url)
     const search = ticketsSearchSchema.parse(Object.fromEntries(url.searchParams.entries()))
-    const result = listTickets(ticketsStore, search)
+    const result = listTickets(store.get(request), search)
 
     return HttpResponse.json(result)
   }),
-  http.get('*/api/tickets/:id', async ({ params }) => {
+  http.get('*/api/tickets/:id', async ({ params, request }) => {
     const id = parseTicketId(params.id)
 
     if (id === null) {
       return ticketError(400, 'Invalid ticket id')
     }
 
-    const ticket = getTicketById(ticketsStore, id)
+    const ticket = getTicketById(store.get(request), id)
 
     if (!ticket) {
       return ticketError(404, 'Ticket not found')
@@ -379,7 +380,7 @@ export const ticketHandlers = [
 
     const now = new Date().toISOString()
     const actor = ticketActorSchema.parse(MOCK_USER)
-    const ticket = createTicketItem(ticketsStore, body, now, actor)
+    const ticket = createTicketItem(store.get(request), body, now, actor)
 
     return HttpResponse.json(ticket, { status: 201 })
   }),
@@ -397,7 +398,7 @@ export const ticketHandlers = [
     }
 
     const actor = ticketActorSchema.parse(MOCK_USER)
-    const ticket = createTicketCommentItem(ticketsStore, id, body, new Date().toISOString(), actor)
+    const ticket = createTicketCommentItem(store.get(request), id, body, new Date().toISOString(), actor)
 
     if (!ticket) {
       return ticketError(404, 'Ticket not found')
@@ -420,7 +421,7 @@ export const ticketHandlers = [
     }
 
     const actor = ticketActorSchema.parse(MOCK_USER)
-    const ticket = getTicketById(ticketsStore, ticketId)
+    const ticket = getTicketById(store.get(request), ticketId)
 
     if (!ticket) {
       return ticketError(404, 'Ticket not found')
@@ -437,7 +438,7 @@ export const ticketHandlers = [
     }
 
     const updated = updateTicketCommentItem(
-      ticketsStore,
+      store.get(request),
       ticketId,
       commentId,
       body,
@@ -447,7 +448,7 @@ export const ticketHandlers = [
 
     return HttpResponse.json(updated)
   }),
-  http.delete('*/api/tickets/:id/comments/:commentId', async ({ params }) => {
+  http.delete('*/api/tickets/:id/comments/:commentId', async ({ params, request }) => {
     const ticketId = parseTicketId(params.id)
     const commentId = parseTicketId(params.commentId)
 
@@ -456,7 +457,7 @@ export const ticketHandlers = [
     }
 
     const actor = ticketActorSchema.parse(MOCK_USER)
-    const ticket = getTicketById(ticketsStore, ticketId)
+    const ticket = getTicketById(store.get(request), ticketId)
 
     if (!ticket) {
       return ticketError(404, 'Ticket not found')
@@ -473,7 +474,7 @@ export const ticketHandlers = [
     }
 
     const updated = deleteTicketCommentItem(
-      ticketsStore,
+      store.get(request),
       ticketId,
       commentId,
       new Date().toISOString(),
@@ -498,7 +499,7 @@ export const ticketHandlers = [
     const body = { ...input, id }
 
     const actor = ticketActorSchema.parse(MOCK_USER)
-    const ticket = updateTicketItem(ticketsStore, body, new Date().toISOString(), actor)
+    const ticket = updateTicketItem(store.get(request), body, new Date().toISOString(), actor)
 
     if (!ticket) {
       return ticketError(404, 'Ticket not found')
@@ -506,14 +507,14 @@ export const ticketHandlers = [
 
     return HttpResponse.json(ticket)
   }),
-  http.delete('*/api/tickets/:id', async ({ params }) => {
+  http.delete('*/api/tickets/:id', async ({ params, request }) => {
     const id = parseTicketId(params.id)
 
     if (id === null) {
       return ticketError(400, 'Invalid ticket id')
     }
 
-    const removedTicket = deleteTicketItem(ticketsStore, id)
+    const removedTicket = deleteTicketItem(store.get(request), id)
 
     if (!removedTicket) {
       return ticketError(404, 'Ticket not found')

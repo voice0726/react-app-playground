@@ -1,3 +1,5 @@
+import { organizationHandlers, resetOrganizationState } from './organizations'
+import { dashboardHandlers } from './dashboard'
 import { authHandlers } from './auth'
 import { customerHandlers, resetCustomerState } from './customers'
 import { dealHandlers, resetDealState } from './deals'
@@ -6,6 +8,8 @@ import { resetTaskState, taskHandlers } from './tasks'
 import { resetTicketState, ticketHandlers } from './tickets'
 
 export const handlers = [
+  ...organizationHandlers,
+  ...dashboardHandlers,
   ...authHandlers,
   ...customerHandlers,
   ...dealHandlers,
@@ -15,6 +19,7 @@ export const handlers = [
 ]
 
 export function resetMockState(): void {
+  resetOrganizationState()
   resetCustomerState()
   resetDealState()
   resetInvoiceState()

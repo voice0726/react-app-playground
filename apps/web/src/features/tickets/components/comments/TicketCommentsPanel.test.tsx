@@ -1,3 +1,4 @@
+import { TestOrganization } from '@/test/organization'
 import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -20,12 +21,12 @@ const createTestQueryClient = () =>
 
 const renderCommentsSection = (ui: ReactNode) =>
   render(
-    <QueryClientProvider client={createTestQueryClient()}>
+    <QueryClientProvider client={createTestQueryClient()}><TestOrganization>
       <MantineProvider>
         <Notifications />
         {ui}
       </MantineProvider>
-    </QueryClientProvider>,
+    </TestOrganization></QueryClientProvider>,
   )
 
 afterEach(() => {

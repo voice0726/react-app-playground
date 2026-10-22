@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { fetchTickets } from '@/features/tickets/api/tickets'
 import {
@@ -13,11 +14,12 @@ export type UseTicketsOptions = {
 }
 
 export const useTickets = (opts: UseTicketsOptions) => {
+  const { organization } = useOrganization()
   const { filters } = opts
 
   return useQuery<TicketsResponse>({
-    queryKey: ticketsQueryKey.list(filters),
-    queryFn: () => fetchTickets(filters),
+    queryKey: ticketsQueryKey.list(filters, organization.id),
+    queryFn: ({ signal }) => fetchTickets(filters, organization.id, signal),
     placeholderData: keepPreviousData,
     staleTime: TICKETS_STALE_TIME,
     gcTime: TICKETS_GC_TIME,

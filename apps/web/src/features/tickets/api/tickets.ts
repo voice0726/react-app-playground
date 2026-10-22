@@ -1,3 +1,4 @@
+import { organizationHeaders } from '@/lib/organizationHeaders'
 import {
   CreateTicketCommentRequest,
   type CreateTicketCommentRequest as CreateTicketCommentRequestType,
@@ -27,13 +28,14 @@ const requestTicketsApi = (endpoint: string, options: RequestInit, fallbackMessa
 const parseTicketResponse = (response: Response, endpoint: string) =>
   parseJsonResponse(response, endpoint, ticketDetailSchema.parse)
 
-export const fetchTickets = async (filters: TicketsSearch) => {
+export const fetchTickets = async (filters: TicketsSearch, organizationId: string, signal?: AbortSignal) => {
   const endpoint = withQuery('/api/tickets', filters)
   const response = await requestTicketsApi(
     endpoint,
     {
+      signal,
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
     },
     'チケット一覧の取得に失敗しました。',
   )
@@ -43,14 +45,15 @@ export const fetchTickets = async (filters: TicketsSearch) => {
   return parseJsonResponse(response, endpoint, ticketsResponseSchema.parse)
 }
 
-export const fetchTicket = async (id: Ticket['id']) => {
+export const fetchTicket = async (id: Ticket['id'], organizationId: string, signal?: AbortSignal) => {
   const ticketId = parseTicketId(id)
   const endpoint = `/api/tickets/${ticketId}`
   const response = await requestTicketsApi(
     endpoint,
     {
+      signal,
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
     },
     'チケット情報の取得に失敗しました。',
   )
@@ -60,7 +63,7 @@ export const fetchTicket = async (id: Ticket['id']) => {
   return parseTicketResponse(response, endpoint)
 }
 
-export const createTicket = async (body: CreateTicketRequestType) => {
+export const createTicket = async (body: CreateTicketRequestType, organizationId: string) => {
   const payload = CreateTicketRequest.parse(body)
   const endpoint = '/api/tickets'
   const response = await requestTicketsApi(
@@ -68,7 +71,7 @@ export const createTicket = async (body: CreateTicketRequestType) => {
     {
       method: 'POST',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
       body: JSON.stringify(payload),
     },
     'チケットの作成に失敗しました。',
@@ -79,7 +82,7 @@ export const createTicket = async (body: CreateTicketRequestType) => {
   return parseTicketResponse(response, endpoint)
 }
 
-export const updateTicket = async (body: UpdateTicketRequestType) => {
+export const updateTicket = async (body: UpdateTicketRequestType, organizationId: string) => {
   const { id, ...payload } = UpdateTicketRequest.parse(body)
   const endpoint = `/api/tickets/${id}`
   const response = await requestTicketsApi(
@@ -87,7 +90,7 @@ export const updateTicket = async (body: UpdateTicketRequestType) => {
     {
       method: 'PUT',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
       body: JSON.stringify(payload),
     },
     'チケットの更新に失敗しました。',
@@ -98,7 +101,7 @@ export const updateTicket = async (body: UpdateTicketRequestType) => {
   return parseTicketResponse(response, endpoint)
 }
 
-export const deleteTicket = async (id: Ticket['id']): Promise<void> => {
+export const deleteTicket = async (id: Ticket['id'], organizationId: string): Promise<void> => {
   const ticketId = parseTicketId(id)
   const endpoint = `/api/tickets/${ticketId}`
   const response = await requestTicketsApi(
@@ -106,7 +109,7 @@ export const deleteTicket = async (id: Ticket['id']): Promise<void> => {
     {
       method: 'DELETE',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
     },
     'チケットの削除に失敗しました。',
   )
@@ -120,7 +123,7 @@ export const createTicketComment = async ({
 }: {
   ticketId: Ticket['id']
   body: CreateTicketCommentRequestType['body']
-}) => {
+}, organizationId: string) => {
   const parsedTicketId = parseTicketId(ticketId)
   const payload = CreateTicketCommentRequest.parse({ body })
   const endpoint = `/api/tickets/${parsedTicketId}/comments`
@@ -129,7 +132,7 @@ export const createTicketComment = async ({
     {
       method: 'POST',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
       body: JSON.stringify(payload),
     },
     'コメントの投稿に失敗しました。',
@@ -148,7 +151,7 @@ export const updateTicketComment = async ({
   ticketId: Ticket['id']
   commentId: number
   body: CreateTicketCommentRequestType['body']
-}) => {
+}, organizationId: string) => {
   const parsedTicketId = parseTicketId(ticketId)
   const parsedCommentId = ticketIdSchema.parse(commentId)
   const payload = CreateTicketCommentRequest.parse({ body })
@@ -158,7 +161,7 @@ export const updateTicketComment = async ({
     {
       method: 'PUT',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
       body: JSON.stringify(payload),
     },
     'コメントの更新に失敗しました。',
@@ -175,7 +178,7 @@ export const deleteTicketComment = async ({
 }: {
   ticketId: Ticket['id']
   commentId: number
-}) => {
+}, organizationId: string) => {
   const parsedTicketId = parseTicketId(ticketId)
   const parsedCommentId = ticketIdSchema.parse(commentId)
   const endpoint = `/api/tickets/${parsedTicketId}/comments/${parsedCommentId}`
@@ -184,7 +187,7 @@ export const deleteTicketComment = async ({
     {
       method: 'DELETE',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: organizationHeaders(organizationId, JSON_HEADERS),
     },
     'コメントの削除に失敗しました。',
   )

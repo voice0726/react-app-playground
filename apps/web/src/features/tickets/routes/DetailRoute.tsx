@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import {
   Button,
   Divider,
@@ -39,6 +40,7 @@ function DetailItem({ label, value }: { label: string; value: ReactNode }) {
 }
 
 export function DetailRoute({ ticketId, search }: { ticketId: number; search: TicketsSearch }) {
+  const { canEdit } = useOrganization()
   const navigate = useNavigate()
   const [deleteOpened, setDeleteOpened] = useState(false)
   const currentUserId = useSessionStore((state) => state.user?.id)
@@ -46,7 +48,7 @@ export function DetailRoute({ ticketId, search }: { ticketId: number; search: Ti
   const deleteTicket = useDeleteTicket()
 
   const actions =
-    ticketQuery.data && !ticketQuery.isError ? (
+    canEdit && ticketQuery.data && !ticketQuery.isError ? (
       <Group>
         <Button
           leftSection={<IconEdit size={16} />}

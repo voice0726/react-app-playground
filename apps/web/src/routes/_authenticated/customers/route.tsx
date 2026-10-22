@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
@@ -25,6 +26,7 @@ export const Route = createFileRoute('/_authenticated/customers')({
 })
 
 function CustomersRoute() {
+  const { canEdit } = useOrganization()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -69,7 +71,7 @@ function CustomersRoute() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>顧客</Title>
-        <Button onClick={open}>新規顧客</Button>
+        <Button disabled={!canEdit} onClick={open}>新規顧客</Button>
       </Group>
 
       {failedToRefresh(customersQuery) ? (
@@ -84,7 +86,7 @@ function CustomersRoute() {
         isError={customersQuery.isError}
       />
 
-      <Modal opened={opened} onClose={close} title="新規顧客">
+      <Modal opened={canEdit && opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />
       </Modal>
     </Stack>

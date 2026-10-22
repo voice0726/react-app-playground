@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconMessageCircle, IconSend } from '@tabler/icons-react'
@@ -28,6 +29,7 @@ export function TicketCommentsPanel({
   comments,
   currentUserId,
 }: TicketCommentsPanelProps) {
+  const { canEdit } = useOrganization()
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null)
   const [commentToDelete, setCommentToDelete] = useState<TicketComment | null>(null)
 
@@ -72,12 +74,12 @@ export function TicketCommentsPanel({
     comment.createdBy.id === currentUserId
 
   const canEditComment = (comment: TicketComment) =>
-    isCommentOwner(comment) &&
+    canEdit && isCommentOwner(comment) &&
     !isSubmittingDelete(comment.id) &&
     !updateTicketComment.isPending &&
     editingCommentId === null
   const canDeleteComment = (comment: TicketComment) =>
-    isCommentOwner(comment) && !isSubmittingUpdate(comment.id)
+    canEdit && isCommentOwner(comment) && !isSubmittingUpdate(comment.id)
 
   const submitCommentForm = handleSubmit(submitComment)
 
@@ -106,7 +108,7 @@ export function TicketCommentsPanel({
         <Text fw={700}>コメント</Text>
       </Group>
 
-      <Paper p="md" radius="md" withBorder>
+      {canEdit ? <Paper p="md" radius="md" withBorder>
         <TicketCommentForm
           bodyError={errors.body?.message}
           bodyField={register('body')}
@@ -119,7 +121,7 @@ export function TicketCommentsPanel({
           submitLabel="投稿する"
           onSubmit={submitCommentForm}
         />
-      </Paper>
+      </Paper> : null}
 
       {comments.items.length === 0 ? (
         <Paper p="md" radius="md" withBorder>

@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { Alert, Button, Stack } from '@mantine/core'
 import { useRef, useState } from 'react'
 
@@ -20,6 +21,7 @@ export function InvoiceStatusTransition({ invoiceId, status }: InvoiceStatusTran
 }
 
 function InvoiceStatusTransitionContent({ invoiceId, status }: InvoiceStatusTransitionProps) {
+  const { canEdit } = useOrganization()
   const advanceInvoiceStatus = useAdvanceInvoiceStatus()
   const [error, setError] = useState(false)
   const [pending, setPending] = useState(false)
@@ -55,6 +57,7 @@ function InvoiceStatusTransitionContent({ invoiceId, status }: InvoiceStatusTran
         </Alert>
       ) : null}
       <Button
+        disabled={!canEdit}
         variant="light"
         loading={pending}
         onClick={handleAdvance}

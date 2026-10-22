@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import { ActionIcon, Card, Group, NativeSelect, Stack, Text } from '@mantine/core'
 import { IconGripVertical } from '@tabler/icons-react'
 import { useSortable } from '@dnd-kit/sortable'
@@ -20,10 +21,13 @@ const statusOptions = [
 ] satisfies { value: TaskStatus; label: string }[]
 
 export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = false, onStatusChange }: TaskCardProps) {
+  const { canEdit } = useOrganization()
+  const isDisabled = !canEdit || isStatusChangePending
   const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
-    disabled: isDragOverlay || isStatusChangePending,
+    disabled: isDragOverlay || isDisabled,
   })
+  const canChangeStatus = canEdit && !isDragOverlay && onStatusChange !== undefined
   const style: CSSProperties = {
     opacity: isDragging ? 0.45 : 1,
     transform: CSS.Transform.toString(transform),
@@ -41,6 +45,7 @@ export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = 
     >
       <Group align="flex-start" gap="sm" wrap="nowrap">
         <ActionIcon
+          disabled={isDisabled}
           aria-label={`${task.title} をドラッグ`}
           variant="subtle"
           color="gray"
@@ -55,23 +60,27 @@ export function TaskCard({ task, isDragOverlay = false, isStatusChangePending = 
           <Text size="sm" c="dimmed">
             {task.description}
           </Text>
-          {!isDragOverlay && onStatusChange !== undefined ? (
-            <NativeSelect
-              aria-label={`${task.title} を移動`}
-              size="xs"
-              data={statusOptions}
-              value={task.status}
-              disabled={isStatusChangePending}
-              onChange={(value) => {
-                const status = value.currentTarget.value
-                if (status === 'TODO' || status === 'IN_PROGRESS' || status === 'DONE') {
-                  onStatusChange(task.id, status)
-                }
-              }}
-            />
-          ) : null}
+          {canChangeStatus ? <TaskStatusSelect task={task} disabled={isStatusChangePending} onStatusChange={onStatusChange} /> : null}
         </Stack>
       </Group>
     </Card>
   )
+}
+
+function TaskStatusSelect({ task, disabled, onStatusChange }: {
+  task: Task
+  disabled: boolean
+  onStatusChange: (taskId: string, status: TaskStatus) => void
+}) {
+  return <NativeSelect
+    aria-label={`${task.title} を移動`}
+    size="xs"
+    data={statusOptions}
+    value={task.status}
+    disabled={disabled}
+    onChange={(event) => {
+      const status = event.currentTarget.value
+      if (status === 'TODO' || status === 'IN_PROGRESS' || status === 'DONE') onStatusChange(task.id, status)
+    }}
+  />
 }

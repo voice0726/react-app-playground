@@ -1,3 +1,4 @@
+import { organizationData } from './organizationData'
 import { http, HttpResponse } from 'msw'
 
 import type { Customer, CustomerStatus } from '@/types/customer.types'
@@ -5,14 +6,15 @@ import type { Customer, CustomerStatus } from '@/types/customer.types'
 import { customers as seedCustomers } from '../data/seed'
 import { createId, listResponse, notFound, readJsonObject, stringValue } from './utils'
 
-let customers: Customer[] = [...seedCustomers]
+const store = organizationData<Customer>(seedCustomers)
+export const customerSnapshot = store.snapshot
 
 export function resetCustomerState(): void {
-  customers = [...seedCustomers]
+  store.reset()
 }
 
-function findCustomer(id: string): Customer | undefined {
-  return customers.find((customer) => customer.id === id)
+function findCustomer(id: string, request: Request): Customer | undefined {
+  return store.get(request).find((customer) => customer.id === id)
 }
 
 function customerStatus(value: unknown, fallback: CustomerStatus): CustomerStatus {
@@ -27,16 +29,16 @@ function customerStatus(value: unknown, fallback: CustomerStatus): CustomerStatu
 
 export const customerHandlers = [
   http.get('*/api/customers', ({ request }) =>
-    listResponse(request, customers, {
+    listResponse(request, store.get(request), {
       sortableFields: ['name', 'email', 'phone', 'status', 'createdAt'],
       defaultSort: 'createdAt',
       matches: (customer, query) =>
         [customer.name, customer.email, customer.phone].some((value) => value.toLowerCase().includes(query)),
     }),
   ),
-  http.get('*/api/customers/:id', ({ params }) => {
+  http.get('*/api/customers/:id', ({ params, request }) => {
     const id = stringValue(params.id)
-    const customer = id === undefined ? undefined : findCustomer(id)
+    const customer = id === undefined ? undefined : findCustomer(id, request)
 
     if (customer === undefined) {
       return notFound('Customer')
@@ -45,6 +47,7 @@ export const customerHandlers = [
     return HttpResponse.json(customer)
   }),
   http.post('*/api/customers', async ({ request }) => {
+    const customers = store.get(request)
     const body = await readJsonObject(request)
     const createdAt = new Date().toISOString()
     const customer: Customer = {
@@ -56,13 +59,14 @@ export const customerHandlers = [
       createdAt,
     }
 
-    customers = [...customers, customer]
+    store.set(request, [...customers, customer])
 
     return HttpResponse.json(customer, { status: 201 })
   }),
   http.patch('*/api/customers/:id', async ({ params, request }) => {
+    const customers = store.get(request)
     const id = stringValue(params.id)
-    const customer = id === undefined ? undefined : findCustomer(id)
+    const customer = id === undefined ? undefined : findCustomer(id, request)
 
     if (id === undefined || customer === undefined) {
       return notFound('Customer')
@@ -77,19 +81,20 @@ export const customerHandlers = [
       status: customerStatus(body.status, customer.status),
     }
 
-    customers = customers.map((item) => (item.id === id ? updated : item))
+    store.set(request, customers.map((item) => (item.id === id ? updated : item)))
 
     return HttpResponse.json(updated)
   }),
-  http.delete('*/api/customers/:id', ({ params }) => {
+  http.delete('*/api/customers/:id', ({ params, request }) => {
+    const customers = store.get(request)
     const id = stringValue(params.id)
-    const customer = id === undefined ? undefined : findCustomer(id)
+    const customer = id === undefined ? undefined : findCustomer(id, request)
 
     if (id === undefined || customer === undefined) {
       return notFound('Customer')
     }
 
-    customers = customers.filter((item) => item.id !== id)
+    store.set(request, customers.filter((item) => item.id !== id))
 
     return HttpResponse.json({ success: true })
   }),

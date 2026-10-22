@@ -1,3 +1,4 @@
+import { useOrganization } from '@/lib/organization'
 import {
   Box,
   Button,
@@ -57,6 +58,7 @@ export function TicketsListPanel({
   onPageSizeChange,
   onRetry,
 }: TicketsListPanelProps) {
+  const { canEdit } = useOrganization()
   const headerRef = useRef<HTMLTableSectionElement | null>(null)
   const [headerHeight, setHeaderHeight] = useState(0)
   const isTableOverlayVisible = isLoading || isFetching
@@ -90,7 +92,7 @@ export function TicketsListPanel({
       <Stack gap="md">
         <Group align="center" justify="space-between" wrap="wrap">
           <Text fw={600}>チケット一覧</Text>
-          <Button leftSection={<IconPlus size={16} />} onClick={onCreate} variant="light">
+          <Button disabled={!canEdit} leftSection={<IconPlus size={16} />} onClick={onCreate} variant="light">
             新規作成
           </Button>
         </Group>
@@ -191,6 +193,7 @@ export function TicketsListPanel({
                             詳細
                           </Button>
                           <Button
+                            disabled={!canEdit}
                             leftSection={<IconEdit size={14} />}
                             onClick={() => {
                               onEdit(ticket.id)
@@ -202,6 +205,7 @@ export function TicketsListPanel({
                           </Button>
                           <Button
                             color="red"
+                            disabled={!canEdit}
                             leftSection={<IconTrash size={14} />}
                             onClick={() => {
                               onDelete({
