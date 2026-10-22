@@ -1,4 +1,4 @@
-import { Alert, Button, Group, Loader, Modal, Select, Stack, Text, TextInput } from '@mantine/core'
+import { Alert, Button, Loader, Modal, Select, Stack, Text, TextInput } from '@mantine/core'
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
@@ -15,7 +15,13 @@ import { useKanbanStore } from '@/features/tasks/stores/kanban.store'
 
 const schema = z.object({ name: z.string().trim().min(1, '組織名を入力してください').max(200, '200文字以内で入力してください') })
 
-export function OrganizationWorkspace({ children }: { children: ReactNode }) {
+type WorkspaceSlots = {
+  switcher: ReactNode
+  roleLabel: string | null
+  content: ReactNode
+}
+
+export function OrganizationWorkspace({ main, children }: { main: ReactNode; children: (slots: WorkspaceSlots) => ReactNode }) {
   const userId = useSessionStore((state) => state.user?.id)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -62,22 +68,38 @@ export function OrganizationWorkspace({ children }: { children: ReactNode }) {
   const initialId = organizations.data?.[0]?.id
   if (selectedId === null && initialId !== undefined) setSelectedId(initialId)
 
-  if (organizations.isPending) return <Loader aria-label="組織を読み込み中" />
-  if (organizations.isError) return <Alert color="red" title="組織を取得できませんでした"><Button onClick={() => { void organizations.refetch() }}>再読み込み</Button></Alert>
+  if (organizations.isPending) {
+    return children({ switcher: null, roleLabel: null, content: <Loader aria-label="組織を読み込み中" /> })
+  }
+  if (organizations.isError) {
+    return children({
+      switcher: null,
+      roleLabel: null,
+      content: <Alert color="red" title="組織を取得できませんでした"><Button onClick={() => { void organizations.refetch() }}>再読み込み</Button></Alert>,
+    })
+  }
+
+  const switcher = (
+    <Stack gap={4}>
+      <Text size="sm" fw={500} aria-hidden>組織</Text>
+      <Select aria-label="組織" value={organization?.id ?? null} allowDeselect={false}
+        data={organizations.data.map((item) => ({ value: item.id, label: item.name }))}
+        disabled={mutationCount > 0 || switching}
+        onChange={(id) => { if (id && id !== organization?.id && queryClient.isMutating() === 0) void activateOrganization(id) }} />
+      <Button variant="subtle" size="xs" justify="flex-start" px={0} leftSection={<span aria-hidden>+</span>} disabled={mutationCount > 0 || switching}
+        onClick={() => { createOrganization.reset(); form.reset(); setOpened(true) }}>組織を作成</Button>
+    </Stack>
+  )
+  const roleLabel = organization ? organizationRoles.find((role) => role.value === organization.role)?.label ?? null : null
+  const content = (
+    <WorkspaceContent organization={organization} switching={switching} hasOrganizations={organizations.data.length > 0}>
+      {main}
+    </WorkspaceContent>
+  )
 
   return (
-    <Stack>
-      <Group align="end">
-        <Select label="組織" aria-label="組織" value={organization?.id ?? null} allowDeselect={false}
-          data={organizations.data.map((item) => ({ value: item.id, label: item.name }))}
-          disabled={mutationCount > 0 || switching}
-          onChange={(id) => { if (id && id !== organization?.id && queryClient.isMutating() === 0) void activateOrganization(id) }} />
-        <Button variant="default" disabled={mutationCount > 0 || switching} onClick={() => { createOrganization.reset(); form.reset(); setOpened(true) }}>組織を作成</Button>
-        {organization ? <Text size="sm">権限: {organizationRoles.find((role) => role.value === organization.role)?.label}</Text> : null}
-      </Group>
-      <WorkspaceContent organization={organization} switching={switching} hasOrganizations={organizations.data.length > 0}>
-        {children}
-      </WorkspaceContent>
+    <>
+      {children({ switcher, roleLabel, content })}
       <Modal opened={opened} onClose={() => { if (!createOrganization.isPending) setOpened(false) }} title="組織を作成">
         <form onSubmit={form.handleSubmit((values) => createOrganization.mutate(values))}>
           <Stack>
@@ -87,7 +109,7 @@ export function OrganizationWorkspace({ children }: { children: ReactNode }) {
           </Stack>
         </form>
       </Modal>
-    </Stack>
+    </>
   )
 }
 
