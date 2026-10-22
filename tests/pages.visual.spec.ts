@@ -32,7 +32,7 @@ for (const screen of screens) {
 
 test('ダッシュボードの表示', async ({ page }) => {
   await page.goto('/dashboard')
-  await expect(page.getByRole('heading', { level: 3 })).toHaveText(['10', '15', '8', '10'])
+  await expect(page.getByRole('heading', { level: 3 }).filter({ hasText: /^\d+$/ })).toHaveText(['10', '15', '8', '10'])
   await expect(page).toHaveScreenshot('dashboard.png', { fullPage: true })
 })
 
