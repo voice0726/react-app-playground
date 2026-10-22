@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 
 import { deals as seedDeals, type Deal, type DealStatus } from '../data/seed'
-import { createId, notFound, numberValue, readJsonObject, stringValue } from './utils'
+import { createId, listResponse, notFound, numberValue, readJsonObject, stringValue } from './utils'
 
 let deals: Deal[] = [...seedDeals]
 
@@ -24,7 +24,13 @@ function dealStatus(value: unknown, fallback: DealStatus): DealStatus {
 }
 
 export const dealHandlers = [
-  http.get('*/api/deals', () => HttpResponse.json(deals)),
+  http.get('*/api/deals', ({ request }) =>
+    listResponse(request, deals, {
+      sortableFields: ['title', 'customerId', 'amount', 'status', 'createdAt'],
+      defaultSort: 'createdAt',
+      matches: (deal, query) => deal.title.toLowerCase().includes(query),
+    }),
+  ),
   http.get('*/api/deals/:id', ({ params }) => {
     const id = stringValue(params.id)
     const deal = id === undefined ? undefined : findDeal(id)

@@ -58,7 +58,7 @@ test('keeps retry screen for auth outage and app shell for backend outage', asyn
 
   const backendContext = await createUserContext(browser, 'a')
   const backendPage = await backendContext.newPage()
-  await backendPage.route('**/api/customers', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unavailable"}' }))
+  await backendPage.route((url) => url.pathname === '/api/customers', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unavailable"}' }))
   await backendPage.goto('/customers')
   await expect(backendPage.getByText('顧客を読み込めませんでした。')).toBeVisible()
   expect(backendPage.url()).toMatch(/\/customers$/)
@@ -88,6 +88,7 @@ test('画面から顧客・案件・請求書を作成し、タスクを移動�
     const customerResponse = page.waitForResponse((r) => r.url().endsWith('/api/customers') && r.request().method() === 'POST')
     await page.getByRole('button', { name: '保存', exact: true }).click()
     const customer = await (await customerResponse).json() as { id: string }
+    await page.getByLabel('検索', { exact: true }).fill(customerName)
     await page.getByRole('button', { name: `${customerName} の詳細を見る`, exact: true }).click()
     await expect(page.getByRole('heading', { name: customerName })).toBeVisible()
 
@@ -100,6 +101,7 @@ test('画面から顧客・案件・請求書を作成し、タスクを移動�
     const dealResponse = page.waitForResponse((r) => r.url().endsWith('/api/deals') && r.request().method() === 'POST')
     await page.getByRole('button', { name: '保存', exact: true }).click()
     expect((await dealResponse).status()).toBe(201)
+    await page.getByLabel('検索', { exact: true }).fill(dealTitle)
     await page.getByRole('button', { name: `${dealTitle} の詳細を見る`, exact: true }).click()
     await expect(page.getByRole('heading', { name: dealTitle })).toBeVisible()
     await expect(page.getByText(customerName, { exact: true })).toBeVisible()
@@ -116,6 +118,7 @@ test('画面から顧客・案件・請求書を作成し、タスクを移動�
     const invoiceResponse = page.waitForResponse((r) => r.url().endsWith('/api/invoices') && r.request().method() === 'POST')
     await page.getByRole('button', { name: '保存', exact: true }).click()
     expect((await invoiceResponse).status()).toBe(201)
+    await page.getByLabel('検索', { exact: true }).fill(invoiceNumber)
     await page.getByRole('button', { name: `${invoiceNumber} の詳細を見る`, exact: true }).click()
     await page.getByRole('button', { name: '→ 送付済み', exact: true }).click()
     await page.getByRole('button', { name: '→ 支払済み', exact: true }).click()
@@ -164,7 +167,7 @@ test('業務APIの401でログインへ戻る', async ({ browser }) => {
   try {
     await page.goto('/dashboard')
     await expect(page.getByRole('heading', { name: 'ダッシュボード' })).toBeVisible()
-    await page.route('**/api/customers', (route) => route.fulfill({ status: 401, body: '{}' }))
+    await page.route((url) => url.pathname === '/api/customers', (route) => route.fulfill({ status: 401, body: '{}' }))
     await page.goto('/customers')
     await expect(page).toHaveURL(`${appOrigin}/login`)
   } finally {

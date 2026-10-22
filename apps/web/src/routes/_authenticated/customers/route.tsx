@@ -1,14 +1,15 @@
-import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
 import { useCreateCustomer } from '@/features/customers/api/mutations'
-import { useCustomers } from '@/features/customers/api/queries'
+import { useCustomerPage } from '@/features/customers/api/queries'
 import { CustomerForm } from '@/features/customers/components/CustomerForm'
 import { CustomerTable } from '@/features/customers/components/CustomerTable'
 import type { CustomerFormValues } from '@/features/customers/schemas/customer.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
+import { failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 const customerSearchSchema = createListSearchSchema([
   'name',
@@ -28,7 +29,9 @@ function CustomersRoute() {
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const modalSession = useRef(0)
-  const customersQuery = useCustomers()
+  const search = Route.useSearch()
+  const request = toListRequest(search)
+  const customersQuery = useCustomerPage(request)
   const createCustomer = useCreateCustomer()
 
   const handleCreate = async (values: CustomerFormValues) => {
@@ -56,6 +59,12 @@ function CustomersRoute() {
     return <Outlet />
   }
 
+  const lastPage = outOfRangeLastPage(request.page, customersQuery)
+  if (lastPage !== undefined) {
+    return <Navigate to="/customers" search={{ ...search, page: toPageParam(lastPage) }} replace />
+  }
+  const page = pageToShow(request, customersQuery)
+
   return (
     <Stack gap="lg">
       <Group justify="space-between">
@@ -63,13 +72,17 @@ function CustomersRoute() {
         <Button onClick={open}>新規顧客</Button>
       </Group>
 
-      {customersQuery.isLoading ? <Loader /> : null}
-      {customersQuery.isError ? (
+      {failedToRefresh(customersQuery) ? (
         <Alert color="red" variant="light">
-          顧客を読み込めませんでした。
+          顧客の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {customersQuery.data !== undefined ? <CustomerTable customers={customersQuery.data} /> : null}
+      <CustomerTable
+        page={page}
+        isLoading={customersQuery.isLoading}
+        isUpdating={customersQuery.isPlaceholderData}
+        isError={customersQuery.isError}
+      />
 
       <Modal opened={opened} onClose={close} title="新規顧客">
         <CustomerForm isSubmitting={createCustomer.isPending} onSubmit={handleCreate} submitError={submitError} />

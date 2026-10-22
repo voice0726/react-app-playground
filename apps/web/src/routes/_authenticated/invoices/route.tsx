@@ -1,13 +1,14 @@
-import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 import { useCreateInvoice } from '@/features/invoices/api/mutations'
-import { useInvoices } from '@/features/invoices/api/queries'
+import { useInvoicePage } from '@/features/invoices/api/queries'
 import { InvoiceForm } from '@/features/invoices/components/InvoiceForm'
 import { InvoiceTable } from '@/features/invoices/components/InvoiceTable'
 import { invoiceSearchSchema } from '@/features/invoices/schemas/search'
 import type { InvoiceFormValues } from '@/features/invoices/schemas/invoice.schema'
+import { failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 export const Route = createFileRoute('/_authenticated/invoices')({
   validateSearch: invoiceSearchSchema,
@@ -16,11 +17,19 @@ export const Route = createFileRoute('/_authenticated/invoices')({
 
 function InvoicesRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const invoicesQuery = useInvoices()
+  const search = Route.useSearch()
+  const request = toListRequest(search)
+  const invoicesQuery = useInvoicePage(request)
 
   if (pathname !== '/invoices') {
     return <Outlet />
   }
+
+  const lastPage = outOfRangeLastPage(request.page, invoicesQuery)
+  if (lastPage !== undefined) {
+    return <Navigate to="/invoices" search={{ ...search, page: toPageParam(lastPage) }} replace />
+  }
+  const page = pageToShow(request, invoicesQuery)
 
   return (
     <Stack gap="lg">
@@ -29,13 +38,17 @@ function InvoicesRoute() {
         <InvoiceCreateModal />
       </Group>
 
-      {invoicesQuery.isLoading ? <Loader /> : null}
-      {invoicesQuery.isError ? (
+      {failedToRefresh(invoicesQuery) ? (
         <Alert color="red" variant="light">
-          請求書を読み込めませんでした。
+          請求書の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {invoicesQuery.data !== undefined ? <InvoiceTable invoices={invoicesQuery.data} /> : null}
+      <InvoiceTable
+        page={page}
+        isLoading={invoicesQuery.isLoading}
+        isUpdating={invoicesQuery.isPlaceholderData}
+        isError={invoicesQuery.isError}
+      />
     </Stack>
   )
 }

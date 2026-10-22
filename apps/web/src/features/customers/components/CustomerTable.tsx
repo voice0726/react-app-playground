@@ -1,4 +1,17 @@
-import { ActionIcon, Alert, Button, Group, Modal, Stack, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import {
+  ActionIcon,
+  Alert,
+  Button,
+  Center,
+  Group,
+  Loader,
+  Modal,
+  Stack,
+  Table,
+  Text,
+  TextInput,
+  Tooltip,
+} from '@mantine/core'
 import { IconEye, IconTrash } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -12,11 +25,16 @@ import { createContext, useContext, useMemo, useRef, useState } from 'react'
 
 import { useDeleteCustomer } from '@/features/customers/api/mutations'
 import { CustomerStatusBadge } from '@/features/customers/components/CustomerStatusBadge'
+import { ListPagination } from '@/components/ListPagination'
 import { features } from '@/lib/tableFeatures'
+import { type PaginatedResponse, toPageParam } from '@/lib/pagination'
 import type { Customer } from '@/types/customer.types'
 
 type CustomerTableProps = {
-  customers: Customer[]
+  page: PaginatedResponse<Customer>
+  isLoading: boolean
+  isUpdating: boolean
+  isError: boolean
 }
 
 const columnHelper = createColumnHelper<typeof features, Customer>()
@@ -100,7 +118,7 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   return [{ id: sort, desc: order === 'desc' }]
 }
 
-export function CustomerTable({ customers }: CustomerTableProps) {
+export function CustomerTable({ page, isLoading, isUpdating, isError }: CustomerTableProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [displayedCustomerName, setDisplayedCustomerName] = useState<string | null>(null)
   const deleteCustomer = useDeleteCustomer()
@@ -157,11 +175,10 @@ export function CustomerTable({ customers }: CustomerTableProps) {
 
   const table = useTable({
     features,
-    data: customers,
+    data: page.items,
     columns,
     state: {
       sorting,
-      globalFilter,
     },
     onSortingChange: (updater) => {
       const nextSorting = typeof updater === 'function' ? updater(sorting) : updater
@@ -172,31 +189,35 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           ...previous,
           sort: next?.id,
           order: next === undefined ? undefined : next.desc ? 'desc' : 'asc',
+          page: undefined,
         }),
       })
     },
-    onGlobalFilterChange: (value) => {
-      navigate({
-        search: (previous) => ({
-          ...previous,
-          q: typeof value === 'string' && value.length > 0 ? value : undefined,
-        }),
-      })
-    },
-    globalFilterFn: 'includesString',
   })
 
   return (
     <>
       <TextInput
         label="検索"
-        placeholder="顧客を検索"
+        placeholder="名前・メールアドレス・電話番号で検索"
         value={globalFilter}
-        onChange={(event) => table.setGlobalFilter(event.currentTarget.value)}
+        onChange={(event) => {
+          const { value } = event.currentTarget
+          navigate({
+            search: (previous) => ({ ...previous, q: value.length > 0 ? value : undefined, page: undefined }),
+          })
+        }}
       />
       <CustomerActionsContext.Provider value={customerActionsContext}>
         <Table.ScrollContainer minWidth={900}>
-          <Table striped highlightOnHover withTableBorder mt="md">
+          <Table
+            striped
+            highlightOnHover
+            withTableBorder
+            mt="md"
+            aria-busy={isUpdating}
+            style={{ opacity: isUpdating ? 0.6 : 1 }}
+          >
             <Table.Thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <Table.Tr key={headerGroup.id}>
@@ -238,9 +259,19 @@ export function CustomerTable({ customers }: CustomerTableProps) {
               ) : (
                 <Table.Tr>
                   <Table.Td colSpan={columns.length}>
-                    <Text c="dimmed" ta="center">
-                      顧客が見つかりません。
-                    </Text>
+                    {isError ? (
+                      <Text c="red" ta="center" role="alert">
+                        顧客を読み込めませんでした。
+                      </Text>
+                    ) : isLoading ? (
+                      <Center>
+                        <Loader size="sm" role="status" aria-label="読み込み中" />
+                      </Center>
+                    ) : (
+                      <Text c="dimmed" ta="center">
+                        顧客が見つかりません。
+                      </Text>
+                    )}
                   </Table.Td>
                 </Table.Tr>
               )}
@@ -248,6 +279,13 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           </Table>
         </Table.ScrollContainer>
       </CustomerActionsContext.Provider>
+      <ListPagination
+        page={page.page}
+        pageSize={page.pageSize}
+        total={page.total}
+        onPageChange={(next) => navigate({ search: (previous) => ({ ...previous, page: toPageParam(next) }) })}
+        onPageSizeChange={(pageSize) => navigate({ search: (previous) => ({ ...previous, pageSize, page: undefined }) })}
+      />
       <Modal
         opened={selectedCustomer !== null}
         onClose={handleCloseDelete}

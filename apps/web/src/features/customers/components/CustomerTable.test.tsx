@@ -10,10 +10,10 @@ import { customers as seedCustomers } from '@/mocks/data/seed'
 import { useSessionStore } from '@/lib/stores/session.store'
 import type { Customer } from '@/types/customer.types'
 
-function renderCustomers() {
+function renderCustomers(entry = '/customers') {
   const router = createRouter({
     routeTree,
-    history: createMemoryHistory({ initialEntries: ['/customers'] }),
+    history: createMemoryHistory({ initialEntries: [entry] }),
   })
 
   render(<RouterProvider router={router} />)
@@ -25,9 +25,13 @@ function setupCustomerApi(initialCustomers: Customer[], onDelete: (id: string) =
   let listRequests = 0
   const deleteRequests: string[] = []
   server.use(
-    http.get('*/api/customers', () => {
+    http.get('*/api/customers', ({ request }) => {
       listRequests += 1
-      return HttpResponse.json(customers)
+      const params = new URL(request.url).searchParams
+      const page = Number(params.get('page'))
+      const pageSize = Number(params.get('pageSize'))
+      const start = (page - 1) * pageSize
+      return HttpResponse.json({ items: customers.slice(start, start + pageSize), total: customers.length, page, pageSize })
     }),
     http.delete('*/api/customers/:id', async ({ params }) => {
       const id = String(params.id)
@@ -147,5 +151,82 @@ describe('顧客一覧の削除確認', () => {
     expect(api.deleteRequests).toEqual(['customer-001', 'customer-001'])
     await waitFor(() => expect(screen.queryByText('Acme Corporation')).toBeNull())
 
+  })
+
+  it('最終ページの最後の1件を削除すると、残っている最終ページへ移る', async () => {
+    const extraCustomer: Customer = {
+      id: 'customer-011',
+      name: 'Last Page Customer',
+      email: 'last-page@example.com',
+      phone: '03-0000-0011',
+      status: 'active',
+      createdAt: '2026-12-31T00:00:00.000Z',
+    }
+    setupCustomerApi([...seedCustomers, extraCustomer], () => HttpResponse.json({ success: true }))
+    const router = renderCustomers('/customers?page=2')
+    await screen.findByText('Last Page Customer')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Last Page Customer を削除' }))
+    await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: '削除する' }))
+
+    await screen.findByText('Acme Corporation')
+    expect(router.state.location.search).not.toHaveProperty('page')
+    expect(screen.queryByText('Last Page Customer')).toBeNull()
+  })
+})
+
+describe('顧客一覧の取得失敗', () => {
+  it('行が無いまま失敗したら、空表示ではなくエラーを一覧の中に出す', async () => {
+    server.use(http.get('*/api/customers', () => HttpResponse.json({ message: 'failed' }, { status: 500 })))
+    renderCustomers()
+
+    const error = await screen.findByRole('alert')
+    expect(error.textContent).toBe('顧客を読み込めませんでした。')
+    expect(error.closest('tbody')).not.toBeNull()
+    expect(screen.queryByText('顧客が見つかりません。')).toBeNull()
+    expect(screen.getByLabelText('検索')).toBeTruthy()
+  })
+
+  it('最初の取得から失敗しても、検索語を直して再取得する間に検索欄を消さない', async () => {
+    server.use(
+      http.get('*/api/customers', async ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q') ?? ''
+        if (q.length > 200) return HttpResponse.json({ message: 'Invalid list query.' }, { status: 400 })
+        await delay(50)
+        return HttpResponse.json({ items: seedCustomers, total: seedCustomers.length, page: 1, pageSize: 10 })
+      }),
+    )
+    renderCustomers(`/customers?q=${'a'.repeat(201)}`)
+    await screen.findByText('顧客を読み込めませんでした。')
+
+    const input = screen.getByLabelText('検索')
+    input.focus()
+    fireEvent.change(input, { target: { value: 'a'.repeat(200) } })
+
+    expect(await screen.findByRole('status', { name: '読み込み中' })).toBeTruthy()
+    expect(screen.getByLabelText('検索')).toBe(input)
+    expect(document.activeElement).toBe(input)
+    await screen.findByText('Acme Corporation')
+  })
+
+  it('表示中の行を残したまま再取得に失敗したら、一覧の外で伝える', async () => {
+    let failing = false
+    server.use(
+      http.get('*/api/customers', () =>
+        failing
+          ? HttpResponse.json({ message: 'failed' }, { status: 500 })
+          : HttpResponse.json({ items: seedCustomers, total: seedCustomers.length, page: 1, pageSize: 10 }),
+      ),
+    )
+    renderCustomers()
+    await screen.findByText('Acme Corporation')
+
+    failing = true
+    await queryClient.refetchQueries()
+
+    expect(await screen.findByText('顧客の一覧を更新できませんでした。前回読み込んだ内容を表示しています。')).toBeTruthy()
+    expect(screen.getByText('Acme Corporation')).toBeTruthy()
+    expect(screen.queryByText('顧客を読み込めませんでした。')).toBeNull()
   })
 })

@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { isPageSize } from '@/lib/pagination'
+
 const optionalQuery = z.preprocess(
   (value: unknown) => {
     if (typeof value === 'string') return value
@@ -7,6 +9,16 @@ const optionalQuery = z.preprocess(
     return undefined
   },
   z.string().optional(),
+)
+
+const optionalPage = z.preprocess(
+  (value: unknown) => (typeof value === 'string' ? Number(value) : value),
+  z.number().int().min(2).optional().catch(undefined),
+)
+
+const optionalPageSize = z.preprocess(
+  (value: unknown) => (typeof value === 'string' ? Number(value) : value),
+  z.number().optional().catch(undefined),
 )
 
 export function createListSearchSchema<const SortableFields extends readonly [string, ...string[]]>(
@@ -19,9 +31,11 @@ export function createListSearchSchema<const SortableFields extends readonly [st
       z.enum(['asc', 'desc']).optional(),
     ),
     q: optionalQuery,
+    page: optionalPage,
+    pageSize: optionalPageSize,
   })
 
-  return schema.transform(({ sort, order, q }) => {
+  return schema.transform(({ sort, order, q, page, pageSize }) => {
     const isSortable = typeof sort === 'string' && sortableFields.includes(sort)
     const invalidSort = sort !== undefined && !isSortable
 
@@ -29,6 +43,8 @@ export function createListSearchSchema<const SortableFields extends readonly [st
       sort: isSortable ? sort : undefined,
       order: invalidSort ? undefined : order,
       q,
+      page,
+      pageSize: isPageSize(pageSize) ? pageSize : undefined,
     }
   })
 }

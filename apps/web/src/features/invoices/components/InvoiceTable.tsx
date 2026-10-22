@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Center, Group, Loader, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -11,11 +11,16 @@ import { useMemo } from 'react'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
 import { formatInvoiceDate } from '@/features/invoices/date'
+import { ListPagination } from '@/components/ListPagination'
 import { features } from '@/lib/tableFeatures'
+import { type PaginatedResponse, toPageParam } from '@/lib/pagination'
 import type { Invoice } from '@/features/invoices/types'
 
 type InvoiceTableProps = {
-  invoices: Invoice[]
+  page: PaginatedResponse<Invoice>
+  isLoading: boolean
+  isUpdating: boolean
+  isError: boolean
 }
 
 const columnHelper = createColumnHelper<typeof features, Invoice>()
@@ -77,7 +82,7 @@ const columns = columnHelper.columns([
   }),
 ])
 
-export function InvoiceTable({ invoices }: InvoiceTableProps) {
+export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTableProps) {
   const search = useSearch({ from: '/_authenticated/invoices' })
   const navigate = useNavigate({ from: '/invoices' })
   const sorting = useMemo(
@@ -88,11 +93,10 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
 
   const table = useTable({
     features,
-    data: invoices,
+    data: page.items,
     columns,
     state: {
       sorting,
-      globalFilter,
     },
     onSortingChange: (updater) => {
       const nextSorting = typeof updater === 'function' ? updater(sorting) : updater
@@ -103,30 +107,34 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
           ...previous,
           sort: next?.id,
           order: next === undefined ? undefined : next.desc ? 'desc' : 'asc',
+          page: undefined,
         }),
       })
     },
-    onGlobalFilterChange: (value) => {
-      navigate({
-        search: (previous: typeof search) => ({
-          ...previous,
-          q: typeof value === 'string' && value.length > 0 ? value : undefined,
-        }),
-      })
-    },
-    globalFilterFn: 'includesString',
   })
 
   return (
     <>
       <TextInput
         label="検索"
-        placeholder="請求書を検索"
+        placeholder="請求書番号で検索"
         value={globalFilter}
-        onChange={(event) => table.setGlobalFilter(event.currentTarget.value)}
+        onChange={(event) => {
+          const { value } = event.currentTarget
+          navigate({
+            search: (previous: typeof search) => ({ ...previous, q: value.length > 0 ? value : undefined, page: undefined }),
+          })
+        }}
       />
       <Table.ScrollContainer minWidth={960}>
-        <Table striped highlightOnHover withTableBorder mt="md">
+        <Table
+          striped
+          highlightOnHover
+          withTableBorder
+          mt="md"
+          aria-busy={isUpdating}
+          style={{ opacity: isUpdating ? 0.6 : 1 }}
+        >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
@@ -168,15 +176,32 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
             ) : (
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
-                  <Text c="dimmed" ta="center">
-                    請求書が見つかりません。
-                  </Text>
+                  {isError ? (
+                    <Text c="red" ta="center" role="alert">
+                      請求書を読み込めませんでした。
+                    </Text>
+                  ) : isLoading ? (
+                    <Center>
+                      <Loader size="sm" role="status" aria-label="読み込み中" />
+                    </Center>
+                  ) : (
+                    <Text c="dimmed" ta="center">
+                      請求書が見つかりません。
+                    </Text>
+                  )}
                 </Table.Td>
               </Table.Tr>
             )}
           </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
+      <ListPagination
+        page={page.page}
+        pageSize={page.pageSize}
+        total={page.total}
+        onPageChange={(next) => navigate({ search: (previous: typeof search) => ({ ...previous, page: toPageParam(next) }) })}
+        onPageSizeChange={(pageSize) => navigate({ search: (previous: typeof search) => ({ ...previous, pageSize, page: undefined }) })}
+      />
     </>
   )
 }

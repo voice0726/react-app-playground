@@ -1,14 +1,15 @@
-import { Alert, Button, Group, Loader, Modal, Stack, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, Stack, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Navigate, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
 import { useCreateDeal } from '@/features/deals/api/mutations'
-import { useDeals } from '@/features/deals/api/queries'
+import { useDealPage } from '@/features/deals/api/queries'
 import { DealForm } from '@/features/deals/components/DealForm'
 import { DealTable } from '@/features/deals/components/DealTable'
 import type { DealFormValues } from '@/features/deals/schemas/deal.schema'
 import { createListSearchSchema } from '@/lib/listSearchSchema'
+import { failedToRefresh, outOfRangeLastPage, pageToShow, toListRequest, toPageParam } from '@/lib/pagination'
 
 const dealSearchSchema = createListSearchSchema([
   'title',
@@ -28,7 +29,9 @@ function DealsRoute() {
   const [opened, { close: closeModal, open: openModal }] = useDisclosure()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const modalSession = useRef(0)
-  const dealsQuery = useDeals()
+  const search = Route.useSearch()
+  const request = toListRequest(search)
+  const dealsQuery = useDealPage(request)
   const createDeal = useCreateDeal()
 
   const handleCreate = async (values: DealFormValues) => {
@@ -56,6 +59,12 @@ function DealsRoute() {
     return <Outlet />
   }
 
+  const lastPage = outOfRangeLastPage(request.page, dealsQuery)
+  if (lastPage !== undefined) {
+    return <Navigate to="/deals" search={{ ...search, page: toPageParam(lastPage) }} replace />
+  }
+  const page = pageToShow(request, dealsQuery)
+
   return (
     <Stack gap="lg">
       <Group justify="space-between">
@@ -63,13 +72,17 @@ function DealsRoute() {
         <Button onClick={open}>新規案件</Button>
       </Group>
 
-      {dealsQuery.isLoading ? <Loader /> : null}
-      {dealsQuery.isError ? (
+      {failedToRefresh(dealsQuery) ? (
         <Alert color="red" variant="light">
-          案件を読み込めませんでした。
+          案件の一覧を更新できませんでした。前回読み込んだ内容を表示しています。
         </Alert>
       ) : null}
-      {dealsQuery.data !== undefined ? <DealTable deals={dealsQuery.data} /> : null}
+      <DealTable
+        page={page}
+        isLoading={dealsQuery.isLoading}
+        isUpdating={dealsQuery.isPlaceholderData}
+        isError={dealsQuery.isError}
+      />
 
       <Modal opened={opened} onClose={close} title="新規案件">
         <DealForm isSubmitting={createDeal.isPending} onSubmit={handleCreate} submitError={submitError} />
