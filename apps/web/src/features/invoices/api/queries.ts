@@ -14,11 +14,12 @@ export const invoiceKeys = {
   detail: (id: string, organizationId: string) => [...invoiceKeys.all, 'detail', organizationId, id] as const,
 }
 
-export function useInvoicePage(request: ListRequest) {
+export function useInvoicePage(request: ListRequest, today: string) {
   const { organization } = useOrganization()
+  const listRequest = { ...request, today }
   return useQuery({
-    queryKey: invoiceKeys.page(request, organization.id),
-    queryFn: ({ signal }) => fetchOrganizationJson<PaginatedResponse<Invoice>>(organization.id, buildListUrl('/api/invoices', request), { signal }),
+    queryKey: invoiceKeys.page(listRequest, organization.id),
+    queryFn: ({ signal }) => fetchOrganizationJson<PaginatedResponse<Invoice>>(organization.id, buildListUrl('/api/invoices', listRequest), { signal }),
     placeholderData: keepPreviousData,
   })
 }

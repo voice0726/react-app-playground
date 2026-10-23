@@ -18,6 +18,12 @@ type AdvanceInvoiceStatusInput = {
   nextStatus: InvoiceStatus
 }
 
+export type BulkInvoiceStatusInput = {
+  ids: string[]
+  from: 'draft' | 'sent'
+  to: 'sent' | 'paid'
+}
+
 export function useCreateInvoice() {
   const { organization } = useOrganization()
   const queryClient = useQueryClient()
@@ -70,6 +76,25 @@ export function useAdvanceInvoiceStatus() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: invoiceKeys.all }),
         queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(variables.id, organization.id) }),
+      ])
+    },
+  })
+}
+
+export function useBulkInvoiceStatus() {
+  const { organization } = useOrganization()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: BulkInvoiceStatusInput) =>
+      fetchOrganizationJson<{ items: Invoice[] }>(organization.id, '/api/invoices/bulk-status', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: invoiceKeys.all }),
       ])
     },
   })

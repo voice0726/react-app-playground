@@ -23,6 +23,7 @@ const optionalPageSize = z.preprocess(
 
 export function createListSearchSchema<const SortableFields extends readonly [string, ...string[]]>(
   sortableFields: SortableFields,
+  includeOverdue = false,
 ) {
   const schema = z.object({
     sort: z.unknown().optional(),
@@ -31,11 +32,12 @@ export function createListSearchSchema<const SortableFields extends readonly [st
       z.enum(['asc', 'desc']).optional(),
     ),
     q: optionalQuery,
+    overdue: z.preprocess((value: unknown) => value === 'true' || value === true, z.boolean()).optional(),
     page: optionalPage,
     pageSize: optionalPageSize,
   })
 
-  return schema.transform(({ sort, order, q, page, pageSize }) => {
+  return schema.transform(({ sort, order, q, overdue, page, pageSize }) => {
     const isSortable = typeof sort === 'string' && sortableFields.includes(sort)
     const invalidSort = sort !== undefined && !isSortable
 
@@ -43,6 +45,7 @@ export function createListSearchSchema<const SortableFields extends readonly [st
       sort: isSortable ? sort : undefined,
       order: invalidSort ? undefined : order,
       q,
+      ...(includeOverdue ? { overdue: overdue === true ? true : undefined } : {}),
       page,
       pageSize: isPageSize(pageSize) ? pageSize : undefined,
     }

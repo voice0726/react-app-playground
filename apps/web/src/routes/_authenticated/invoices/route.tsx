@@ -21,10 +21,10 @@ function InvoicesRoute() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const search = Route.useSearch()
   const request = toListRequest(search)
-  const invoicesQuery = useInvoicePage(request)
   // 再描画時に日付変更を queryKey へ反映する。
   // eslint-disable-next-line react/purity
   const today = format(new Date(), 'yyyy-MM-dd')
+  const invoicesQuery = useInvoicePage(request, today)
   const summary = useInvoiceSummary(today)
 
   if (pathname !== '/invoices') {

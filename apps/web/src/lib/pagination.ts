@@ -14,6 +14,7 @@ export type ListSearch = {
   sort?: string
   order?: SortOrder
   q?: string
+  overdue?: boolean
   page?: number
   pageSize?: number
 }
@@ -22,6 +23,8 @@ export type ListRequest = {
   page: number
   pageSize: number
   q?: string
+  overdue?: boolean
+  today?: string
   sort?: string
   order?: SortOrder
 }
@@ -39,6 +42,7 @@ export function toListRequest(search: ListSearch): ListRequest {
     page: search.page ?? 1,
     pageSize: search.pageSize ?? DEFAULT_PAGE_SIZE,
     ...(q === undefined || q === '' ? {} : { q }),
+    ...(search.overdue === true ? { overdue: true } : {}),
     ...(sorted ? { sort: search.sort, order: search.order } : {}),
   }
 }
@@ -50,6 +54,10 @@ export function buildListUrl(path: string, request: ListRequest): string {
   })
 
   if (request.q !== undefined) params.set('q', request.q)
+  if (request.overdue === true) {
+    params.set('overdue', 'true')
+    if (request.today !== undefined) params.set('today', request.today)
+  }
   if (request.sort !== undefined) params.set('sort', request.sort)
   if (request.order !== undefined) params.set('order', request.order)
 

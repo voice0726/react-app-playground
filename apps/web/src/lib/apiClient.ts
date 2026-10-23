@@ -2,7 +2,7 @@ import { organizationHeaders } from '@/lib/organizationHeaders'
 import { useSessionStore } from '@/lib/stores/session.store'
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, message: string) {
+  constructor(public readonly status: number, message: string, public readonly body?: unknown) {
     super(message)
     this.name = 'ApiError'
   }
@@ -24,7 +24,8 @@ export async function requestJson<T>(url: string, init: RequestInit = {}): Promi
   }
   if (!response.ok) {
     if (response.status === 401) handleUnauthorized()
-    throw new ApiError(response.status, `Request failed: ${url}`)
+    const body: unknown = await response.json().catch(() => undefined)
+    throw new ApiError(response.status, `Request failed: ${url}`, body)
   }
   return (await response.json()) as T
 }

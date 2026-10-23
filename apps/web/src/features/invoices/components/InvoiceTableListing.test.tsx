@@ -20,7 +20,7 @@ function columnTexts(index: number) {
   return screen
     .queryAllByRole('row')
     .slice(1)
-    .map((row) => within(row).queryAllByRole('cell')[index]?.textContent ?? '')
+    .map((row) => within(row).queryAllByRole('cell')[index + 1]?.textContent ?? '')
 }
 
 const toNumber = (text: string) => Number(text.replace(/[^\d]/g, ''))
