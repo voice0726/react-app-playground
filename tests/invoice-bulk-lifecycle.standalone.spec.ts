@@ -58,3 +58,33 @@ test('一覧を離れると確認ダイアログが消え更新できない', as
   await expect(page.getByRole('dialog')).toHaveCount(0)
   expect(bulkRequests).toEqual([])
 })
+
+test('競合後に最新の状態を表示して選び直せる', async ({ page }) => {
+  await page.goto('/invoices')
+  const selection = page.getByLabel('INV-2026-0003 を選択', { exact: true })
+  await selection.check()
+  await page.getByRole('button', { name: '送付済みにする', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  const changed = await page.evaluate(async () => {
+    const response = await fetch('/api/invoices/invoice-003', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Organization-ID': '00000000-0000-4000-8000-000000000001' },
+      body: JSON.stringify({ status: 'sent' }),
+    })
+    return response.status
+  })
+  expect(changed).toBe(200)
+  await page.getByRole('button', { name: '変更する', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('状態が変更されている請求書があります')
+  await expect(selection).not.toBeChecked()
+  await expect(page.getByText('1 件選択中')).toHaveCount(0)
+  const row = page.getByRole('row').filter({ hasText: 'INV-2026-0003' })
+  await expect(row.getByText('送付済み', { exact: true })).toBeVisible()
+
+  await selection.check()
+  await page.getByRole('button', { name: '入金済みにする', exact: true }).click()
+  await page.getByRole('button', { name: '変更する', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('1 件を入金済みに変更しました')
+  await expect(row.getByText('支払済み', { exact: true })).toBeVisible()
+})

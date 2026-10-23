@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Button, Center, Checkbox, Group, Loader, Modal, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Center, Checkbox, Group, Loader, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -7,9 +7,9 @@ import {
   useTable,
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
-import { useBulkInvoiceStatus } from '@/features/invoices/api/mutations'
-import { ApiError } from '@/lib/apiClient'
+import { useMemo } from 'react'
+import { useInvoiceBulkActions } from '@/features/invoices/hooks/useInvoiceBulkActions'
+import { InvoiceBulkActions } from '@/features/invoices/components/InvoiceBulkActions'
 import { useOrganization } from '@/lib/organization'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
@@ -33,7 +33,6 @@ const currencyFormatter = new Intl.NumberFormat('ja-JP', {
   currency: 'JPY',
   maximumFractionDigits: 0,
 })
-const emptySelection: string[] = []
 
 function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   if (sort === undefined || order === undefined) {
@@ -41,17 +40,6 @@ function toSortingState(sort?: string, order?: 'asc' | 'desc'): SortingState {
   }
 
   return [{ id: sort, desc: order === 'desc' }]
-}
-
-function invoiceIdsFromError(body: unknown): string[] {
-  if (body === null || typeof body !== 'object' || !('error' in body)) return []
-  const error = body.error
-  if (error === null || typeof error !== 'object' || !('details' in error)) return []
-  const details = error.details
-  if (details === null || typeof details !== 'object' || !('invoiceIds' in details)) return []
-  return Array.isArray(details.invoiceIds)
-    ? details.invoiceIds.filter((id): id is string => typeof id === 'string')
-    : []
 }
 
 const columns = columnHelper.columns([
@@ -107,69 +95,7 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
   )
   const globalFilter = search.q ?? ''
   const viewKey = JSON.stringify([search.page, search.pageSize, search.sort, search.order, search.q, search.overdue])
-  const [selectionState, setSelectionState] = useState<{
-    viewKey: string
-    ids: string[]
-    result?: { kind: 'success' | 'error'; message: string }
-  }>(() => ({ viewKey, ids: [] }))
-  const [confirmation, setConfirmation] = useState<{
-    viewKey: string
-    ids: string[]
-    from: 'draft' | 'sent'
-    to: 'sent' | 'paid'
-  } | null>(null)
-  if (selectionState.viewKey !== viewKey) {
-    setSelectionState({ viewKey, ids: [] })
-    setConfirmation(null)
-  }
-  const selectedIds = selectionState.viewKey === viewKey ? selectionState.ids : emptySelection
-  const bulkResult = selectionState.viewKey === viewKey ? selectionState.result : undefined
-  const bulkStatus = useBulkInvoiceStatus()
-  const updateSelectedIds = (update: (ids: string[]) => string[]) => {
-    setSelectionState((previous) => ({
-      viewKey,
-      ids: update(previous.viewKey === viewKey ? previous.ids : []),
-      result: previous.viewKey === viewKey ? previous.result : undefined,
-    }))
-  }
-  const setBulkResult = (result: typeof bulkResult) => {
-    setSelectionState((previous) => ({
-      viewKey,
-      ids: previous.viewKey === viewKey ? previous.ids : [],
-      result,
-    }))
-  }
-  const selectedRows = page.items.filter((invoice) => selectedIds.includes(invoice.id))
-  const fromStatus = selectedRows.length > 0 && selectedRows.every((invoice) => invoice.status === 'draft')
-    ? 'draft'
-    : selectedRows.length > 0 && selectedRows.every((invoice) => invoice.status === 'sent')
-      ? 'sent'
-      : undefined
-  const toStatus = fromStatus === 'draft' ? 'sent' : fromStatus === 'sent' ? 'paid' : undefined
-  const statusLabel = toStatus === 'sent' ? '送付済み' : '入金済み'
-
-  const runBulkStatus = async (ids: string[], from: 'draft' | 'sent', to: 'sent' | 'paid') => {
-    setBulkResult(undefined)
-    try {
-      const result = await bulkStatus.mutateAsync({ ids, from, to })
-      setSelectionState({
-        viewKey,
-        ids: [],
-        result: { kind: 'success', message: `${result.items.length} 件を${to === 'sent' ? '送付済み' : '入金済み'}に変更しました。` },
-      })
-    } catch (error) {
-      const errorIds = error instanceof ApiError ? invoiceIdsFromError(error.body) : []
-      const message = error instanceof ApiError && error.status === 409
-        ? '状態が変更されている請求書があります。最新の一覧を確認してください。'
-        : error instanceof ApiError && error.status === 404
-          ? '請求書が見つかりません。選択対象を確認してください。'
-          : '一括変更できませんでした。請求書の状態を確認して、もう一度お試しください。'
-      setBulkResult({
-        kind: 'error',
-        message: errorIds.length > 0 ? `${message} 対象の請求書 ID: ${errorIds.join(', ')}` : message,
-      })
-    }
-  }
+  const bulk = useInvoiceBulkActions(viewKey, page.items)
 
   const table = useTable({
     features,
@@ -195,32 +121,6 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
 
   return (
     <>
-      <Modal
-        opened={confirmation !== null}
-        onClose={() => setConfirmation(null)}
-        title="請求書の一括変更"
-        centered
-      >
-        {confirmation ? (
-          <>
-            <Text>{confirmation.ids.length} 件を{confirmation.to === 'sent' ? '送付済み' : '入金済み'}に変更します。よろしいですか？</Text>
-            <Group justify="flex-end" mt="lg">
-              <Button variant="default" onClick={() => setConfirmation(null)}>キャンセル</Button>
-              <Button
-                onClick={() => {
-                  const pending = confirmation
-                  setConfirmation(null)
-                  if (pending.viewKey !== viewKey || pending.ids.length !== selectedIds.length ||
-                    !pending.ids.every((id, index) => id === selectedIds[index])) return
-                  void runBulkStatus(pending.ids, pending.from, pending.to)
-                }}
-              >
-                変更する
-              </Button>
-            </Group>
-          </>
-        ) : null}
-      </Modal>
       <TextInput
         label="検索"
         placeholder="請求書番号で検索"
@@ -240,22 +140,7 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
           navigate({ search: (previous: typeof search) => ({ ...previous, overdue, page: undefined }) })
         }}
       />
-      {selectedIds.length > 0 ? (
-        <Group>
-          <Text>{selectedIds.length} 件選択中</Text>
-          <Button
-            disabled={!canEdit || toStatus === undefined || bulkStatus.isPending}
-            loading={bulkStatus.isPending}
-            onClick={() => {
-              if (fromStatus === undefined || toStatus === undefined) return
-              setConfirmation({ viewKey, ids: [...selectedIds], from: fromStatus, to: toStatus })
-            }}
-          >
-            {toStatus === undefined ? '同じステータスの請求書を選択してください' : `${statusLabel}にする`}
-          </Button>
-        </Group>
-      ) : null}
-      {bulkResult ? <Alert color={bulkResult.kind === 'error' ? 'red' : 'teal'} role={bulkResult.kind === 'error' ? 'alert' : 'status'}>{bulkResult.message}</Alert> : null}
+      <InvoiceBulkActions bulk={bulk} canEdit={canEdit} />
       <Table.ScrollContainer minWidth={960}>
         <Table
           striped
@@ -300,13 +185,10 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
                   <Table.Td>
                     <Checkbox
                       aria-label={`${row.original.number} を選択`}
-                      checked={selectedIds.includes(row.original.id)}
-                      disabled={!canEdit || bulkStatus.isPending || isUpdating}
+                      checked={bulk.selectedIds.has(row.original.id)}
+                      disabled={!canEdit || bulk.isPending || isUpdating}
                       onChange={(event) => {
-                        const checked = event.target.checked
-                        updateSelectedIds((current) => checked
-                          ? [...current, row.original.id]
-                          : current.filter((id) => id !== row.original.id))
+                        bulk.setSelected(row.original.id, event.target.checked)
                       }}
                     />
                   </Table.Td>
