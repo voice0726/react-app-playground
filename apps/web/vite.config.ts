@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
     tanstackRouter({
       target: 'react',
       routesDirectory: './src/routes',
+      // Vitest でルートを遅延読み込みすると、初回描画が findBy の既定タイムアウトを超える
+      autoCodeSplitting: mode !== 'test',
     }),
     react(),
   ],
