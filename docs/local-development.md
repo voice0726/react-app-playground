@@ -4,7 +4,7 @@
 
 ## 前提
 
-- コンテナエンジンが起動し、`docker compose` が使えること。Podman を使う場合は `CONTAINER_ENGINE=podman` を指定し、`podman compose` が使えること（Podman の machine も起動しておく）
+- コンテナエンジンが起動し、`docker compose` が使えること。Podman を使う場合は、以降の `bash scripts/local-dev-env.sh` の前に `CONTAINER_ENGINE=podman` を付け、`podman compose` が使えること（Podman の machine も起動しておく）
 - Go、pnpm、curl がインストール済みであること
 - `pnpm install` 済みであること
 - 関連リポジトリが既定の場所にあること。異なる場合は `AUTH_GATEWAY_DIR` と `REACT_APP_PLAYGROUND_BACKEND_DIR` で指定します
@@ -20,7 +20,7 @@ E2E用の2ユーザーもZITADELに事前作成してください。認証情報
 リポジトリルートで次を実行します。
 
 ```sh
-CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh
+bash scripts/local-dev-env.sh
 ```
 
 スクリプトは auth-gateway の PostgreSQL と ZITADEL を起動し、auth-gateway の migration を実行して gateway/login を起動します。続いてバックエンドDBを起動し、業務DBの migration 後に Go API と Vite を起動します。フロントは `http://react.localtest.me:5174`、API は `http://localhost:18080`、auth-gateway は `http://localhost:8800`、ZITADEL は `http://auth.localtest.me:8080` です。
@@ -32,7 +32,7 @@ E2EではPlaywright専用のViteとポートが競合するため、次のモー
 E2Eは案件・請求書などの業務データを作り、削除APIがないものがあります。通常開発のDBを汚さないよう、このモードは同じPostgreSQL内に使い捨てのdatabase `playground_e2e`（`E2E_DATABASE_NAME` で変更可）を作り直してmigrationとAPIに使い、終了時に破棄します。通常開発用の `playground` には触れません。
 
 ```sh
-CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh e2e
+bash scripts/local-dev-env.sh e2e
 ```
 
 結合 E2E は組織・メンバー権限・サーバーページング・請求書の一括ステータス API に対応したバックエンドが必要です。関連リポジトリの main を使ってください。
@@ -41,7 +41,7 @@ CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh e2e
 
 E2E は異なる ZITADEL ユーザー2名の認証済みstorage stateを必要とします。各コマンドでブラウザーが開くため、ZITADELに実際にログインしてください。
 
-stateの作成には `http://react.localtest.me:5174` のViteが必要です。先に既定モードの `CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh` を起動し、別ターミナルで次の手順を実行してください。作成後は `Ctrl-C` で止め、「E2E実行」に進みます。
+stateの作成には `http://react.localtest.me:5174` のViteが必要です。先に既定モードの `bash scripts/local-dev-env.sh` を起動し、別ターミナルで次の手順を実行してください。作成後は `Ctrl-C` で止め、「E2E実行」に進みます。
 
 1. ユーザーA用stateを作ります。
 
@@ -60,7 +60,7 @@ PlaywrightはログインCookieをブラウザーコンテキストから保存�
 
 ## E2E実行
 
-`CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh e2e` を起動したまま、別ターミナルでリポジトリルートから実行します。
+`bash scripts/local-dev-env.sh e2e` を起動したまま、別ターミナルでリポジトリルートから実行します。
 
 ```sh
 E2E_USER_A_STORAGE_STATE="$PWD/tests/fixtures/e2e-user-a.json" \
