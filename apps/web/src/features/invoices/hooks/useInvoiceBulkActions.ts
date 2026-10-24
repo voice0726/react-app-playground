@@ -11,6 +11,7 @@ type BulkResult = { kind: 'success' | 'error'; message: string }
 type BulkConfirmation = BulkInvoiceStatusInput & { viewKey: string }
 type BulkState = {
   viewKey: string
+  visitId: symbol
   ids: string[]
   result?: BulkResult
   confirmation: BulkConfirmation | null
@@ -63,20 +64,24 @@ function confirmationIsCurrent(confirmation: BulkConfirmation, state: BulkState)
 }
 
 function emptyState(viewKey: string): BulkState {
-  return { viewKey, ids: [], confirmation: null }
+  return { viewKey, visitId: Symbol(), ids: [], confirmation: null }
 }
 
 export function useInvoiceBulkActions(viewKey: string, invoices: Invoice[]) {
   const [state, setState] = useState(() => emptyState(viewKey))
-  if (state.viewKey !== viewKey) setState(emptyState(viewKey))
-  const current = state.viewKey === viewKey ? state : emptyState(viewKey)
+  let current = state
+  if (state.viewKey !== viewKey) {
+    current = emptyState(viewKey)
+    setState(current)
+  }
+  const visitId = current.visitId
   const selectedIds = useMemo(() => new Set(current.ids), [current.ids])
   const transition = selectedTransition(invoices.filter((invoice) => selectedIds.has(invoice.id)))
   const bulkStatus = useBulkInvoiceStatus()
   const queryClient = useQueryClient()
 
   const updateCurrent = (update: (previous: BulkState) => BulkState) => {
-    setState((previous) => previous.viewKey === viewKey ? update(previous) : previous)
+    setState((previous) => previous.visitId === visitId ? update(previous) : previous)
   }
 
   const setSelected = (id: string, checked: boolean) => {
