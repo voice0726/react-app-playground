@@ -101,6 +101,34 @@ assert.equal(scripts[0], scripts[1]);
 assert.equal(requestGroups[0], requestGroups[1]);
 assert.notEqual(ci.match(/group: dependabot-merge-runtime-.*/)[0], fs.readFileSync(new URL('dependabot-auto-merge.yml',workflows),'utf8').match(/group: dependabot-merge-dev-.*/)[0]);
 assert.doesNotMatch(ci, /merge_commit/);
+
+const notesScripts = ['ci.yml', 'dependabot-auto-merge.yml'].map(file => fs.readFileSync(new URL(file, workflows), 'utf8')
+  .match(/name: リリースノートの破壊的変更を検出する\n        run: \|\n([\s\S]*?)\n        env:/)[1].replace(/^          /gm, ''));
+assert.equal(notesScripts[0], notesScripts[1]);
+const body = (notes, commits = '') => `<details>\n<summary>Release notes</summary>\n${notes}\n</details>\n`
+  + `<details>\n<summary>Commits</summary>\n${commits}\n</details>\n<details>\n<summary>Dependabot commands and options</summary>\n</details>`;
+const notesTemp = fs.mkdtempSync(path.join(os.tmpdir(), 'pr55-notes-'));
+try {
+  for (const [name, prBody, risky] of [
+    ['breaking in notes', body('<h3>💥 BREAKING CHANGES</h3>'), true],
+    ['deprecation in notes', body('Deprecate support for Node.js v20'), true],
+    ['dropped support in notes', body('Dropped support for TypeScript 5.1'), true],
+    ['removed in bug fix', body('a field the API left out was compared as removed'), false],
+    ['migrated in notes', body('The server was also migrated to the official SDK'), false],
+    ['keywords only in commits', body('Bug fixes', 'chore: migrate tests\nfeat!: [BREAKING] drop old API'), false],
+    ['empty body', '', false],
+  ]) {
+    const output = path.join(notesTemp, name);
+    const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', notesScripts[0]], {
+      encoding: 'utf8', env: { ...process.env, PR_BODY: prBody, GITHUB_OUTPUT: output },
+    });
+    assert.equal(result.status, 0, `${name}: ${result.stderr}`);
+    assert.equal(fs.existsSync(output) ? fs.readFileSync(output, 'utf8') : '', risky ? 'risky=true\n' : '', name);
+    total++;
+  }
+} finally {
+  fs.rmSync(notesTemp, { recursive: true });
+}
 assert.match(ci, /format\('Deploy \{0\}', github.sha\)/);
 
 const group = ci.match(/\nconcurrency:\n  group: >-\n([\s\S]*?)\n  cancel-in-progress:/)[1].trim();
