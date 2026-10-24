@@ -4,7 +4,7 @@
 
 ## 前提
 
-- コンテナエンジンが起動し、`docker compose` が使えること。Podman を使う場合は `CONTAINER_ENGINE=podman` を指定し、`podman compose` が使えること（Podman の machine も起動しておく）
+- コンテナエンジンが起動し、`docker compose` が使えること。Podman を使う場合は、以降の `bash scripts/local-dev-env.sh` の前に `CONTAINER_ENGINE=podman` を付け、`podman compose` が使えること（Podman の machine も起動しておく）
 - Go、pnpm、curl がインストール済みであること
 - `pnpm install` 済みであること
 - 関連リポジトリが既定の場所にあること。異なる場合は `AUTH_GATEWAY_DIR` と `REACT_APP_PLAYGROUND_BACKEND_DIR` で指定します
@@ -34,6 +34,8 @@ E2Eは案件・請求書などの業務データを作り、削除APIがない�
 ```sh
 bash scripts/local-dev-env.sh e2e
 ```
+
+結合 E2E は組織・メンバー権限・サーバーページング・請求書の一括ステータス API に対応したバックエンドが必要です。関連リポジトリの main を使ってください。
 
 ## E2E用ユーザー状態
 
@@ -68,7 +70,9 @@ pnpm test:e2e:backend
 
 ルートの `pnpm test:e2e:backend` は Turbo を経由せず `apps/web` のスクリプトを直接呼ぶため、上の環境変数はそのまま Playwright に渡ります。
 
-最後に実行するログアウトのテストが、ユーザーAのセッションを終了します。JSONファイルが残っていても、保存済みのユーザーA stateは次の実行では認証されません。再実行する前に、「E2E用ユーザー状態」の手順でユーザーAのstateを作り直してください（`apps/web/README.md` にも同じ注意があります）。
+テストは専用の組織を作成し、ユーザーAとBで組織の共有・分離と閲覧者・編集者の権限を確認します。既存の組織名・ユーザーID・業務データには依存しません。組織の事前作成やメンバー追加は不要です。
+
+通常のテストは `chromium` プロジェクトで実行します。依存先の `logout` プロジェクトは、通常のテストがすべて成功した後でユーザーAのセッションを終了します。通常のテストが失敗した場合、ログアウトのテストはスキップします。ログアウトが成功すると、JSONファイルが残っていても、保存済みのユーザーA stateは次の実行では認証されません。再実行する前に、「E2E用ユーザー状態」の手順でユーザーAのstateを作り直してください（`apps/web/README.md` にも同じ注意があります）。
 
 Playwrightが自身のViteサーバーを起動します。終了後に起動スクリプトを `Ctrl-C` で止めます。ComposeのDB、ZITADEL、gatewayは起動したままで構いません。
 
