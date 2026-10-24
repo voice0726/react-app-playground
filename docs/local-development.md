@@ -20,7 +20,7 @@ E2E用の2ユーザーもZITADELに事前作成してください。認証情報
 リポジトリルートで次を実行します。
 
 ```sh
-bash scripts/local-dev-env.sh
+CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh
 ```
 
 スクリプトは auth-gateway の PostgreSQL と ZITADEL を起動し、auth-gateway の migration を実行して gateway/login を起動します。続いてバックエンドDBを起動し、業務DBの migration 後に Go API と Vite を起動します。フロントは `http://react.localtest.me:5174`、API は `http://localhost:18080`、auth-gateway は `http://localhost:8800`、ZITADEL は `http://auth.localtest.me:8080` です。
@@ -32,14 +32,16 @@ E2EではPlaywright専用のViteとポートが競合するため、次のモー
 E2Eは案件・請求書などの業務データを作り、削除APIがないものがあります。通常開発のDBを汚さないよう、このモードは同じPostgreSQL内に使い捨てのdatabase `playground_e2e`（`E2E_DATABASE_NAME` で変更可）を作り直してmigrationとAPIに使い、終了時に破棄します。通常開発用の `playground` には触れません。
 
 ```sh
-bash scripts/local-dev-env.sh e2e
+CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh e2e
 ```
+
+結合 E2E は組織・メンバー権限・サーバーページング・請求書の一括ステータス API に対応したバックエンドが必要です。関連リポジトリの main を使ってください。
 
 ## E2E用ユーザー状態
 
 E2E は異なる ZITADEL ユーザー2名の認証済みstorage stateを必要とします。各コマンドでブラウザーが開くため、ZITADELに実際にログインしてください。
 
-stateの作成には `http://react.localtest.me:5174` のViteが必要です。先に既定モードの `bash scripts/local-dev-env.sh` を起動し、別ターミナルで次の手順を実行してください。作成後は `Ctrl-C` で止め、「E2E実行」に進みます。
+stateの作成には `http://react.localtest.me:5174` のViteが必要です。先に既定モードの `CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh` を起動し、別ターミナルで次の手順を実行してください。作成後は `Ctrl-C` で止め、「E2E実行」に進みます。
 
 1. ユーザーA用stateを作ります。
 
@@ -58,7 +60,7 @@ PlaywrightはログインCookieをブラウザーコンテキストから保存�
 
 ## E2E実行
 
-`bash scripts/local-dev-env.sh e2e` を起動したまま、別ターミナルでリポジトリルートから実行します。
+`CONTAINER_ENGINE=podman bash scripts/local-dev-env.sh e2e` を起動したまま、別ターミナルでリポジトリルートから実行します。
 
 ```sh
 E2E_USER_A_STORAGE_STATE="$PWD/tests/fixtures/e2e-user-a.json" \
@@ -68,7 +70,9 @@ pnpm test:e2e:backend
 
 ルートの `pnpm test:e2e:backend` は Turbo を経由せず `apps/web` のスクリプトを直接呼ぶため、上の環境変数はそのまま Playwright に渡ります。
 
-最後に実行するログアウトのテストが、ユーザーAのセッションを終了します。JSONファイルが残っていても、保存済みのユーザーA stateは次の実行では認証されません。再実行する前に、「E2E用ユーザー状態」の手順でユーザーAのstateを作り直してください（`apps/web/README.md` にも同じ注意があります）。
+テストは専用の組織を作成し、ユーザーAとBで組織の共有・分離と閲覧者・編集者の権限を確認します。既存の組織名・ユーザーID・業務データには依存しません。組織の事前作成やメンバー追加は不要です。
+
+通常のテストは `chromium` プロジェクトで実行します。依存先の `logout` プロジェクトは、通常のテストがすべて成功した後でユーザーAのセッションを終了します。通常のテストが失敗した場合、ログアウトのテストはスキップします。ログアウトが成功すると、JSONファイルが残っていても、保存済みのユーザーA stateは次の実行では認証されません。再実行する前に、「E2E用ユーザー状態」の手順でユーザーAのstateを作り直してください（`apps/web/README.md` にも同じ注意があります）。
 
 Playwrightが自身のViteサーバーを起動します。終了後に起動スクリプトを `Ctrl-C` で止めます。ComposeのDB、ZITADEL、gatewayは起動したままで構いません。
 
