@@ -178,6 +178,7 @@ test('画面から顧客・案件・請求書を作成し、タスクを移動�
     await page.getByRole('combobox', { name: 'ステータス', exact: true }).click()
     await page.getByRole('option', { name: 'キャンセル', exact: true }).click()
     await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: '請求書を編集', exact: true })).toHaveCount(0)
     await expect(page.getByText('キャンセル', { exact: true })).toBeVisible()
 
     await page.goto('/tasks')
