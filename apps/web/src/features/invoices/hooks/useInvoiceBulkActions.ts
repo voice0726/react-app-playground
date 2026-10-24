@@ -68,12 +68,17 @@ function emptyState(viewKey: string): BulkState {
 }
 
 export function useInvoiceBulkActions(viewKey: string, invoices: Invoice[]) {
+  const visibleIds = useMemo(() => new Set(invoices.map((invoice) => invoice.id)), [invoices])
   const [state, setState] = useState(() => emptyState(viewKey))
   let current = state
   if (state.viewKey !== viewKey) {
     current = emptyState(viewKey)
-    setState(current)
   }
+  const visibleSelection = current.ids.filter((id) => visibleIds.has(id))
+  if (visibleSelection.length !== current.ids.length) {
+    current = { ...current, ids: visibleSelection, confirmation: null }
+  }
+  if (current !== state) setState(current)
   const visitId = current.visitId
   const selectedIds = useMemo(() => new Set(current.ids), [current.ids])
   const transition = selectedTransition(invoices.filter((invoice) => selectedIds.has(invoice.id)))

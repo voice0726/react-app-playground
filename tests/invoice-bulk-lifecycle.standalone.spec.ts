@@ -131,3 +131,47 @@ for (const status of [200, 409]) {
     await expect(row.getByText(status === 200 ? '送付済み' : '下書き', { exact: true })).toBeVisible()
   })
 }
+
+for (const refreshDuringConfirmation of [false, true]) {
+  test(`確認${refreshDuringConfirmation ? '中' : '前'}の再取得で消えた請求書を送信しない`, async ({ page }) => {
+    await page.clock.install()
+    await page.goto('/invoices')
+    await expect(page.getByLabel('INV-2026-0003 を選択', { exact: true })).toBeVisible()
+    await page.evaluate(() => {
+      const state = window as Window & { hideSelectedInvoice?: boolean; bulkPayloads?: unknown[] }
+      state.bulkPayloads = []
+      const originalFetch = window.fetch.bind(window)
+      window.fetch = async (input, init) => {
+        const request = new Request(input, init)
+        const path = new URL(request.url).pathname
+        if (path === '/api/invoices/bulk-status') state.bulkPayloads?.push(await request.clone().json())
+        const response = await originalFetch(input, init)
+        if (path !== '/api/invoices' || !state.hideSelectedInvoice) return response
+        const body = await response.json() as { items: { id: string }[]; total: number }
+        const items = body.items.filter((invoice) => invoice.id !== 'invoice-003')
+        return new Response(JSON.stringify({ ...body, items, total: body.total - (body.items.length - items.length) }), {
+          status: response.status, headers: response.headers,
+        })
+      }
+    })
+    await page.getByLabel('INV-2026-0003 を選択', { exact: true }).check()
+    await page.getByLabel('INV-2026-0007 を選択', { exact: true }).check()
+    if (refreshDuringConfirmation) {
+      await page.getByRole('button', { name: '送付済みにする', exact: true }).click()
+      await expect(page.getByRole('dialog')).toContainText('2 件を送付済み')
+    }
+    await page.evaluate(() => { (window as Window & { hideSelectedInvoice?: boolean }).hideSelectedInvoice = true })
+    await page.clock.fastForward(61000)
+    await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
+    await expect(page.getByLabel('INV-2026-0003 を選択', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('1 件選択中')).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+
+    await page.getByRole('button', { name: '送付済みにする', exact: true }).click()
+    await expect(page.getByRole('dialog')).toContainText('1 件を送付済み')
+    await page.getByRole('button', { name: '変更する', exact: true }).click()
+    await expect(page.getByRole('status')).toContainText('1 件を送付済みに変更しました')
+    const payloads = await page.evaluate(() => (window as Window & { bulkPayloads?: unknown[] }).bulkPayloads)
+    expect(payloads).toEqual([{ ids: ['invoice-007'], from: 'draft', to: 'sent' }])
+  })
+}
