@@ -1,4 +1,4 @@
-import { ActionIcon, Center, Group, Loader, Table, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Center, Checkbox, Group, Loader, Table, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconEye } from '@tabler/icons-react'
 import {
   createColumnHelper,
@@ -8,6 +8,9 @@ import {
 } from '@tanstack/react-table'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useMemo } from 'react'
+import { useInvoiceBulkActions } from '@/features/invoices/hooks/useInvoiceBulkActions'
+import { InvoiceBulkActions } from '@/features/invoices/components/InvoiceBulkActions'
+import { useOrganization } from '@/lib/organization'
 
 import { InvoiceStatusBadge } from '@/features/invoices/components/InvoiceStatusBadge'
 import { formatInvoiceDate } from '@/features/invoices/date'
@@ -83,6 +86,7 @@ const columns = columnHelper.columns([
 ])
 
 export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTableProps) {
+  const { canEdit } = useOrganization()
   const search = useSearch({ from: '/_authenticated/invoices' })
   const navigate = useNavigate({ from: '/invoices' })
   const sorting = useMemo(
@@ -90,6 +94,8 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
     [search.sort, search.order],
   )
   const globalFilter = search.q ?? ''
+  const viewKey = JSON.stringify([search.page, search.pageSize, search.sort, search.order, search.q, search.overdue])
+  const bulk = useInvoiceBulkActions(viewKey, page.items)
 
   const table = useTable({
     features,
@@ -126,6 +132,15 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
           })
         }}
       />
+      <Checkbox
+        label="期限超過のみ表示"
+        checked={search.overdue === true}
+        onChange={(event) => {
+          const overdue = event.target.checked ? true : undefined
+          navigate({ search: (previous: typeof search) => ({ ...previous, overdue, page: undefined }) })
+        }}
+      />
+      <InvoiceBulkActions bulk={bulk} canEdit={canEdit} />
       <Table.ScrollContainer minWidth={960}>
         <Table
           striped
@@ -138,6 +153,7 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
+                <Table.Th scope="col">選択</Table.Th>
                 {headerGroup.headers.map((header) => (
                   <Table.Th key={header.id}>
                     {header.isPlaceholder ? null : (
@@ -166,6 +182,16 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <Table.Tr key={row.id}>
+                  <Table.Td>
+                    <Checkbox
+                      aria-label={`${row.original.number} を選択`}
+                      checked={bulk.selectedIds.has(row.original.id)}
+                      disabled={!canEdit || bulk.isPending || isUpdating}
+                      onChange={(event) => {
+                        bulk.setSelected(row.original.id, event.target.checked)
+                      }}
+                    />
+                  </Table.Td>
                   {row.getVisibleCells().map((cell) => (
                     <Table.Td key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -175,7 +201,7 @@ export function InvoiceTable({ page, isLoading, isUpdating, isError }: InvoiceTa
               ))
             ) : (
               <Table.Tr>
-                <Table.Td colSpan={columns.length}>
+                <Table.Td colSpan={columns.length + 1}>
                   {isError ? (
                     <Text c="red" ta="center" role="alert">
                       請求書を読み込めませんでした。

@@ -7,4 +7,4 @@ export const invoiceSearchSchema = createListSearchSchema([
   'issueDate',
   'dueDate',
   'status',
-])
+], true)
