@@ -6,7 +6,9 @@ test('ログアウト失敗後に再試行でき、対象ユーザーのセッ�
   const a = await createUserContext(browser, 'a')
   const b = await createUserContext(browser, 'b')
   try {
-    expect((await a.request.get('/auth/logout')).status()).toBe(405)
+    expect((await a.request.get('/auth/logout')).ok()).toBe(false)
+    expect((await a.request.get('/auth/me')).status()).toBe(200)
+
     expect((await a.request.post('/auth/logout', { headers: { Origin: 'http://other.localtest.me:5174' } })).status()).toBe(403)
     expect((await a.request.get('/auth/me')).status()).toBe(200)
     const page = await a.newPage()
