@@ -1,9 +1,12 @@
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
 import { server } from '@/mocks/server'
 import { resetMockState } from '@/mocks/handlers'
 import { queryClient } from '@/lib/queryClient'
+
+// CI ではファイル最初の描画が既定の 1 秒を超えることがある
+configure({ asyncUtilTimeout: 3000 })
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
