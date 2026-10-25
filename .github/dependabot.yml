@@ -3,6 +3,15 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
+    groups:
+      react:
+        patterns: [react, react-dom, '@types/react', '@types/react-dom']
+      tanstack-query:
+        patterns: ['@tanstack/react-query', '@tanstack/react-query-devtools']
+      tanstack-router:
+        patterns: ['@tanstack/react-router', '@tanstack/react-router-devtools', '@tanstack/router-plugin']
+      mantine:
+        patterns: ['@mantine/*']
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }

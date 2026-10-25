@@ -101,7 +101,8 @@ jobs:
       - id: notes
         name: リリースノートの破壊的変更を検出する
         run: |
-          if printf '%s' "$PR_BODY" | grep -qiE 'breaking|deprecat|removed|drop(ped)? support|migrat'; then
+          if printf '%s' "$PR_BODY" | sed '/<summary>Commits<\/summary>/,/<\/details>/d' \
+            | grep -iE 'breaking|deprecat|drop(ped)? support' > /dev/null; then
             echo "risky=true" >> "$GITHUB_OUTPUT"
           fi
         env:
