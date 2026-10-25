@@ -116,6 +116,8 @@ try {
     ['removed in bug fix', body('a field the API left out was compared as removed'), false],
     ['migrated in notes', body('The server was also migrated to the official SDK'), false],
     ['keywords only in commits', body('Bug fixes', 'chore: migrate tests\nfeat!: [BREAKING] drop old API'), false],
+    ['breaking in later dependency notes', body('Bug fixes', 'chore: migrate tests') + body('<h3>💥 BREAKING CHANGES</h3>'), true],
+    ['keywords only in later dependency commits', body('Bug fixes') + body('Bug fixes', 'feat!: [BREAKING] drop old API'), false],
     ['empty body', '', false],
   ]) {
     const output = path.join(notesTemp, name);
