@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:preview": "vite build --mode preview",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src worker vite.config.ts vitest.worker.config.ts vitest.workerd.config.ts vitest.runtime.config.ts",
     "test": "vitest run && pnpm test:worker",
