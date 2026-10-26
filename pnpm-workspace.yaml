@@ -4,6 +4,9 @@ packages:
 
 savePrefix: ""
 
+# 単位は分（3 日）。Dependabot の cooldown と揃える
+minimumReleaseAge: 4320
+
 onlyBuiltDependencies:
   - lefthook
   - msw
