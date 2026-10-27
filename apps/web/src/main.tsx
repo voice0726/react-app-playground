@@ -12,7 +12,10 @@ const router = createRouter({ routeTree, parseSearch: parseSearchPreservingRawQu
 declare module '@tanstack/react-router' { interface Register { router: typeof router } }
 
 async function startMockWorker(): Promise<void> {
-  if (!import.meta.env.DEV || import.meta.env.VITE_USE_MSW !== 'true') return
+  // MODE はビルド時に定数へ置換されるため、本番ビルドからはモックが取り除かれる
+  const usePreviewMock = import.meta.env.MODE === 'preview'
+  const useDevMock = import.meta.env.DEV && import.meta.env.VITE_USE_MSW === 'true'
+  if (!usePreviewMock && !useDevMock) return
   const { worker } = await import('@/mocks/browser')
   await worker.start({ onUnhandledFrame: 'bypass' })
 }

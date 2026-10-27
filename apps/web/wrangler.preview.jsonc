@@ -1,0 +1,13 @@
+// PR ごとの preview 用。MSW のモックで動くため、/api・/auth の中継と secret を持たせない
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "react-app-playground-preview",
+  "compatibility_date": "2026-10-10",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "observability": { "enabled": true }
+}
