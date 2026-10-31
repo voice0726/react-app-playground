@@ -35,7 +35,7 @@
     "@tanstack/react-query-devtools": "5.105.0",
     "@tanstack/react-router": "1.170.46",
     "@tanstack/react-router-devtools": "1.167.2",
-    "@tanstack/react-table": "9.2.8",
+    "@tanstack/react-table": "9.3.1",
     "date-fns": "4.4.0",
     "dayjs": "1.11.23",
     "react": "19.3.1",
