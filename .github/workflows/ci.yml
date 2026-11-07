@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: pnpm/action-setup@v6.1.0
+      - uses: pnpm/action-setup@v6.1.1
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
@@ -64,7 +64,7 @@ jobs:
         run: printf 'PLAYWRIGHT_HTML_OUTPUT_DIR=%s/playwright-report\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
       - name: 日本語フォントを設定
         run: bash .github/scripts/setup-browser-fonts.sh
-      - uses: pnpm/action-setup@v6.1.0
+      - uses: pnpm/action-setup@v6.1.1
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:e2e:standalone --reporter=line,html --output="$GITHUB_WORKSPACE/test-results"
       - run: pnpm test:vrt --output="$GITHUB_WORKSPACE/test-results"
@@ -184,7 +184,7 @@ jobs:
         run: printf 'PLAYWRIGHT_HTML_OUTPUT_DIR=%s/playwright-report\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
       - name: 日本語フォントを設定
         run: bash .github/scripts/setup-browser-fonts.sh
-      - uses: pnpm/action-setup@v6.1.0
+      - uses: pnpm/action-setup@v6.1.1
       - run: pnpm install --frozen-lockfile
       - name: 基準画像を一式生成
         run: |
@@ -227,7 +227,7 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: pnpm/action-setup@v6.1.0
+      - uses: pnpm/action-setup@v6.1.1
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
