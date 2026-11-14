@@ -13,7 +13,7 @@ workflows:
         - 'dependabot/fetch-metadata@v3.1.0'
     '.github/workflows/pullfrog.yml':
         - 'actions/checkout@v7.0.1'
-        - 'pullfrog/pullfrog@v0.1.114'
+        - 'pullfrog/pullfrog@v0.1.126'
     '.github/workflows/react-doctor.yml':
         - 'actions/checkout@v7.0.1'
         - 'millionco/react-doctor@v2.4.0'
@@ -67,8 +67,8 @@ dependencies:
         commit: 'sha1-73e46992e05b19abd31f2f3c20e0e7370d762115'
         owner_id: 21320719
         repo_id: 262289747
-    'pullfrog/pullfrog@v0.1.114':
-        ref: 'v0.1.114'
-        commit: 'sha1-bef4f79cef8c9793608ef50179bae9e925231e38'
+    'pullfrog/pullfrog@v0.1.126':
+        ref: 'v0.1.126'
+        commit: 'sha1-88bcc3d4bb26951b99fafe09f65d90d20d5b6d62'
         owner_id: 223181266
         repo_id: 1032749534
