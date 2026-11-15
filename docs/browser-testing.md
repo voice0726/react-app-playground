@@ -46,7 +46,7 @@ API 障害・401・ログアウト再試行・ユーザー間分離は既存の�
 
 | 条件 | 固定値 |
 | --- | --- |
-| 基準環境 | CI の Linux、公式 Playwright イメージ `v1.64.0-noble` |
+| 基準環境 | CI の Linux、公式 Playwright イメージ `v1.65.0-noble` |
 | デスクトップ | 1440 x 1000、deviceScaleFactor 1 |
 | モバイル | 390 x 844、deviceScaleFactor 1、タッチ有効 |
 | 言語・時刻 | ja-JP、Asia/Tokyo、2026-04-06 12:00 |

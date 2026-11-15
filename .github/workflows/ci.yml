@@ -54,7 +54,7 @@ jobs:
     env:
       PLAYWRIGHT_HTML_OPEN: never
     container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
       options: --shm-size=1g
     steps:
       - uses: actions/checkout@v7.0.1
@@ -174,7 +174,7 @@ jobs:
     env:
       PLAYWRIGHT_HTML_OPEN: never
     container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
       options: --shm-size=1g
     steps:
       - uses: actions/checkout@v7.0.1
