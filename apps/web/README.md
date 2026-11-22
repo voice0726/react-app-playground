@@ -11,7 +11,7 @@ Worker名は `react-app-playground` です。`wrangler.jsonc` にカスタムド
 
 | リクエスト | 配信・転送先 |
 | --- | --- |
-| `/api/*` | `https://react-app-playground-backend-tqhoqdmw4a-uc.a.run.app`。パスとクエリを維持 |
+| `/api/*` | `https://react-app-playground-backend-1020599343389.us-central1.run.app`。パスとクエリを維持 |
 | `/auth/*` | `https://auth.aknr.dev`。パスとクエリを維持し、`X-App-Id` を `react-app-playground` に上書き |
 | その他 | `dist` の静的アセット。画面のURLはSPA fallbackで `index.html` を配信 |
 

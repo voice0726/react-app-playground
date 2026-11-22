@@ -52,7 +52,7 @@ describe('Worker の中継', () => {
       body: '{"name":"test"}',
     }), { ASSETS: assets })
     const request = upstreamFetch.mock.calls[0]?.[0] as Request
-    expect(request.url).toBe('https://react-app-playground-backend-tqhoqdmw4a-uc.a.run.app/api/customers?limit=10')
+    expect(request.url).toBe('https://react-app-playground-backend-1020599343389.us-central1.run.app/api/customers?limit=10')
     expect(request.method).toBe('POST')
     expect(await request.text()).toBe('{"name":"test"}')
     expect(request.headers.get('Content-Type')).toBe('application/json')
