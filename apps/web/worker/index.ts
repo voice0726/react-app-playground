@@ -6,7 +6,7 @@ interface Env {
   AUTH_PROXY_TOKEN?: string
 }
 
-const backendOrigin = 'https://react-app-playground-backend-tqhoqdmw4a-uc.a.run.app'
+const backendOrigin = 'https://react-app-playground-backend-1020599343389.us-central1.run.app'
 const authOrigin = 'https://auth.aknr.dev'
 
 export default {
