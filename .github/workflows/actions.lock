@@ -9,6 +9,8 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'dependabot/fetch-metadata@v3.1.0'
         - 'pnpm/action-setup@v6.1.1'
+    '.github/workflows/decisions.yml':
+        - 'actions/checkout@v7.0.1'
     '.github/workflows/dependabot-auto-merge.yml':
         - 'dependabot/fetch-metadata@v3.1.0'
     '.github/workflows/pullfrog.yml':
