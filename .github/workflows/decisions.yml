@@ -1,0 +1,100 @@
+name: Decisions
+
+# 比較用の段階。check は success か neutral だけを付け、マージの可否には使わない。
+# PR 側のコードは checkout も実行もしない。判定スクリプトは既定ブランチから取り、
+# PR やレビューの本文はモデルへの入力としてだけ渡す。
+on:
+  # Dependabot が起こした pull_request では Actions secret を読めないため pull_request_target を使う
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main]
+  pull_request_review:
+    types: [submitted, edited]
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/scripts/decisions/**
+      - .github/workflows/decisions.yml
+
+permissions: {}
+
+jobs:
+  test:
+    name: 判定スクリプトのテスト
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts/decisions
+      - run: node --test .github/scripts/decisions/decisions.test.mjs
+
+  deps-risk:
+    name: decision/deps-risk
+    if: >-
+      github.event_name == 'pull_request_target'
+      && (github.event.pull_request.user.login == 'dependabot[bot]'
+      || github.event.pull_request.user.login == 'devin-ai-integration[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: decisions-deps-risk-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts/decisions
+      - id: script
+        name: 既定ブランチに判定スクリプトがあるか確かめる
+        run: |
+          if [ -f .github/scripts/decisions/run.mjs ]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '::notice::既定ブランチに判定スクリプトが無いため判定しません'
+          fi
+      - if: steps.script.outputs.present == 'true'
+        run: node .github/scripts/decisions/run.mjs deps-risk
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  pullfrog-verdict:
+    name: decision/pullfrog-verdict
+    if: github.event_name == 'pull_request_review' && github.event.review.user.login == 'pullfrog[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: decisions-pullfrog-verdict-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts/decisions
+      - id: script
+        name: 既定ブランチに判定スクリプトがあるか確かめる
+        run: |
+          if [ -f .github/scripts/decisions/run.mjs ]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '::notice::既定ブランチに判定スクリプトが無いため判定しません'
+          fi
+      - if: steps.script.outputs.present == 'true'
+        run: node .github/scripts/decisions/run.mjs pullfrog-verdict
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
