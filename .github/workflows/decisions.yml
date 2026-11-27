@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: .github/scripts/decisions
-      - run: node --test .github/scripts/decisions/
+      - run: node --test .github/scripts/decisions/decisions.test.mjs
 
   deps-risk:
     name: decision/deps-risk
