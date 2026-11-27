@@ -5,6 +5,9 @@ const DECISIONS_URL = 'https://api.openai.com/v1/decisions';
 const GITHUB_API = 'https://api.github.com';
 // check run の summary は 65535 文字まで
 const SUMMARY_LIMIT = 60000;
+// job の timeout-minutes（5 分）に達する前に打ち切り、neutral の check を付ける時間を残す
+const DECISIONS_TIMEOUT_MS = 120000;
+const GITHUB_TIMEOUT_MS = 30000;
 
 export class DecisionsError extends Error {}
 
@@ -44,6 +47,7 @@ export async function createDecision({ apiKey, input, questions, fetchImpl = fet
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: DECISIONS_MODEL, input, questions }),
+    signal: AbortSignal.timeout(DECISIONS_TIMEOUT_MS),
   });
   const text = await response.text();
   if (!response.ok) {
@@ -80,6 +84,7 @@ export function githubClient({ token, repository, fetchImpl = fetch }) {
         ...(body ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
     });
     const text = await response.text();
     if (!response.ok) throw new Error(`GitHub API ${method} ${path} が ${response.status} を返しました: ${truncate(text, 1000)}`);

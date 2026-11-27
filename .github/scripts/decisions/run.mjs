@@ -48,7 +48,8 @@ export async function run({ mode, env, fetchImpl = fetch, log = console.log }) {
         result = { conclusion: 'neutral', title: '判定対象外', summary: prepared.skip };
       } else {
         const decision = await createDecision({ apiKey: env.OPENAI_API_KEY, fetchImpl, ...prepared.request });
-        result = { conclusion: 'success', ...prepared.summarize(decision.answers) };
+        const judged = decision.answers.some((answer) => answer.type !== 'refusal');
+        result = { conclusion: judged ? 'success' : 'neutral', ...prepared.summarize(decision.answers) };
       }
     } catch (error) {
       result = { conclusion: 'neutral', title: '判定に失敗しました', summary: `判定中にエラーが起きました。\n\n${error.message}` };

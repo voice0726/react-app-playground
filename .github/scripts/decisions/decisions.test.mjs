@@ -30,7 +30,7 @@ function mockFetch(handlers) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     const body = init.body ? JSON.parse(init.body) : undefined;
-    calls.push({ url, method: init.method ?? 'GET', body, headers: init.headers });
+    calls.push({ url, method: init.method ?? 'GET', body, headers: init.headers, signal: init.signal });
     const handler = handlers.find(([pattern]) => url.includes(pattern));
     if (!handler) throw new Error(`unexpected fetch ${url}`);
     const [status, payload] = handler[1](body);
@@ -143,6 +143,19 @@ test('依存更新でない PR は API を呼ばず neutral にする', async ()
   const result = await run({ mode: 'deps-risk', env, fetchImpl, log: () => {} });
   assert.equal(result.title, '判定対象外');
   assert.equal(calls.length, 1);
+});
+
+test('全質問が回答拒否なら neutral にし、どのリクエストにも期限を付ける', async () => {
+  const refusals = pullfrogVerdict.QUESTIONS.map(({ name }) => ({ type: 'refusal', name }));
+  const { fetchImpl, calls } = mockFetch([
+    ['/v1/decisions', () => [200, { answers: refusals }]],
+    ['/check-runs', () => [201, {}]],
+  ]);
+  const env = { ...baseEnv, OPENAI_API_KEY: 'sk-test', GITHUB_EVENT_PATH: eventFile({ pull_request: pullRequest, review: { body: 'x', html_url: 'u' } }) };
+  const result = await run({ mode: 'pullfrog-verdict', env, fetchImpl, log: () => {} });
+  assert.equal(result.conclusion, 'neutral');
+  assert.equal(calls.at(-1).body.conclusion, 'neutral');
+  assert.ok(calls.every((call) => call.signal instanceof AbortSignal));
 });
 
 test('回答拒否のときは title で分かるようにする', () => {
